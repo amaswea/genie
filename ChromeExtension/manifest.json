@@ -1,0 +1,46 @@
+{
+    "manifest_version": 2,
+    "name": "Action Detector",
+    "description": "This extension shows you what actions are possible on this page",
+    "version": "1.0",
+    "browser_action": {
+        "default_icon": "resources/icon.png",
+        "default_title": "See what all you can do on this page!"
+    },
+    "background": {
+        "scripts": [
+            "scripts/jquery-2.1.4.min.js",
+            "scripts/background.js",
+            "scripts/getActions.js"
+        ],
+        "persistent": false
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "http://*/*",
+                "https://*/*"
+            ],
+            "css": [
+                "css/styles.css"
+            ],
+            "js": [
+                "scripts/jquery-2.1.4.min.js",
+                "scripts/content.js",
+                "scripts/getActions.js", 
+                "scripts/performAction.js", 
+                "scripts/mousetrap.min.js"
+            ]
+        }
+    ],
+    "permissions": [
+        "tabs",
+        "<all_urls>"
+    ],
+
+    "web_accessible_resources": [
+        "scripts/jquery-2.1.4.min.js",
+        "scripts/getActions.js", 
+        "scripts/performAction.js"
+    ]
+}

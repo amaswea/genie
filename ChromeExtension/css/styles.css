@@ -1,0 +1,34 @@
+.action-search {
+    width: 300px;
+    height: 300px;
+    position: absolute;
+    bottom: 0px;
+    left: 10px;
+    background-color: white;
+    box-shadow: rgb(126, 126, 126) 1px 1px 1px 1px;
+    border-radius: 3px;
+    overflow: auto;
+    padding-top: 10px;
+    font-family: 'Lucida Grande', sans-serif;
+}
+
+.action-search-list {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.action-search-list-item {
+    border-bottom: 0.5px solid lightgray;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+    cursor: pointer;
+}
+
+.action-search-label {
+    padding-left: 10px;
+    padding-bottom: 10px;
+    border-bottom: 0.5px solid lightgray;
+    font-weight: bold;
+}
