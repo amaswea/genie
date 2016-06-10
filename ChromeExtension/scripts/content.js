@@ -43,13 +43,21 @@ TagEnglishWordMappings = {
 
 window.addEventListener("message", receiveMessage, false);
 
-function receiveMessage(event) {
-    //  var origin = event.origin || event.originalEvent.origin; // For Chrome, the origin property is in the event.originalEvent object.
-    //if (origin !== "http://example.org:8080")
-    //
-    // TODO: Verify that the message is coming from the same origin
-    //return;
+var injectScript = function (script) {
+    // Inject the getActions.js script into the page
+    var s = document.createElement('script');
+    s.src = chrome.extension.getURL(script);
+    s.onload = function () {
+      //  this.parentNode.removeChild(this);
+    };
+    console.log("script injected");
+    (document.head || document.documentElement).appendChild(s);
+};
 
+function receiveMessage(event) {
+    if(event.source != window) {
+        return;
+    }
 
     if (event.data.length && event.data[0].selector) {
         var dialog = document.createElement("div");
@@ -110,22 +118,18 @@ function receiveMessage(event) {
 
         // ...
     }
-}
-
-var injectScript = function (script) {
-    // Inject the getActions.js script into the page
-    var s = document.createElement('script');
-    s.src = chrome.extension.getURL(script);
-    s.onload = function () {
-        this.parentNode.removeChild(this);
-    };
-    (document.head || document.documentElement).appendChild(s);
-};
+} 
 
 // Listen for messages from the background script and return the requested information
 chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
-    if (msg.text === 'getActions') {
-        // Inject the getActions.js script into the page
-        injectScript("scripts/getActions.js");
+    console.log("message received");
+    if (msg.text === 'monitorActions') {
+        console.log("injecting monitor script");
+        // Inject the event monitoring script into the page
+        injectScript("scripts/monitor.js");
     }
 });
+
+$(document).ready(function(){
+ // alert("ready.")  
+})

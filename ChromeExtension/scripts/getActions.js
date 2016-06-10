@@ -1,3 +1,8 @@
+
+
+/**
+* Extended the getPath function to return a selector for the current element
+*/
 jQuery.fn.extend({
     getPath: function () {
         var path, node = this;

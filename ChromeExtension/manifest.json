@@ -9,7 +9,7 @@
     },
     "background": {
         "scripts": [
-            "scripts/jquery-2.1.4.min.js",
+            "scripts/jquery-3.0.0.js",
             "scripts/background.js",
             "scripts/getActions.js"
         ],
@@ -25,7 +25,7 @@
                 "css/styles.css"
             ],
             "js": [
-                "scripts/jquery-2.1.4.min.js",
+                "scripts/jquery-3.0.0.js",
                 "scripts/content.js",
                 "scripts/getActions.js", 
                 "scripts/performAction.js", 
@@ -39,8 +39,9 @@
     ],
 
     "web_accessible_resources": [
-        "scripts/jquery-2.1.4.min.js",
+        "scripts/jquery-3.0.0.js",
         "scripts/getActions.js", 
-        "scripts/performAction.js"
+        "scripts/performAction.js", 
+        "scripts/monitor.js"
     ]
 }
