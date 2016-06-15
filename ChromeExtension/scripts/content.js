@@ -131,5 +131,5 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 });
 
 $(document).ready(function(){
- // alert("ready.")  
+  alert("ready.");  
 })
