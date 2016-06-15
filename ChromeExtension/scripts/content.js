@@ -1,4 +1,6 @@
-TagEnglishWordMappings = {
+$actionhandler = {};
+
+$actionhandler.TagEnglishWordMappings = {
     "div": "container",
     "h1": "header",
     "h2": "header",
@@ -38,7 +40,15 @@ TagEnglishWordMappings = {
     "thead": "table header",
     "col": "column",
     "fieldset": "form group",
-    "svg": "graphic"
+    "svg": "graphic",
+    "body": "body",
+    "form": "form", 
+    "html": "html"
+};
+
+$actionhandler.ActionableElementsActionLabel = {
+    "A": "Click", 
+    "INPUT": "Fill out"
 };
 
 window.addEventListener("message", receiveMessage, false);
@@ -48,14 +58,78 @@ var injectScript = function (script) {
     var s = document.createElement('script');
     s.src = chrome.extension.getURL(script);
     s.onload = function () {
-      //  this.parentNode.removeChild(this);
+        //  this.parentNode.removeChild(this);
     };
-    console.log("script injected");
     (document.head || document.documentElement).appendChild(s);
 };
 
+var isVisible = function (domNode) {
+    //  var visible = $(domNode).is(':visible');
+    var element = $(domNode);
+    var displayed = element.css('display') != "none";
+    var visibility = element.css('visibility') != "hidden";
+    var heightBigEnough = element.height() > 10;
+    var widthBigEnough = element.width() > 10;
+    var notClear = element.css('opacity') != "0" && element.css('opacity') != "0.0";
+    var offLeftRight = (element.offset().left >= window.innerWidth) || ((element.offset().left + element.offsetWidth) <= 0);
+    var hidden = $(domNode).attr('type') == 'hidden';
+
+    if (displayed && visibility && heightBigEnough && widthBigEnough && notClear && !offLeftRight && !hidden) {
+        return true;
+    }
+
+    return false;
+}
+
+var createActionItem = function (item, modifier, listener) {
+    var selector = item.selector;
+
+    var element = jQuery(selector);
+
+    if (element.length && isVisible(element[0])) {
+        var label = item.label;
+        var tag = item.tag;
+        var item = document.createElement("li");
+        var action = listener ? listener : $actionhandler.ActionableElementsActionLabel[tag];
+        item.classList.add("action-search-list-item");
+        item.textContent = action + " the " + label + " " + $actionhandler.TagEnglishWordMappings[tag.toLowerCase()];
+
+        var modifierLabel = document.createElement("span");
+        modifierLabel.classList.add("action-search-modifier");
+        modifierLabel.textContent = 'ctrl+shift+' + modifier;
+        item.appendChild(modifierLabel);
+
+        var action = function () {
+            // Inject the getActions.js script into the page
+            var s = document.createElement('script');
+            s.src = chrome.extension.getURL("scripts/performAction.js");
+            (document.head || document.documentElement).appendChild(s);
+
+            var action = {
+                action: listener ? listener : undefined,
+                selector: selector,
+                tag: tag
+            }
+
+            window.postMessage(action, "*");
+
+            // Unload the script
+            (document.head || document.documentElement).removeChild(s);
+        }
+
+        $actionhandler.listener.simple_combo("shift 0", function () {
+            console.log("you pressed shift 0");
+        });
+
+        // Send a message to the script to perform the action
+        $(item).click(action);
+
+        return item;
+    }
+}
+
 function receiveMessage(event) {
-    if(event.source != window) {
+    if (event.source != window) {
         return;
     }
 
@@ -65,71 +139,56 @@ function receiveMessage(event) {
         var list = document.createElement("ul");
         list.classList.add("action-search-list");
 
-
         var label = document.createElement("div");
         label.classList.add("action-search-label");
-        label.textContent = "There were " + event.data.length + " actions found ...";
 
         dialog.appendChild(label);
         dialog.appendChild(list);
         $('html').append(dialog);
 
+        var keyActionModifier = 0;
+        var visibleElements = 0;
         for (var i = 0; i < event.data.length; i++) {
             var elt = event.data[i];
-            var selector = elt.selector;
             var listeners = elt.listeners;
-            var label = elt.label;
-            var tag = elt.tag;
-            for (var j = 0; j < listeners.length; j++) {
-                var listener = listeners[j];
-
-
-                var item = document.createElement("li");
-                item.classList.add("action-search-list-item");
-                item.textContent = listener + " the " + label + " " + TagEnglishWordMappings[tag.toLowerCase()];
-                list.appendChild(item);
-
-                var action = function () {
-                    // Inject the getActions.js script into the page
-                    var s = document.createElement('script');
-                    s.src = chrome.extension.getURL("scripts/performAction.js");
-                    (document.head || document.documentElement).appendChild(s);
-
-                    var action = {
-                        action: listener,
-                        selector: selector
+            if (listeners) {
+                for (var j = 0; j < listeners.length; j++) {
+                    var listener = listeners[j];
+                    var item = createActionItem(elt, keyActionModifier, listener);
+                    if (item) {
+                        visibleElements++;
+                        list.appendChild(item);
                     }
 
-                    window.postMessage(action, "*");
-
-                    // Unload the script
-                    (document.head || document.documentElement).removeChild(s);
+                    keyActionModifier++;
+                }
+            } else {
+                var item = createActionItem(elt, keyActionModifier);
+                if (item) {
+                    visibleElements++;
+                    list.appendChild(item);
                 }
 
-                Mousetrap.bind('ctrl+shift+' + j, function (e) {
-                    action();
-                    return false;
-                });
-
-                // Send a message to the script to perform the action
-                $(item).click(action);
+                keyActionModifier++;
             }
         }
 
-        // ...
+        label.textContent = "There were " + visibleElements + " actions found ...";
     }
-} 
+}
 
 // Listen for messages from the background script and return the requested information
 chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
-    console.log("message received");
     if (msg.text === 'monitorActions') {
-        console.log("injecting monitor script");
         // Inject the event monitoring script into the page
         injectScript("scripts/monitor.js");
     }
+
+    if (msg.text === 'getActions') {
+        injectScript("scripts/getActions.js");
+    }
 });
 
-$(document).ready(function(){
-  alert("ready.");  
+$(document).ready(function () {
+    $actionhandler.listener = new window.keypress.Listener();
 })

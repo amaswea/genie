@@ -1,7 +1,11 @@
 $(document).ready(function () {
     var buttons = $(".test-button");
-    var listener = function() {
-        alert("testing");
+    var listener = function (evt) {
+        var currentTarget = evt.currentTarget;
+        var label = currentTarget.textContent;
+        if (label) {
+            alert("testing " + label);
+        }
     }
 
     for (var i = 0; i < buttons.length; i++) {

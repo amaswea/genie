@@ -26,14 +26,24 @@ $(document).ready(function () {
 
 
     /**
-    * Listen for tab update events and send a message when the page is loading to inject the event monitoring script
-    */
+     * Listen for tab update events and send a message when the page is loading to inject the event monitoring script
+     */
     chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
         if (changeInfo.status == "loading") {
-            console.log("loading");
             chrome.tabs.sendMessage(tab.id, {
                 text: 'monitorActions'
             });
         }
+    });
+
+    
+    /**
+    * Description for undefined
+    * @private
+    * @method undefined
+    * @param {Object} function (command
+    */
+    chrome.commands.onCommand.addListener(function (command) {
+        console.log('Command:', command);
     });
 });

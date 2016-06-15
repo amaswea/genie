@@ -8,10 +8,6 @@
         if (!this.eventListenerList) this.eventListenerList = {};
         if (!this.eventListenerList[a]) this.eventListenerList[a] = [];
         this.eventListenerList[a].push(b);
-
-        // Send the updated list back to the content script 
-        // TODO: Send one at a time or send the whole set of events at once? 
-     //   window.postMessage(this.eventListenerList);
     };
 })();
 
@@ -27,9 +23,4 @@
         var index = this.eventListenerList[a].indexOf(b);
         this.eventListenerList[a].splice(index);
     };
-
-
-    // Send the updated list back to the content script 
-    // TODO: Send one at a time or send the whole set of events at once? 
-   // window.postMessage(this.eventListenerList);
 })();
