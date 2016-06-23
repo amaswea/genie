@@ -27,9 +27,8 @@
             "js": [
                 "scripts/ext/jquery-3.0.0.js",
                 "scripts/content.js",
-                "scripts/ext/keypress.js", 
-                "scripts/ext/jquery-ui.js",
-                "scripts/ext/underscore-min.js",
+                "scripts/ext/keypress.js",
+                "scripts/ext/lodash.js",
                 "scripts/dialog.js", 
                 "scripts/action.js"
             ]

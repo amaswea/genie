@@ -58,7 +58,7 @@ var $action = $action || {};
 
             this.label.textContent = "There were " + visibleElements + " actions found ...";
 
-            $(window).scroll(_.throttle(this.repositionDialog, 10));
+            $(window).scroll(_.throttle(this.repositionDialog, 1));
             this.repositionDialog();
         };
 
