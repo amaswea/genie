@@ -9,7 +9,7 @@
     },
     "background": {
         "scripts": [
-            "scripts/jquery-3.0.0.js",
+            "scripts/ext/jquery-3.0.0.js",
             "scripts/background.js",
             "scripts/getActions.js"
         ],
@@ -25,9 +25,13 @@
                 "css/styles.css"
             ],
             "js": [
-                "scripts/jquery-3.0.0.js",
+                "scripts/ext/jquery-3.0.0.js",
                 "scripts/content.js",
-                "scripts/keypress.js"
+                "scripts/ext/keypress.js", 
+                "scripts/ext/jquery-ui.js",
+                "scripts/ext/underscore-min.js",
+                "scripts/dialog.js", 
+                "scripts/action.js"
             ]
         }
     ],
@@ -37,7 +41,7 @@
     ],
 
     "web_accessible_resources": [
-        "scripts/jquery-3.0.0.js",
+        "scripts/ext/jquery-3.0.0.js",
         "scripts/getActions.js",
         "scripts/performAction.js",
         "scripts/monitor.js"

@@ -1,23 +1,8 @@
-$(document).ready(function () {
-    var buttons = $(".test-button");
-    var listener = function (evt) {
-        var currentTarget = evt.currentTarget;
-        var label = currentTarget.textContent;
-        if (label) {
-            alert("testing " + label);
-        }
-    }
-
-    for (var i = 0; i < buttons.length; i++) {
-        var button = buttons[i];
-        $(button).on("click", listener);
-    }
-
-    $(".remove").click(function () {
-        var buttons = $(".test-button");
-        for (var i = 0; i < buttons.length; i++) {
-            var button = buttons[i];
-            $(button).off("click", listener);
-        }
-    });
-});
+function (e) {
+    var t = $j(e.target);
+    $j("#user_auto_add_fb_friends").prop("checked", "true" == t.find("#auto_add_fb_friends_confirm").val()), $j.post(t.attr("action"), t.serialize()).success(function () {
+        Lightbox.hideBox()
+    }).error(function () {
+        alert("There was an error saving your preference. Please try again.")
+    }), e.preventDefault()
+}

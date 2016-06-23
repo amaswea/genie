@@ -10,6 +10,13 @@ ActionableElementsActionFunction = {
 // Sending and receiving messages from the window object
 window.addEventListener("message", receiveMessage, false);
 
+
+/**
+* Description for receiveMessage
+* @private
+* @method receiveMessage
+* @param {Object} event
+*/
 function receiveMessage(event) {
     var origin = event.origin || event.originalEvent.origin; // For Chrome, the origin property is in the event.originalEvent object.
     if (event.source != window) {
