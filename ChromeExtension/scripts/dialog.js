@@ -6,6 +6,7 @@ var $action = $action || {};
             this.dialog = undefined;
             this.actionItems = [];
             this.actionManager = new $action.ActionManager();
+            this.actionCount = 0;
         }
 
         initializeDialog() {
@@ -25,49 +26,39 @@ var $action = $action || {};
             this.list = list;
             this.label = label;
             
-            $('body').click(this.disposeDialog);
-        };
-
-        populateDialog(items) {
-            var keyActionModifier = 0;
-            var visibleElements = 0;
-            for (var i = 0; i < items.length; i++) {
-                var elt = items[i];
-                var listeners = elt.listeners;
-                if (listeners) {
-                    for (var j = 0; j < listeners.length; j++) {
-                        var listener = listeners[j];
-                        var item = this.createDialogCommand(elt, keyActionModifier, listener);
-                        if (item) {
-                            visibleElements++;
-                            this.list.appendChild(item);
-                        }
-
-                        keyActionModifier++;
-                    }
-                } else {
-                    var item = this.createDialogCommand(elt, keyActionModifier);
-                    if (item) {
-                        visibleElements++;
-                        this.list.appendChild(item);
-                    }
-
-                    keyActionModifier++;
-                }
-            }
-
-            this.label.textContent = "There were " + visibleElements + " actions found ...";
-
+            this.hideDialog();
             $(window).scroll(_.throttle(this.repositionDialog, 1));
             this.repositionDialog();
         };
 
+        addCommand(command) {
+            var item = this.createDialogCommand(elt, this.actionCount, command.eventType);
+            if (item) {
+                this.actionCount++;
+                this.list.appendChild(item);
+                this.label.textContent = "There were " + this.actionCount + " actions found ...";
+            }
+        };
+
+
+        removeCommand(command) {
+            this.actionCount--;
+        };
+        
         repositionDialog() {
             var dialog = $('.action-search');
 
             var scrollTop = $(window).scrollTop();
             var top = $(window).height() + scrollTop - dialog.height();
-            dialog[0].style.top = top + "px";            
+            dialog[0].style.top = top + "px";
+        };
+
+        showDialog() {
+            this.dialog.style.display = "";
+        };
+
+        hideDialog() {
+            this.dialog.style.display = "none";
         };
 
         disposeDialog() {
@@ -103,8 +94,8 @@ var $action = $action || {};
 
             return false;
         };
-        
-        commandIsAvailable(domNode){
+
+        commandIsAvailable(domNode) {
             // Ways that a command can not be available
             // 1. Command is not visible
             //    - Display set to None

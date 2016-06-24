@@ -13,36 +13,75 @@ $(document).ready(function () {
      * 
      */
 
+    var saveDialogState = function (open) {
+        // Save the current state of the dialog in Chrome extension storage API
+        chrome.storage.sync.set({
+            'dialogState': open
+        }, function () {
+            console.log("dialog state saved to " + open);
+        });
+    };
+
+
+    var restoreDialogState = function (tab) {
+        chrome.storage.sync.get('dialogState', function (object) {
+            if (!chrome.runtime.lastError && object && object.dialogState) {
+                chrome.tabs.sendMessage(tab.id, {
+                    text: 'openDialog'
+                });
+            } else {
+                chrome.tabs.sendMessage(tab.id, {
+                    text: 'closeDialog'
+                })
+            }
+        });
+    }
+
+    var updateDialogState = function (tab) {
+        chrome.storage.sync.get('dialogState', function (object) {
+            if (!chrome.runtime.lastError && object && !object.dialogState) {
+                chrome.tabs.sendMessage(tab.id, {
+                    text: 'openDialog'
+                });
+
+                saveDialogState(true);
+            } else {
+                chrome.tabs.sendMessage(tab.id, {
+                    text: 'closeDialog'
+                })
+
+                saveDialogState(false);
+            }
+        });
+    }
+
     /**
      * Open a connection to the popup script to listen for update snapshot and analyze requests
      * @param  {int} The port number
      */
     chrome.browserAction.onClicked.addListener(function (tab) {
-        // TBD 
-        chrome.tabs.sendMessage(tab.id, {
-            text: 'getActions'
-        });
+        updateDialogState(tab);
     });
 
-
-    /**
-     * Listen for tab update events and send a message when the page is loading to inject the event monitoring script
-     */
-    chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-        if (changeInfo.status == "loading") {
-            chrome.tabs.sendMessage(tab.id, {
-                text: 'monitorActions'
-            });
+    chrome.tabs.onUpdated.addListener(function (tabID, changeInfo, tab) {
+        if (changeInfo.status == "complete") {
+            restoreDialogState(tab);
         }
     });
 
-    
+    chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+        if (request.updateDialogState) {
+            var dialogState = request.dialogState;
+            saveDialogState(dialogState);
+        }
+    });
+
     /**
-    * Description for undefined
-    * @private
-    * @method undefined
-    * @param {Object} function (command
-    */
+     * Description for undefined
+     * @private
+     * @method undefined
+     * @param {Object} function (command
+     */
     chrome.commands.onCommand.addListener(function (command) {
         console.log('Command:', command);
     });

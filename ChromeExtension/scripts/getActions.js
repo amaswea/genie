@@ -1,4 +1,7 @@
-ActionableElements = {
+"use strict";
+var $action = $action || {};
+
+$action.ActionableElements = {
     "A": function (element) {
         var href = jQuery(element).attr("href");
         return href && href.length > 0;
@@ -9,18 +12,22 @@ ActionableElements = {
     }
 };
 
-ElementLabels = {
+$action.ElementLabels = {
     "INPUT": function (element) { // Get the label from the placeholder attribute
         var placeholder = jQuery(element).attr("placeholder");
         return placeholder;
+    }, 
+    "A": function(element) {
+        var title = jQuery(element).attr("title");
+        return title;
     }
 }
 
-GlobalEventHandlers = [
+$action.GlobalEventHandlers = [
   "onclick", "onmouseover"
 ];
 
-GlobalEventHandlerMappings = { // TODO: Add the rest
+$action.GlobalEventHandlerMappings = { // TODO: Add the rest
     "onclick": "click",
     "onmouseover": "mouseover"
 }
@@ -28,38 +35,15 @@ GlobalEventHandlerMappings = { // TODO: Add the rest
 /**
  * Extended the getPath function to return a selector for the current element
  */
-jQuery.fn.extend({
-    getPath: function () {
-        var path, node = this;
-        while (node.length) {
-            var realNode = node[0],
-                name = realNode.localName;
-            if (!name) break;
-            name = name.toLowerCase();
 
-            var parent = node.parent();
-
-            var sameTagSiblings = parent.children(name);
-            if (sameTagSiblings.length > 1) {
-                allSiblings = parent.children();
-                var index = allSiblings.index(realNode) + 1;
-                name += ':nth-child(' + index + ')';
-            }
-
-            path = name + (path ? '>' + path : '');
-            node = parent;
-        }
-
-        return path;
-    }
-});
 
 // May one day be more complex process
+// Include title if no text is found
 var getElementLabel = function (element) {
     var tagname = element.tagName;
     if (tagname != "IFRAME") { // Cannot request contents of iframe due to cross origin frame error
         var label = "";
-        if (ElementLabels[tagname]) {
+        if ($action.ElementLabels[tagname]) {
             label = ElementLabels[tagname](element);
         } else {
             label = jQuery(element).contents().first().text().trim();
@@ -81,8 +65,8 @@ var getListeners = function (element) {
 
 var getAttributeListeners = function (element, data) {
     var $element = jQuery(element);
-    for (var i = 0; i < GlobalEventHandlers.length; i++) {
-        var eventHandler = GlobalEventHandlers[i];
+    for (var i = 0; i < $action.GlobalEventHandlers.length; i++) {
+        var eventHandler = $action.GlobalEventHandlers[i];
         var attributeValue = $element.attr(eventHandler);
         if (attributeValue && attributeValue.length > 0) {
             if(!data){
@@ -97,7 +81,7 @@ var getAttributeListeners = function (element, data) {
 
 var isActionable = function (element) {
     var tagName = element.tagName;
-    return tagName && ActionableElements[tagName] && ActionableElements[tagName](element);
+    return tagName && $action.ActionableElements[tagName] && $ction.ActionableElements[tagName](element);
 }
 
 var getEventHandlersOnPage = function () {

@@ -1,26 +1,44 @@
-/**
- * Override addEventListener to keep a list of currently registered listeners that use this method
- */
+jQuery.fn.extend({
+    getPath: function () {
+        var path, node = this;
+        while (node.length) {
+            var realNode = node[0],
+                name = realNode.localName;
+            if (!name) break;
+            name = name.toLowerCase();
+
+            var parent = node.parent();
+
+            var sameTagSiblings = parent.children(name);
+            if (sameTagSiblings.length > 1) {
+                var allSiblings = parent.children();
+                var index = allSiblings.index(realNode) + 1;
+                name += ':nth-child(' + index + ')';
+            }
+
+            path = name + (path ? '>' + path : '');
+            node = parent;
+        }
+
+        return path;
+    }
+});
+
 (function () {
     Element.prototype._addEventListener = Element.prototype.addEventListener;
     Element.prototype.addEventListener = function (a, b, c) {
         this._addEventListener(a, b, c);
-        if (!this.eventListenerList) this.eventListenerList = {};
-        if (!this.eventListenerList[a]) this.eventListenerList[a] = [];
-        this.eventListenerList[a].push(b);
+        window.postMessage({ messageType: 'eventAdded', eventType: a, handler: b, path: jQuery(this).getPath()}, "*");
     };
 })();
 
-/**
- * Override removeEventListener to intercept calls and remove them from the list
- */
 (function () {
     Element.prototype._removeEventListener = Element.prototype.removeEventListener;
     Element.prototype.removeEventListener = function (a, b, c) {
         this._removeEventListener(a, b, c);
-        if (!this.eventListenerList) return;
-        if (!this.eventListenerList[a]) return;
-        var index = this.eventListenerList[a].indexOf(b);
-        this.eventListenerList[a].splice(index);
+        window.postMessage({ messageType: 'eventRemoved', eventType: a, handler: b, path: jQuery(this).getPath()}, "*")
     };
 })();
+
+
+

@@ -45,7 +45,9 @@ var $action = $action || {};
         "body": "body",
         "form": "form",
         "html": "html", 
-        "dd": "description element"
+        "dd": "description element", 
+        "section": "section", 
+        "article": "article"
     };
 
     $action.ActionableElementsActionLabel = {
