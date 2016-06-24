@@ -3,4 +3,9 @@ $(document).ready(function () {
     button2.addEventListener("click", function() {
         alert("another button added");
     });
+    
+    var button1 = $('#mybutton')[0];
+    button1.addEventListener("click", function() {
+       alert("another button added 2"); 
+    });
 });

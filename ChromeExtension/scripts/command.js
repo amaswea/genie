@@ -44,9 +44,9 @@ var $action = $action || {};
         "svg": "graphic",
         "body": "body",
         "form": "form",
-        "html": "html", 
-        "dd": "description element", 
-        "section": "section", 
+        "html": "html",
+        "dd": "description element",
+        "section": "section",
         "article": "article"
     };
 
@@ -55,15 +55,46 @@ var $action = $action || {};
         "INPUT": "Fill out"
     };
 
-    class ActionManager {
+    $action.ActionableElements = {
+        "A": function (element) {
+            var href = jQuery(element).attr("href");
+            return href && href.length > 0;
+        },
+        "INPUT": function (element) {
+            var type = jQuery(element).attr("type");
+            return type && type != "hidden";
+        }
+    };
+
+    $action.ElementLabels = {
+        "INPUT": function (element) { // Get the label from the placeholder attribute
+            var placeholder = jQuery(element).attr("placeholder");
+            return placeholder;
+        },
+        "A": function (element) {
+            var title = jQuery(element).attr("title");
+            return title;
+        }
+    };
+
+    $action.GlobalEventHandlers = [
+        "onclick", "onmouseover"
+    ];
+
+    $action.GlobalEventHandlerMappings = { // TODO: Add the rest
+        "onclick": "click",
+        "onmouseover": "mouseover"
+    };
+
+    class CommandManager {
         constructor() {}
 
-        create(item, modifier, listener) {
+        createCommand(element, command, modifier, listener) {
             var listItem = document.createElement("li");
-            var action = listener ? listener : $action.ActionableElementsActionLabel[item.tag];
+            var action = listener ? listener : $action.ActionableElementsActionLabel[element.tagName];
             listItem.classList.add("action-search-list-item");
 
-            var label = action + " the " + item.label + " " + $action.TagEnglishWordMappings[item.tag.toLowerCase()];
+            var label = action + " the " + this.getCommandLabel(element) + " " + $action.TagEnglishWordMappings[element.tagName.toLowerCase()];
             listItem.textContent = label;
 
             var modifierLabel = document.createElement("span");
@@ -73,18 +104,18 @@ var $action = $action || {};
 
             // Send a message to the script to perform the action
             var handleAction = function (evt) {
-                evt.preventDefault(); 
+                evt.preventDefault();
                 evt.stopPropagation();
-                
+
                 var s = document.createElement('script');
                 s.src = chrome.extension.getURL("scripts/performAction.js");
                 (document.head || document.documentElement).appendChild(s);
 
                 var action = {
                     action: listener ? listener : undefined,
-                    selector: item.selector,
-                    tag: item.tag,
-                    handler: item.handler
+                    selector: command.path,
+                    tag: element.tagName,
+                    handler: command.handler
                 }
 
                 window.postMessage(action, "*");
@@ -99,10 +130,27 @@ var $action = $action || {};
 
         dispose() {};
 
-        handleAction() {
+        handleCommand() {
             // Inject the performActions.js script into the page
         }
-    }
 
-    $action.ActionManager = ActionManager;
+        getCommandLabel(element) {
+            var tagname = element.tagName;
+            if (tagname != "IFRAME") { // Cannot request contents of iframe due to cross origin frame error
+                var label = "";
+                if ($action.ElementLabels[tagname]) {
+                    label = $action.ElementLabels[tagname](element);
+                } else {
+                    label = jQuery(element).contents().first().text().trim();
+                }
+
+                if (label && label.length > 0) {
+                    return label;
+                }
+            }
+            return "";
+        };
+    };
+
+    $action.CommandManager = CommandManager;
 })($action);

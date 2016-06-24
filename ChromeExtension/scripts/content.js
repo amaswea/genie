@@ -88,13 +88,17 @@ function receiveMessage(event) {
             $action.commands = [];
         }
 
-        if (event.data.eventType == 'eventAdded') {
+        if (event.data.messageType == 'eventAdded') {
             $action.commands.push(event.data);
+            $action.dialogManager.addCommand(event.data);
+            console.log("command found " + event.data.eventType);
+            console.log("command path " + event.data.path);
         }
 
-        if (event.data.eventType == 'eventRemoved') {
+        if (event.data.messageType == 'eventRemoved') {
             var index = $action.commands.indexOf(event.data);
             $action.commands.splice(index, 1);
+            $action.dialogManager.removeCommand(event.data);
         }
     }
 }

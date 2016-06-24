@@ -83,27 +83,3 @@ var isActionable = function (element) {
     var tagName = element.tagName;
     return tagName && $action.ActionableElements[tagName] && $ction.ActionableElements[tagName](element);
 }
-
-var getEventHandlersOnPage = function () {
-    var items = Array.prototype.slice.call(
-        document.querySelectorAll('*')
-    ).map(function (element) {
-        var listeners = getListeners(element);
-        return {
-            selector: jQuery(element).getPath(),
-            label: getElementLabel(element),
-            tag: element.tagName,
-            listeners: listeners ? Object.keys(listeners) : undefined
-        };
-    }).filter(function (item) {
-        var element = jQuery(item.selector);
-        return item && ((item.listeners && item.listeners.length > 0) || (element.length && element[0] && isActionable(element[0])));
-    });
-
-    return items;
-};
-
-jQuery(document).ready(function () {
-    var items = getEventHandlersOnPage();
-    window.postMessage(items, "*");
-});

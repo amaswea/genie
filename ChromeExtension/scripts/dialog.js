@@ -4,8 +4,8 @@ var $action = $action || {};
     class DialogManager {
         constructor() {
             this.dialog = undefined;
-            this.actionItems = [];
-            this.actionManager = new $action.ActionManager();
+            this.commands = {};
+            this.commandManager = new $action.CommandManager();
             this.actionCount = 0;
         }
 
@@ -25,15 +25,16 @@ var $action = $action || {};
             this.dialog = dialog;
             this.list = list;
             this.label = label;
-            
+
             this.hideDialog();
             $(window).scroll(_.throttle(this.repositionDialog, 1));
             this.repositionDialog();
         };
 
         addCommand(command) {
-            var item = this.createDialogCommand(elt, this.actionCount, command.eventType);
+            var item = this.createDialogCommand(command, this.actionCount, command.eventType);
             if (item) {
+                this.commands[command.path] = item;
                 this.actionCount++;
                 this.list.appendChild(item);
                 this.label.textContent = "There were " + this.actionCount + " actions found ...";
@@ -42,9 +43,15 @@ var $action = $action || {};
 
 
         removeCommand(command) {
-            this.actionCount--;
+            var commandItem = this.commands[command.path];
+            if (commandItem) {
+                this.actionCount--;
+                delete this.commands[command.selector];
+                this.list.removeChild(commandItem);
+                this.label.textContent = "There were " + this.actionCount + " actions found ...";
+            }
         };
-        
+
         repositionDialog() {
             var dialog = $('.action-search');
 
@@ -66,15 +73,13 @@ var $action = $action || {};
             $(window).unbind("scroll", this.repositionDialog);
         }
 
-        createDialogCommand(item, modifier, listener) {
-            var selector = item.selector;
-            var element = jQuery(selector);
+        createDialogCommand(command, modifier, listener) {
+            var element = jQuery(command.path);
             if (element.length && this.commandIsVisible(element[0])) {
-                var newAction = this.actionManager.create(item, modifier, listener);
-                this.actionItems.push(newAction);
+                var newAction = this.commandManager.createCommand(element[0], command, modifier, listener);
                 return newAction;
             }
-        }
+        };
 
         commandIsVisible(domNode) {
             //  var visible = $(domNode).is(':visible');
