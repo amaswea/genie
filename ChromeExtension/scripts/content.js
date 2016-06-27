@@ -2,11 +2,11 @@ window.addEventListener("message", receiveMessage, false);
 var $action = $action || {};
 
 /**
-* Description for addCommandFromElement
-* @private
-* @method addCommandFromElement
-* @param {Object} element
-*/
+ * Description for addCommandFromElement
+ * @private
+ * @method addCommandFromElement
+ * @param {Object} element
+ */
 function addCommandFromElement(element) {
     var tagAdded = element.tagName;
     var hasAction = $action.ActionableElements[tagAdded] != undefined;
@@ -25,7 +25,51 @@ function addCommandFromElement(element) {
             $action.commands.push(commandData);
         }
     }
+
+    var $element = $(element);
+    for (var i = 0; i < $action.GlobalEventHandlers.length; i++) {
+        var eventHandler = $action.GlobalEventHandlers[i];
+        var attributeValue = $element.attr(eventHandler);
+        if (attributeValue && attributeValue.length > 0) {
+            var commandData = {
+                eventType: eventHandler,
+                path: $action.getElementPath(element), 
+                handler: attributeValue
+            }
+
+            if (!$action.commands) {
+                $action.commands = [];
+            }
+
+            $action.dialogManager.addCommand(commandData);
+            $action.commands.push(commandData);
+        }
+    }
 };
+
+/**
+ * Description for getAttributeListeners
+ * @private
+ * @method getAttributeListeners
+ * @param {Object} element
+ * @param {Object} data
+ */
+function getAttributeListeners(element, data) {
+    var $element = jQuery(element);
+    for (var i = 0; i < $action.GlobalEventHandlers.length; i++) {
+        var eventHandler = $action.GlobalEventHandlers[i];
+        var attributeValue = $element.attr(eventHandler);
+        if (attributeValue && attributeValue.length > 0) {
+            if (!data) {
+                data = {};
+            }
+            data[eventHandler] = attributeValue;
+        }
+    }
+
+    return data;
+}
+
 
 /**
  * Description for observeMutations
