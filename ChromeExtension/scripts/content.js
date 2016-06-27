@@ -13,7 +13,7 @@ function addCommandFromElement(element) {
     if (hasAction) {
         var isActionable = $action.ActionableElements[tagAdded](element);
         if (isActionable) {
-            var commandData = {
+            var commandData = { 
                 path: $action.getElementPath(element)
             }
 
