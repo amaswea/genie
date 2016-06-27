@@ -73,7 +73,12 @@ var $action = $action || {};
         },
         "A": function (element) {
             var title = jQuery(element).attr("title");
-            return title;
+            if(title && title.length) {
+                return title; 
+            }
+            
+            var innerText = jQuery(element).contents().first().text().trim();
+            return innerText;
         }
     };
 

@@ -1,37 +1,3 @@
-"use strict";
-var $action = $action || {};
-
-$action.ActionableElements = {
-    "A": function (element) {
-        var href = jQuery(element).attr("href");
-        return href && href.length > 0;
-    },
-    "INPUT": function (element) {
-        var type = jQuery(element).attr("type");
-        return type && type != "hidden";
-    }
-};
-
-$action.ElementLabels = {
-    "INPUT": function (element) { // Get the label from the placeholder attribute
-        var placeholder = jQuery(element).attr("placeholder");
-        return placeholder;
-    }, 
-    "A": function(element) {
-        var title = jQuery(element).attr("title");
-        return title;
-    }
-}
-
-$action.GlobalEventHandlers = [
-  "onclick", "onmouseover"
-];
-
-$action.GlobalEventHandlerMappings = { // TODO: Add the rest
-    "onclick": "click",
-    "onmouseover": "mouseover"
-}
-
 /**
  * Extended the getPath function to return a selector for the current element
  */

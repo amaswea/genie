@@ -1,11 +1,18 @@
 $(document).ready(function () {
-    var button2 = $('#mybutton2')[0];
-    button2.addEventListener("click", function() {
-        alert("another button added");
+    var button2 = $('#mybutton2');
+    var button1 = $('#mybutton');
+
+    button2[0].addEventListener("click", function () {
+        var event = document.createEvent('Event');
+        event.initEvent('mouseup', true, true);
+        button1[0].dispatchEvent(event);
+    });
+
+    button1.mouseup(function () {
+        alert("button1 was mouseup");
     });
     
-    var button1 = $('#mybutton')[0];
-    button1.addEventListener("click", function() {
-       alert("another button added 2"); 
+    button1.click(function() {
+        alert("button1 was clicked");
     });
 });

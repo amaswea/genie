@@ -2,6 +2,66 @@ window.addEventListener("message", receiveMessage, false);
 var $action = $action || {};
 
 /**
+* Description for addCommandFromElement
+* @private
+* @method addCommandFromElement
+* @param {Object} element
+*/
+function addCommandFromElement(element) {
+    var tagAdded = element.tagName;
+    var hasAction = $action.ActionableElements[tagAdded] != undefined;
+    if (hasAction) {
+        var isActionable = $action.ActionableElements[tagAdded](element);
+        if (isActionable) {
+            var commandData = {
+                path: $action.getElementPath(element)
+            }
+
+            if (!$action.commands) {
+                $action.commands = [];
+            }
+
+            $action.dialogManager.addCommand(commandData);
+            $action.commands.push(commandData);
+        }
+    }
+};
+
+/**
+ * Description for observeMutations
+ * @private
+ * @method observeMutations
+ */
+function observeMutations() {
+    // select the target node
+    var target = document.body;
+
+    // create an observer instance
+    var observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            var addedNodes = mutation.addedNodes;
+            if (addedNodes && addedNodes.length) {
+                for (var i = 0; i < addedNodes.length; i++) {
+                    var added = addedNodes[i];
+                    if (added.tagName) {
+                        addCommandFromElement(added);
+                    }
+                }
+            }
+        });
+    });
+
+    // configuration of the observer:
+    var config = {
+        childList: true,
+        subtree: true
+    };
+
+    // pass in the target node, as well as the observer options
+    observer.observe(target, config);
+};
+
+/**
  * Description for injectScript
  * @private
  * @method injectScript
@@ -91,8 +151,6 @@ function receiveMessage(event) {
         if (event.data.messageType == 'eventAdded') {
             $action.commands.push(event.data);
             $action.dialogManager.addCommand(event.data);
-            console.log("command found " + event.data.eventType);
-            console.log("command path " + event.data.path);
         }
 
         if (event.data.messageType == 'eventRemoved') {
@@ -102,6 +160,8 @@ function receiveMessage(event) {
         }
     }
 }
+
+
 
 /**
  * Listen for messages from the background script and return the requested information
@@ -121,8 +181,19 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     }
 });
 
+
 $(document).ready(function () {
     $action.dialogManager = new $action.DialogManager();
     $action.dialogManager.initializeDialog();
     injectMonitorScript();
+
+    // Add an observer to watch when new elements are added to the page
+    observeMutations();
+
+    // Extract all of the non-event commands from the page
+    var allElements = document.querySelectorAll("*");
+    for (var i = 0; i < allElements.length; i++) {
+        var element = allElements[i];
+        addCommandFromElement(element);
+    }
 });

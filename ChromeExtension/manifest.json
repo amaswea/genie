@@ -29,7 +29,8 @@
                 "scripts/ext/keypress.js",
                 "scripts/ext/lodash.js",
                 "scripts/dialog.js", 
-                "scripts/command.js"
+                "scripts/command.js", 
+                "scripts/util.js"
             ], 
             "run_at": "document_start"
         }
