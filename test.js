@@ -89,4 +89,50 @@ $(document).ready(function () {
     textarea[0].addEventListener("keypress", function () {
         console.log("keypress");
     });
+
+    textarea[0].addEventListener("select", function () {
+        console.log("select");
+    });
+
+    textarea[0].addEventListener("change", function () {
+        console.log("change");
+    });
+
+    var button5 = $("#mybutton5");
+    button5.click(function () {
+        var newLink = document.createElement("a");
+        newLink.classList.add("new-link");
+        newLink.href = "www.google.com";
+        newLink.textContent = "google";
+
+        document.body.appendChild(newLink);
+    });
+
+    var button6 = $("#mybutton6");
+    button6.click(function () {
+        var remove = $(".new-link").first();
+        remove.remove();
+    });
+
+    var button7 = $("#mybutton7");
+    button7.click(function () {
+        var newlink = $(".new-link").first();
+        $('#container1').append(newlink);
+    });
+
+    var listener = function () {
+        alert("hello! ");
+    };
+    
+    var add = $('#add');
+    add.click(function () {
+        var clickButton = $('#click')[0];
+        clickButton.addEventListener("click", listener);
+    });
+
+    var remove = $('#remove');
+    remove.click(function () {
+        var clickButton = $('#click')[0];
+        clickButton.removeEventListener("click", listener);
+    });
 });

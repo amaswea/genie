@@ -4,7 +4,8 @@ var $action = $action || {};
     class DialogManager {
         constructor() {
             this.dialog = undefined;
-            this.commands = {};
+            this.commandItems = [];
+            this.elements = [];
             this.commandManager = new $action.CommandManager();
             this.actionCount = 0;
         }
@@ -31,24 +32,47 @@ var $action = $action || {};
             this.repositionDialog();
         };
 
-        addCommand(command) {
-            var item = this.createDialogCommand(command, this.actionCount, command.eventType);
-            if (item) {
-                this.commands[command.path] = item;
+        addCommand(element, command) {
+            if (this.commandIsVisible(element)) {
+                var newCommand = this.commandManager.createCommand(element, command, this.actionCount);
+
+                var index = this.elements.indexOf(element);
+                if (index == -1) {
+                    // What happens when an element is removed to this object? 
+                    this.elements.push(element);
+                    index = this.elements.length - 1;
+                }
+
+                if (!this.commandItems[index])
+                    this.commandItems[index] = [];
+
+                this.commandItems[index].push(newCommand);
                 this.actionCount++;
-                this.list.appendChild(item);
+                this.list.appendChild(newCommand.commandItem);
                 this.label.textContent = "There were " + this.actionCount + " actions found ...";
             }
         };
 
 
-        removeCommand(command) {
-            var commandItem = this.commands[command.path];
-            if (commandItem) {
-                this.actionCount--;
-                delete this.commands[command.path];
-                this.list.removeChild(commandItem);
-                this.label.textContent = "There were " + this.actionCount + " actions found ...";
+        removeCommand(element, command) {
+            var index = this.elements.indexOf(element);
+            if (index > -1) {
+                var commands = this.commandItems[index];
+                var remove = -1;
+                for (var i = 0; i < commands.length; i++) {
+                    var cmd = commands[i];
+                    if (cmd.commandType == command.commandType) {
+                        remove = i;
+                        this.actionCount--;
+                        this.list.removeChild(cmd.commandItem);
+                        this.label.textContent = "There were " + this.actionCount + " actions found ...";
+                        break;
+                    }
+                }
+
+                if (remove != -1) {
+                    this.commandItems[index].splice(remove, 1);
+                }
             }
         };
 
@@ -72,14 +96,6 @@ var $action = $action || {};
             $('.action-search').remove();
             $(window).unbind("scroll", this.repositionDialog);
         }
-
-        createDialogCommand(command, modifier, listener) {
-            var element = jQuery(command.path);
-            if (element.length && this.commandIsVisible(element[0])) {
-                var newAction = this.commandManager.createCommand(element[0], command, modifier, listener);
-                return newAction;
-            }
-        };
 
         commandIsVisible(domNode) {
             //  var visible = $(domNode).is(':visible');

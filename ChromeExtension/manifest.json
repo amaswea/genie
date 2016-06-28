@@ -30,7 +30,8 @@
                 "scripts/ext/lodash.js",
                 "scripts/dialog.js", 
                 "scripts/command.js", 
-                "scripts/util.js"
+                "scripts/util.js", 
+                "scripts/mutationWatcher.js"
             ], 
             "run_at": "document_start"
         }

@@ -2,110 +2,6 @@ window.addEventListener("message", receiveMessage, false);
 var $action = $action || {};
 
 /**
- * Description for addCommandFromElement
- * @private
- * @method addCommandFromElement
- * @param {Object} element
- */
-function addCommandFromElement(element) {
-    var tagAdded = element.tagName;
-    var hasAction = $action.ActionableElements[tagAdded] != undefined;
-    if (hasAction) {
-        var isActionable = $action.ActionableElements[tagAdded](element);
-        if (isActionable) {
-            var commandData = { 
-                path: $action.getElementPath(element)
-            }
-
-            if (!$action.commands) {
-                $action.commands = [];
-            }
-
-            $action.dialogManager.addCommand(commandData);
-            $action.commands.push(commandData);
-        }
-    }
-
-    var $element = $(element);
-    for (var i = 0; i < $action.GlobalEventHandlers.length; i++) {
-        var eventHandler = $action.GlobalEventHandlers[i];
-        var attributeValue = $element.attr(eventHandler);
-        if (attributeValue && attributeValue.length > 0) {
-            var commandData = {
-                eventType: eventHandler,
-                path: $action.getElementPath(element), 
-                handler: attributeValue
-            }
-
-            if (!$action.commands) {
-                $action.commands = [];
-            }
-
-            $action.dialogManager.addCommand(commandData);
-            $action.commands.push(commandData);
-        }
-    }
-};
-
-/**
- * Description for getAttributeListeners
- * @private
- * @method getAttributeListeners
- * @param {Object} element
- * @param {Object} data
- */
-function getAttributeListeners(element, data) {
-    var $element = jQuery(element);
-    for (var i = 0; i < $action.GlobalEventHandlers.length; i++) {
-        var eventHandler = $action.GlobalEventHandlers[i];
-        var attributeValue = $element.attr(eventHandler);
-        if (attributeValue && attributeValue.length > 0) {
-            if (!data) {
-                data = {};
-            }
-            data[eventHandler] = attributeValue;
-        }
-    }
-
-    return data;
-}
-
-
-/**
- * Description for observeMutations
- * @private
- * @method observeMutations
- */
-function observeMutations() {
-    // select the target node
-    var target = document.body;
-
-    // create an observer instance
-    var observer = new MutationObserver(function (mutations) {
-        mutations.forEach(function (mutation) {
-            var addedNodes = mutation.addedNodes;
-            if (addedNodes && addedNodes.length) {
-                for (var i = 0; i < addedNodes.length; i++) {
-                    var added = addedNodes[i];
-                    if (added.tagName) {
-                        addCommandFromElement(added);
-                    }
-                }
-            }
-        });
-    });
-
-    // configuration of the observer:
-    var config = {
-        childList: true,
-        subtree: true
-    };
-
-    // pass in the target node, as well as the observer options
-    observer.observe(target, config);
-};
-
-/**
  * Description for injectScript
  * @private
  * @method injectScript
@@ -160,13 +56,13 @@ function injectMonitorScript() {
                 Element.prototype._addEventListener = Element.prototype.addEventListener; 
                 Element.prototype.addEventListener = function (a, b, c) {
                     this._addEventListener(a, b, c);
-                    window.postMessage({ messageType: 'eventAdded', eventType: a, handler: b.toString(), path: getElementPath(this)}, "*");
+                    window.postMessage({ messageType: 'eventAdded', commandType: a, handler: b.toString(), path: getElementPath(this)}, "*");
                 };
 
                 Element.prototype._removeEventListener = Element.prototype.removeEventListener;
                 Element.prototype.removeEventListener = function (a, b, c) {
                     this._removeEventListener(a, b, c); 
-                    window.postMessage({ messageType: 'eventRemoved', eventType: a, handler: b.toString(), path: getElementPath(this)}, "*");
+                    window.postMessage({ messageType: 'eventRemoved', commandType: a, handler: b.toString(), path: getElementPath(this)}, "*");
                 };`;
 
     var header = document.head || document.documentElement;
@@ -188,19 +84,24 @@ function receiveMessage(event) {
 
     // Check the type of the message returned, and add or remove the command from the dialog accordingly
     if (event.data) {
-        if (!$action.commands) {
-            $action.commands = [];
-        }
-
         if (event.data.messageType == 'eventAdded') {
-            $action.commands.push(event.data);
-            $action.dialogManager.addCommand(event.data);
+            var elementPath = event.data.path;
+            if (elementPath && elementPath.length) {
+                var element = $(elementPath);
+                if (element && element.length) {
+                    $action.dialogManager.addCommand(element[0], event.data);
+                }
+            }
         }
 
         if (event.data.messageType == 'eventRemoved') {
-            var index = $action.commands.indexOf(event.data);
-            $action.commands.splice(index, 1);
-            $action.dialogManager.removeCommand(event.data);
+            var elementPath = event.data.path;
+            if (elementPath && elementPath.length) {
+                var element = $(elementPath);
+                if (element && element.length) {
+                    $action.dialogManager.removeCommand(element[0], event.data);
+                }
+            }
         }
     }
 }
@@ -232,12 +133,6 @@ $(document).ready(function () {
     injectMonitorScript();
 
     // Add an observer to watch when new elements are added to the page
-    observeMutations();
-
-    // Extract all of the non-event commands from the page
-    var allElements = document.querySelectorAll("*");
-    for (var i = 0; i < allElements.length; i++) {
-        var element = allElements[i];
-        addCommandFromElement(element);
-    }
+    var mutationObserver = new $action.MutationWatcher();
+    mutationObserver.init();
 });

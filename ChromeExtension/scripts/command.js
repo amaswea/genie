@@ -90,13 +90,22 @@ var $action = $action || {};
         "onclick": "click",
         "onmouseover": "mouseover"
     };
+    
+    class Command {
+        constructor(commandType, element, item) {
+            this.commandType = commandType; 
+            this.element = element;
+            this.commandItem = item;
+            //this.handler; TOOD: What do do when an element has more than one handler for a specific event
+        }    
+    }
 
     class CommandManager {
         constructor() {}
 
-        createCommand(element, command, modifier, listener) {
+        createCommand(element, command, modifier) {
             var listItem = document.createElement("li");
-            var action = listener ? listener : $action.ActionableElementsActionLabel[element.tagName];
+            var action = command.commandType != 'default' ? command.commandType : $action.ActionableElementsActionLabel[element.tagName];
             listItem.classList.add("action-search-list-item");
 
             var label = action + " the " + this.getCommandLabel(element) + " " + $action.TagEnglishWordMappings[element.tagName.toLowerCase()];
@@ -117,10 +126,8 @@ var $action = $action || {};
                 (document.head || document.documentElement).appendChild(s);
 
                 var action = {
-                    action: listener ? listener : undefined,
-                    selector: command.path,
-                    tag: element.tagName,
-                    handler: command.handler
+                    action: command.commandType,
+                    selector: $action.getElementPath(element)
                 }
 
                 window.postMessage(action, "*");
@@ -130,14 +137,12 @@ var $action = $action || {};
             }
 
             $(listItem).click(handleAction);
-            return listItem;
+            
+            var command = new Command(command.commandType, element, listItem);
+            return command;
         };
 
         dispose() {};
-
-        handleCommand() {
-            // Inject the performActions.js script into the page
-        }
 
         getCommandLabel(element) {
             var tagname = element.tagName;
