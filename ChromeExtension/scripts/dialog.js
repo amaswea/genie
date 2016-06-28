@@ -46,7 +46,7 @@ var $action = $action || {};
             var commandItem = this.commands[command.path];
             if (commandItem) {
                 this.actionCount--;
-                delete this.commands[command.selector];
+                delete this.commands[command.path];
                 this.list.removeChild(commandItem);
                 this.label.textContent = "There were " + this.actionCount + " actions found ...";
             }
