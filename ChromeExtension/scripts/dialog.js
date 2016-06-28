@@ -1,6 +1,27 @@
 "use strict";
 var $action = $action || {};
 (function ($action) {
+    /**
+     This is the list of events that correspond to commands that can be performed by a user. 
+     Each events may also have a set of implicit events that should be triggered when the command is performed
+    */
+    $action.AllowedCommands = [
+        "click", 
+        "dblclick", 
+        "wheel", 
+        "cut", 
+        "copy", 
+        "paste", 
+        "focus", // ? 
+        "input", 
+        "resize",
+        "scroll", 
+        "select", 
+        "wheel", 
+        "blur" // ? 
+        // Drag & Drop API, Touch events 
+    ];
+        
     class DialogManager {
         constructor() {
             this.dialog = undefined;
@@ -33,7 +54,8 @@ var $action = $action || {};
         };
 
         addCommand(element, command) {
-            if (this.commandIsVisible(element)) {
+            var allowed = command.commandType == 'default' || $action.AllowedCommands.indexOf(command.commandType) > -1;
+            if (this.commandIsVisible(element) && allowed) {
                 var newCommand = this.commandManager.createCommand(element, command, this.actionCount);
 
                 var index = this.elements.indexOf(element);

@@ -9,11 +9,11 @@ $(document).ready(function () {
         console.log("dblclick");
     });
 
-    textarea[0].addEventListener("keydown", function () {
+    textarea[0].addEventListener("keydown", function (evt) {
         console.log("keydown");
     });
 
-    textarea[0].addEventListener("keyup", function () {
+    textarea[0].addEventListener("keyup", function (evt) {
         console.log("keyup");
     });
 
@@ -33,7 +33,7 @@ $(document).ready(function () {
         console.log("change");
     });
 
-    textarea[0].addEventListener("cut", function () {
+    textarea[0].addEventListener("cut", function (evt) {
         console.log("cut");
     });
 

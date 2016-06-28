@@ -73,10 +73,10 @@ var $action = $action || {};
         },
         "A": function (element) {
             var title = jQuery(element).attr("title");
-            if(title && title.length) {
-                return title; 
+            if (title && title.length) {
+                return title;
             }
-            
+
             var innerText = jQuery(element).contents().first().text().trim();
             return innerText;
         }
@@ -90,14 +90,59 @@ var $action = $action || {};
         "onclick": "click",
         "onmouseover": "mouseover"
     };
-    
+
+    /** 
+    Each command above may also consist of implicit commands executed in a specific order. If the command does not appear below, 
+    only that event should be triggered when executing the command. 
+    TOOD: In the future, these may have inputs
+    - There are two collections. One is the order of events if that command is performed by a keyboard. The other is the order of events if that command is perfomed by a mouse. 
+    */
+
+    $action.AllowedCommands = [
+        "click",
+        "dblclick",
+        "wheel",
+        "cut",
+        "copy",
+        "paste",
+        "focus", // TODO: Think about whether this should be a command
+        "input", 
+        "resize",
+        "scroll",
+        "select",
+        "wheel",
+        "blur" // ? 
+        // Drag & Drop API, Touch events 
+    ];
+
+    $action.MouseOrders = {
+        "click": ["mousedown", "mouseup", "click"], // TODO: right click 
+        "dblclick": ["mousedown", "mouseup", "click", "mousedown", "mouseup", "click"],
+        "cut": ["mousedown", "mouseup", "select", "copy"],
+        "copy": ["mousedown", "mouseup", "select", "cut", "input"],
+        "paste": ["mousedown", "mouseup", "paste", "input"]
+    }
+
+    $action.KeyboardOrders = {
+        "click": ["keydown", "keypress", "click", "keyup"], // TODO: right click 
+        //"dblclick":  Cannot be executed by a seqence of two enter keys.. Might be different in other browsers? Need to test
+        "cut": ["keydown", "keydown", "cut", "input", "keyup", "keyup"], // TOOD: Need to pass in the right keycodes for input
+        "paste": ["keydown", "keydown", "paste", "input", "keyup", "keyup"],
+        "copy": ["keydown", "keydown", "copy", "input", "keyup", "keyup"],
+        "input": ["keydown", "keypress", "input", "keyup"]
+    }
+
+    /* $action.CommandInputs = {
+         "cut": ["ctrl", "x", "" "", "ctrl", "x"]
+     };*/
+
     class Command {
         constructor(commandType, element, item) {
-            this.commandType = commandType; 
+            this.commandType = commandType;
             this.element = element;
             this.commandItem = item;
             //this.handler; TOOD: What do do when an element has more than one handler for a specific event
-        }    
+        }
     }
 
     class CommandManager {
@@ -125,8 +170,10 @@ var $action = $action || {};
                 s.src = chrome.extension.getURL("scripts/performAction.js");
                 (document.head || document.documentElement).appendChild(s);
 
+                var events = $action.CommandOrders[command.commandType];
                 var action = {
-                    action: command.commandType,
+                    events: events ? events : [command.commandType],
+                    inputs: $action.CommandInputs[command.commandType],
                     selector: $action.getElementPath(element)
                 }
 
@@ -137,12 +184,10 @@ var $action = $action || {};
             }
 
             $(listItem).click(handleAction);
-            
+
             var command = new Command(command.commandType, element, listItem);
             return command;
         };
-
-        dispose() {};
 
         getCommandLabel(element) {
             var tagname = element.tagName;

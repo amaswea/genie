@@ -98,6 +98,18 @@ $(document).ready(function () {
         console.log("change");
     });
 
+    textarea[0].addEventListener("cut", function () {
+        console.log("cut");
+    });
+    
+    textarea[0].addEventListener("copy", function () {
+        console.log("copy");
+    });
+    
+        textarea[0].addEventListener("blur", function () {
+        console.log("blur");
+    });
+
     var button5 = $("#mybutton5");
     button5.click(function () {
         var newLink = document.createElement("a");
@@ -123,7 +135,7 @@ $(document).ready(function () {
     var listener = function () {
         alert("hello! ");
     };
-    
+
     var add = $('#add');
     add.click(function () {
         var clickButton = $('#click')[0];

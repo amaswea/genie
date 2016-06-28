@@ -30,11 +30,19 @@ function receiveMessage(event) {
         var element = jQuery(data.selector);
         if (element.length) {
             // Execute the action using the trigger or the associated action function
-            if (data.action && data.action != 'default') {
-                element.trigger(data.action);
-            }
+            if (data.events.length > 1) {
+                for (var i = 0; i < data.events.length; i++) {
+                    var event = data.events[i];
 
-            if (data.action == 'default') {
+                    // TODO: Verify that all UIEvent types are cancelable and bubble
+                    var eventObj = new Event(event, {"bubbles":true, "cancelable":false});
+                    if(data.inputs) {
+                        var input = data.inputs[i]; // Assume data.inputs is same length as data.events
+                        
+                    }
+                    element[0].dispatchEvent(eventObj);
+                }
+            } else if (data.events.length == 1 && data.events[0] == 'default') {
                 var actionFunction = $action.ActionableElementsActionFunction[element[0].tagName];
                 if (actionFunction) {
                     if (actionFunction) {
@@ -46,4 +54,4 @@ function receiveMessage(event) {
     }
 
     window.removeEventListener("message", receiveMessage);
-}
+};
