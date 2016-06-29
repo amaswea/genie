@@ -129,8 +129,8 @@ var $action = $action || {};
 
             // configuration of the observer:
             var config = {
-                childList: true,
-                subtree: true
+                attributes: true, 
+                characterData: true
             };
 
             // pass in the target node, as well as the observer options

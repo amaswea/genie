@@ -91,31 +91,41 @@ var $action = $action || {};
         "onmouseover": "mouseover"
     };
 
-    /** 
-    Each command above may also consist of implicit commands executed in a specific order. If the command does not appear below, 
-    only that event should be triggered when executing the command. 
-    TOOD: In the future, these may have inputs
-    - There are two collections. One is the order of events if that command is performed by a keyboard. The other is the order of events if that command is perfomed by a mouse. 
-    */
-
     $action.AllowedCommands = [
-        "click",
-        "dblclick",
-        "wheel",
         "cut",
-        "copy",
-        "paste",
-        "focus", // TODO: Think about whether this should be a command
+        "copy", 
+        "paste", 
+        "blur", 
+        "click", 
+        "compositionend", 
+        "compisitionstart", 
+        "compisitionupdate", 
+        "dblclick", 
+        "focus", 
+        "focusin", 
+        "focusout", 
         "input", 
-        "resize",
-        "scroll",
+        "keydown", 
+        "keyup", 
+        "mousedown",
+        "mouseenter", 
+        "mouseleave", 
+        "mousemove", 
+        "mouseout", 
+        "mouseover", 
+        "mouseup", 
+        "resize", 
+        "scroll", 
         "select",
-        "wheel",
-        "blur" // ? 
-        // Drag & Drop API, Touch events 
+        "wheel", 
+        "change", 
+        "contextmenu", 
+        "show", 
+        "submit"
+        // TOOD: rest of HTML DOM events, Drag & Drop events, Touch events
     ];
 
-    $action.MouseOrders = {
+/*    $action.MouseOrders = {
         "click": ["mousedown", "mouseup", "click"], // TODO: right click 
         "dblclick": ["mousedown", "mouseup", "click", "mousedown", "mouseup", "click"],
         "cut": ["mousedown", "mouseup", "select", "copy"],
@@ -130,7 +140,7 @@ var $action = $action || {};
         "paste": ["keydown", "keydown", "paste", "input", "keyup", "keyup"],
         "copy": ["keydown", "keydown", "copy", "input", "keyup", "keyup"],
         "input": ["keydown", "keypress", "input", "keyup"]
-    }
+    }*/
 
     /* $action.CommandInputs = {
          "cut": ["ctrl", "x", "" "", "ctrl", "x"]

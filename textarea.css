@@ -1,0 +1,13 @@
+body, html, #container {
+    height: 100%; 
+    width: 100%; 
+}
+
+#container {
+    display: flex; 
+}
+
+#container > #mytextarea1 {
+    flex: 1 1 0px; 
+}
+
