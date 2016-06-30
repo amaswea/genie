@@ -148,7 +148,7 @@ var $action = $action || {};
 
                 this.commandItems[index].push(newCommand);
                 this.actionCount++;
-                this.list.appendChild(newCommand.dom());
+                this.list.appendChild(newCommand.DOM);
                 this.label.textContent = "There were " + this.actionCount + " actions found ...";
             }
         };
@@ -161,10 +161,10 @@ var $action = $action || {};
                 var remove = -1;
                 for (var i = 0; i < commands.length; i++) {
                     var cmd = commands[i];
-                    if (cmd.eventType == command.eventType) {
+                    if (cmd.Command.EventType == command.eventType) {
                         remove = i;
                         this.actionCount--;
-                        this.list.removeChild(cmd.commandItem);
+                        this.list.removeChild(cmd.DOM);
                         this.label.textContent = "There were " + this.actionCount + " actions found ...";
                         break;
                     }
@@ -208,24 +208,38 @@ var $action = $action || {};
         get Command() {
             return this.command;
         }
+        
+        get DOM() {}
+
+        init() {};
 
         /**
          * A label string to use for the command item
          * @private
          * @property undefined
          */
-        label() {
-
-        }
-
-        dom() {
-
-        }
+        label() {}
     };
 
     class KeyboardUICommandItem extends CommandItem {
         constructor(eventType, element, handler) {
             super(eventType, element, handler);
+            this.init();
+        }
+
+        get DOM() {
+            return this._domElement;
+        };
+        
+        init() {
+            var listItem = document.createElement("li");
+            var action = this.command.EventType != 'default' ? this.command.EventType : $action.ActionableElementsActionLabel[this.command.Element.tagName];
+            listItem.classList.add("action-search-list-item");
+
+            var label = action + " the " + this.label(this.command.Element) + " " + $action.TagEnglishWordMappings[this.command.Element.tagName.toLowerCase()];
+            listItem.textContent = label;
+            listItem.addEventListener("click", this.command.execute());
+            this._domElement = listItem;
         }
 
         /**
@@ -246,26 +260,6 @@ var $action = $action || {};
                 }
             }
             return "";
-        };
-
-
-        dom() {
-            var listItem = document.createElement("li");
-            var action = this.command.EventType != 'default' ? this.command.EventType : $action.ActionableElementsActionLabel[this.command.Element.tagName];
-            listItem.classList.add("action-search-list-item");
-
-            var label = action + " the " + this.label(this.command.Element) + " " + $action.TagEnglishWordMappings[this.command.Element.tagName.toLowerCase()];
-            listItem.textContent = label;      
-            listItem.addEventListener("click", this.command.execute()); 
-            
-            return listItem;
-
-            /*
-                        var modifierLabel = document.createElement("span");
-                        modifierLabel.classList.add("action-search-modifier");
-                        modifierLabel.textContent = 'ctrl+shift+' + modifier;
-                        listItem.appendChild(modifierLabel);
-            */
         };
     };
 
