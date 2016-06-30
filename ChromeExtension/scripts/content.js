@@ -70,7 +70,6 @@ function injectMonitorScript() {
     header.insertBefore(s, script[0]);
 };
 
-
 /**
  * Receive the message from the getActions script and update the dialog with the new actions
  * @private
@@ -117,22 +116,22 @@ function receiveMessage(event) {
  * @param {Object} sendResponse
  */
 chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
-    if (msg.text === 'openDialog') {
-        $action.dialogManager.showDialog();
+    if (msg.text === 'open') {
+        $action.interface.show();
     }
 
-    if (msg.text === 'closeDialog') {
-        $action.dialogManager.hideDialog();
+    if (msg.text === 'close') {
+        $action.interface.hide();
     }
 });
 
-
 $(document).ready(function () {
-    $action.dialogManager = new $action.DialogManager();
-    $action.dialogManager.initializeDialog();
     injectMonitorScript();
 
     // Add an observer to watch when new elements are added to the page
     var mutationObserver = new $action.MutationWatcher();
     mutationObserver.init();
+    
+    $action.interface = new $action.KeyboardUI(); // Instantiate a new type of interface 
+    // For other types of interfaces, they could be instantiated here or through a setting? 
 });

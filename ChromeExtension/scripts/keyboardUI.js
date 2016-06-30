@@ -1,28 +1,19 @@
 "use strict";
 var $action = $action || {};
 (function ($action) {
-    /**
-     This is the list of events that correspond to commands that can be performed by a user. 
-     Each events may also have a set of implicit events that should be triggered when the command is performed
-    */
-    $action.AllowedCommands = [
-        "click", 
-        "dblclick", 
-        "wheel", 
-        "cut", 
-        "copy", 
-        "paste", 
-        "focus", // ? 
-        "input", 
-        "resize",
-        "scroll", 
-        "select", 
-        "wheel", 
-        "blur" // ? 
-        // Drag & Drop API, Touch events 
-    ];
+    class UI {
+        constructor() {
+            
+        }
         
-    class DialogManager {
+        show() {}
+        
+        hide() {}
+        
+        dom() {}
+    }
+    
+    class KeyboardUI {
         constructor() {
             this.dialog = undefined;
             this.commandItems = [];
@@ -155,4 +146,45 @@ var $action = $action || {};
     };
 
     $action.DialogManager = DialogManager;
+
+    class CommandItem {
+        constructor() {
+
+        }
+
+        /**
+         * Return a suitable label for the command
+         */
+        label() {
+            var tagname = element.tagName;
+            if (tagname != "IFRAME") { // Cannot request contents of iframe due to cross origin frame error
+                var label = "";
+                if ($action.ElementLabels[tagname]) {
+                    label = $action.ElementLabels[tagname](element);
+                } else {
+                    label = jQuery(element).contents().first().text().trim();
+                }
+
+                if (label && label.length > 0) {
+                    return label;
+                }
+            }
+            return "";
+        };
+
+        
+        dom() {
+            var listItem = document.createElement("li");
+            var action = command.commandType != 'default' ? command.commandType : $action.ActionableElementsActionLabel[element.tagName];
+            listItem.classList.add("action-search-list-item");
+
+            var label = action + " the " + this.label(element) + " " + $action.TagEnglishWordMappings[element.tagName.toLowerCase()];
+            listItem.textContent = label;
+
+            var modifierLabel = document.createElement("span");
+            modifierLabel.classList.add("action-search-modifier");
+            modifierLabel.textContent = 'ctrl+shift+' + modifier;
+            listItem.appendChild(modifierLabel);
+        };
+    };
 })($action);

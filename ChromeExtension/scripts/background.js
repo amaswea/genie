@@ -1,56 +1,59 @@
 $(document).ready(function () {
-    /** 
-     * What do I need? 
-     *  - Find all interactive elements on a page
-     *  - What is an interactive element? 
-     *       - Has an event handler attached to it. 
-     *       - Is a link or button? Are there any others that are interactive by default? 
-     *           - button - Needs to be submit or reset and inside of a form element or associated with some event handler
-     *           - link - Only if it has href and other certain attributes that cause some action
-     *           - Interactive content - https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/Content_categories
-     * jQuery._data($0, "events")
-     * getEventListeners - Chrome dev tools - Is this in JS? 
-     * 
+    /**
+     * Save the current active state of the interface
+     * @private
+     * @method saveInterfaceState
+     * @param {Object} open
      */
-
-    var saveDialogState = function (open) {
-        // Save the current state of the dialog in Chrome extension storage API
+    var saveInterfaceState = function (open) {
+        // Save the current state of the interface in Chrome extension storage API
         chrome.storage.sync.set({
-            'dialogState': open
+            'interfaceState': open
         }, function () {
-            console.log("dialog state saved to " + open);
+            console.log("interface state saved to " + open);
         });
     };
 
-
-    var restoreDialogState = function (tab) {
-        chrome.storage.sync.get('dialogState', function (object) {
-            if (!chrome.runtime.lastError && object && object.dialogState) {
+    /**
+     * Restore the saved state of the interface
+     * @private
+     * @method restoreInterfaceState
+     * @param {Object} tab
+     */
+    var restoreInterfaceState = function (tab) {
+        chrome.storage.sync.get('interfaceState', function (object) {
+            if (!chrome.runtime.lastError && object && object.interfaceState) {
                 chrome.tabs.sendMessage(tab.id, {
-                    text: 'openDialog'
+                    text: 'open'
                 });
             } else {
                 chrome.tabs.sendMessage(tab.id, {
-                    text: 'closeDialog'
+                    text: 'close'
                 })
             }
         });
     }
 
-    var updateDialogState = function (tab) {
-        chrome.storage.sync.get('dialogState', function (object) {
-            if (!chrome.runtime.lastError && object && !object.dialogState) {
+    /**
+     * Persist the current open or close staste of the interface
+     * @private
+     * @method updateState
+     * @param {Object} tab
+     */
+    var updateState = function (tab) {
+        chrome.storage.sync.get('interfaceState', function (object) { // TODO: is this going to clash? 
+            if (!chrome.runtime.lastError && object && !object.interfaceState) {
                 chrome.tabs.sendMessage(tab.id, {
-                    text: 'openDialog'
+                    text: 'open'
                 });
 
-                saveDialogState(true);
+                saveInterfaceState(true);
             } else {
                 chrome.tabs.sendMessage(tab.id, {
-                    text: 'closeDialog'
+                    text: 'close'
                 })
 
-                saveDialogState(false);
+                saveInterfaceState(false);
             }
         });
     }
@@ -60,29 +63,19 @@ $(document).ready(function () {
      * @param  {int} The port number
      */
     chrome.browserAction.onClicked.addListener(function (tab) {
-        updateDialogState(tab);
+        updateInterfaceState(tab);
     });
 
     chrome.tabs.onUpdated.addListener(function (tabID, changeInfo, tab) {
         if (changeInfo.status == "complete") {
-            restoreDialogState(tab);
+            restoreIntefaceState(tab);
         }
     });
 
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-        if (request.updateDialogState) {
-            var dialogState = request.dialogState;
-            saveDialogState(dialogState);
+        if (request.updateInterfaceState) {
+            var interfaceState = request.interfaceState;
+            restoreInterfaceState(interfaceState);
         }
-    });
-
-    /**
-     * Description for undefined
-     * @private
-     * @method undefined
-     * @param {Object} function (command
-     */
-    chrome.commands.onCommand.addListener(function (command) {
-        console.log('Command:', command);
     });
 });

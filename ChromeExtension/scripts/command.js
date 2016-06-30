@@ -91,85 +91,122 @@ var $action = $action || {};
         "onmouseover": "mouseover"
     };
 
-    $action.AllowedCommands = [
+    $action.UserInvokeableEvents = [
         "cut",
-        "copy", 
-        "paste", 
-        "blur", 
-        "click", 
-        "compositionend", 
-        "compisitionstart", 
-        "compisitionupdate", 
-        "dblclick", 
-        "focus", 
-        "focusin", 
-        "focusout", 
-        "input", 
-        "keydown", 
-        "keyup", 
+        "copy",
+        "paste",
+        "blur",
+        "click",
+        "compositionend",
+        "compisitionstart",
+        "compisitionupdate",
+        "dblclick",
+        "focus",
+        "focusin",
+        "focusout",
+        "input",
+        "keydown",
+        "keyup",
         "mousedown",
-        "mouseenter", 
-        "mouseleave", 
-        "mousemove", 
-        "mouseout", 
-        "mouseover", 
-        "mouseup", 
-        "resize", 
-        "scroll", 
+        "mouseenter",
+        "mouseleave",
+        "mousemove",
+        "mouseout",
+        "mouseover",
+        "mouseup",
+        "resize",
+        "scroll",
         "select",
-        "wheel", 
-        "change", 
-        "contextmenu", 
-        "show", 
+        "wheel",
+        "change",
+        "contextmenu",
+        "show",
         "submit"
         // TOOD: rest of HTML DOM events, Drag & Drop events, Touch events
     ];
 
-/*    $action.MouseOrders = {
-        "click": ["mousedown", "mouseup", "click"], // TODO: right click 
-        "dblclick": ["mousedown", "mouseup", "click", "mousedown", "mouseup", "click"],
-        "cut": ["mousedown", "mouseup", "select", "copy"],
-        "copy": ["mousedown", "mouseup", "select", "cut", "input"],
-        "paste": ["mousedown", "mouseup", "paste", "input"]
-    }
+    /*    $action.MouseOrders = {
+            "click": ["mousedown", "mouseup", "click"], // TODO: right click 
+            "dblclick": ["mousedown", "mouseup", "click", "mousedown", "mouseup", "click"],
+            "cut": ["mousedown", "mouseup", "select", "copy"],
+            "copy": ["mousedown", "mouseup", "select", "cut", "input"],
+            "paste": ["mousedown", "mouseup", "paste", "input"]
+        }
 
-    $action.KeyboardOrders = {
-        "click": ["keydown", "keypress", "click", "keyup"], // TODO: right click 
-        //"dblclick":  Cannot be executed by a seqence of two enter keys.. Might be different in other browsers? Need to test
-        "cut": ["keydown", "keydown", "cut", "input", "keyup", "keyup"], // TOOD: Need to pass in the right keycodes for input
-        "paste": ["keydown", "keydown", "paste", "input", "keyup", "keyup"],
-        "copy": ["keydown", "keydown", "copy", "input", "keyup", "keyup"],
-        "input": ["keydown", "keypress", "input", "keyup"]
-    }*/
+        $action.KeyboardOrders = {
+            "click": ["keydown", "keypress", "click", "keyup"], // TODO: right click 
+            //"dblclick":  Cannot be executed by a seqence of two enter keys.. Might be different in other browsers? Need to test
+            "cut": ["keydown", "keydown", "cut", "input", "keyup", "keyup"], // TOOD: Need to pass in the right keycodes for input
+            "paste": ["keydown", "keydown", "paste", "input", "keyup", "keyup"],
+            "copy": ["keydown", "keydown", "copy", "input", "keyup", "keyup"],
+            "input": ["keydown", "keypress", "input", "keyup"]
+        }*/
 
     /* $action.CommandInputs = {
          "cut": ["ctrl", "x", "" "", "ctrl", "x"]
      };*/
 
     class Command {
-        constructor(commandType, element, item) {
-            this.commandType = commandType;
-            this.element = element;
-            this.commandItem = item;
-            //this.handler; TOOD: What do do when an element has more than one handler for a specific event
+        constructor(eventType, domElement, handler) {
+            this._eventType = eventType;
+            this._domElement = domElement; // The DOM element the command is associated with
+            this._handler = handler;
+            this.init();
         }
-    }
 
-    class CommandManager {
-        constructor() {}
+        init() {
+            this.createCommand()
+        };
+
+        /**
+         * Return whether the command can be invoked by a user 
+         * @private
+         * @property undefined
+         */
+        userInvokable() {
+
+        };
+
+        /**
+         * The set of data dependencies that the command has (control dependencies)
+         * Example: enabled state of another element, etc. 
+         */
+        dataDependencies() {
+
+        };
+
+        /**
+         * Returns whether the command is currently enabled (can be performed)
+         */
+        enabled() {
+
+        };
+
+        /**
+         * Command or set of commands that the command is dependent on being executed before it can be executed
+         */
+        eventDependencies() {
+
+        };
+
+        /**
+         * The set of commands that must be executed based on the nature of the device
+         * @private
+         * @property undefined
+         */
+        deviceDependencies() {
+
+        };
+
+        /**
+         * Executes the command (need to figure out what the inputs should be)
+         */
+        execute() {
+
+        };
 
         createCommand(element, command, modifier) {
-            var listItem = document.createElement("li");
-            var action = command.commandType != 'default' ? command.commandType : $action.ActionableElementsActionLabel[element.tagName];
-            listItem.classList.add("action-search-list-item");
 
-            var label = action + " the " + this.getCommandLabel(element) + " " + $action.TagEnglishWordMappings[element.tagName.toLowerCase()];
-            listItem.textContent = label;
-
-            var modifierLabel = document.createElement("span");
-            modifierLabel.classList.add("action-search-modifier");
-            modifierLabel.textContent = 'ctrl+shift+' + modifier;
-            listItem.appendChild(modifierLabel);
 
             // Send a message to the script to perform the action
             var handleAction = function (evt) {
@@ -198,24 +235,7 @@ var $action = $action || {};
             var command = new Command(command.commandType, element, listItem);
             return command;
         };
-
-        getCommandLabel(element) {
-            var tagname = element.tagName;
-            if (tagname != "IFRAME") { // Cannot request contents of iframe due to cross origin frame error
-                var label = "";
-                if ($action.ElementLabels[tagname]) {
-                    label = $action.ElementLabels[tagname](element);
-                } else {
-                    label = jQuery(element).contents().first().text().trim();
-                }
-
-                if (label && label.length > 0) {
-                    return label;
-                }
-            }
-            return "";
-        };
     };
 
-    $action.CommandManager = CommandManager;
+    $action.Command = Command;
 })($action);
