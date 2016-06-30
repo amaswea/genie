@@ -40,7 +40,7 @@ $(document).ready(function () {
      * @method updateState
      * @param {Object} tab
      */
-    var updateState = function (tab) {
+    var updateInterfaceState = function (tab) {
         chrome.storage.sync.get('interfaceState', function (object) { // TODO: is this going to clash? 
             if (!chrome.runtime.lastError && object && !object.interfaceState) {
                 chrome.tabs.sendMessage(tab.id, {
@@ -68,7 +68,7 @@ $(document).ready(function () {
 
     chrome.tabs.onUpdated.addListener(function (tabID, changeInfo, tab) {
         if (changeInfo.status == "complete") {
-            restoreIntefaceState(tab);
+            restoreInterfaceState(tab);
         }
     });
 

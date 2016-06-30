@@ -35,10 +35,10 @@ var $action = $action || {};
                 var isActionable = $action.ActionableElements[tagAdded](element);
                 if (isActionable) {
                     var commandData = {
-                        commandType: 'default'
+                        eventType: 'default'
                     }
 
-                    $action.dialogManager.addCommand(element, commandData);
+                    $action.interface.addCommand(element, commandData);
                 }
             }
 
@@ -48,11 +48,11 @@ var $action = $action || {};
                 var attributeValue = $element.attr(eventHandler);
                 if (attributeValue && attributeValue.length > 0) {
                     var commandData = {
-                        commandType: eventHandler, 
+                        eventType: eventHandler, 
                         handler: attributeValue
                     }
 
-                    $action.dialogManager.addCommand(element, commandData);
+                    $action.interface.addCommand(element, commandData);
                 }
             }
         };
@@ -70,10 +70,10 @@ var $action = $action || {};
                 var isActionable = $action.ActionableElements[tagRemoved](element);
                 if (isActionable) {
                     var commandData = {
-                        commandType: 'default'
+                        eventType: 'default'
                     }
 
-                    $action.dialogManager.removeCommand(element, commandData);
+                    $action.interface.removeCommand(element, commandData);
                 }
             }
 
@@ -83,11 +83,11 @@ var $action = $action || {};
                 var attributeValue = $element.attr(eventHandler);
                 if (attributeValue && attributeValue.length > 0) {
                     var commandData = {
-                        commandType: eventHandler,
+                        eventType: eventHandler,
                         handler: attributeValue
                     }
 
-                    $action.dialogManager.removeCommand(element, commandData);
+                    $action.interface.removeCommand(element, commandData);
                 }
             }
         };

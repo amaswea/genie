@@ -56,13 +56,13 @@ function injectMonitorScript() {
                 Element.prototype._addEventListener = Element.prototype.addEventListener; 
                 Element.prototype.addEventListener = function (a, b, c) {
                     this._addEventListener(a, b, c);
-                    window.postMessage({ messageType: 'eventAdded', commandType: a, handler: b.toString(), path: getElementPath(this)}, "*");
+                    window.postMessage({ messageType: 'eventAdded', eventType: a, handler: b.toString(), path: getElementPath(this)}, "*");
                 };
 
                 Element.prototype._removeEventListener = Element.prototype.removeEventListener;
                 Element.prototype.removeEventListener = function (a, b, c) {
                     this._removeEventListener(a, b, c); 
-                    window.postMessage({ messageType: 'eventRemoved', commandType: a, handler: b.toString(), path: getElementPath(this)}, "*");
+                    window.postMessage({ messageType: 'eventRemoved', eventType: a, handler: b.toString(), path: getElementPath(this)}, "*");
                 };`;
 
     var header = document.head || document.documentElement;
@@ -88,7 +88,7 @@ function receiveMessage(event) {
             if (elementPath && elementPath.length) {
                 var element = $(elementPath);
                 if (element && element.length) {
-                    $action.dialogManager.addCommand(element[0], event.data);
+                    $action.interface.addCommand(element[0], event.data);
                 }
             }
         }
@@ -98,7 +98,7 @@ function receiveMessage(event) {
             if (elementPath && elementPath.length) {
                 var element = $(elementPath);
                 if (element && element.length) {
-                    $action.dialogManager.removeCommand(element[0], event.data);
+                    $action.interface.removeCommand(element[0], event.data);
                 }
             }
         }
@@ -126,12 +126,12 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 });
 
 $(document).ready(function () {
+    $action.interface = new $action.KeyboardUI(); // Instantiate a new type of interface 
+    // For other types of interfaces, they could be instantiated here or through a setting? 
+    
     injectMonitorScript();
 
     // Add an observer to watch when new elements are added to the page
     var mutationObserver = new $action.MutationWatcher();
     mutationObserver.init();
-    
-    $action.interface = new $action.KeyboardUI(); // Instantiate a new type of interface 
-    // For other types of interfaces, they could be instantiated here or through a setting? 
 });

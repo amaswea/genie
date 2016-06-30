@@ -28,7 +28,7 @@
                 "scripts/content.js",
                 "scripts/ext/keypress.js",
                 "scripts/ext/lodash.js",
-                "scripts/dialog.js", 
+                "scripts/keyboardUI.js", 
                 "scripts/command.js", 
                 "scripts/util.js", 
                 "scripts/mutationWatcher.js"

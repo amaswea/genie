@@ -8,6 +8,10 @@ $(document).ready(function () {
     button[0].addEventListener("click", function (evt) {
         console.log("click");
     });
+    
+    button[0].addEventListener("click", function (evt) {
+       console.log("another click"); 
+    });
 
     button[0].addEventListener("dblclick", function (evt) {
         console.log("dblclick");

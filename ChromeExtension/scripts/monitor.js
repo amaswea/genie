@@ -28,7 +28,7 @@ jQuery.fn.extend({
     Element.prototype._addEventListener = Element.prototype.addEventListener;
     Element.prototype.addEventListener = function (a, b, c) {
         this._addEventListener(a, b, c);
-        window.postMessage({ messageType: 'eventAdded', commandType: a, handler: b, path: jQuery(this).getPath()}, "*");
+        window.postMessage({ messageType: 'eventAdded', eventType: a, handler: b, path: jQuery(this).getPath()}, "*");
     };
 })();
 
@@ -36,7 +36,7 @@ jQuery.fn.extend({
     Element.prototype._removeEventListener = Element.prototype.removeEventListener;
     Element.prototype.removeEventListener = function (a, b, c) {
         this._removeEventListener(a, b, c);
-        window.postMessage({ messageType: 'eventRemoved', commandType: a, handler: b, path: jQuery(this).getPath()}, "*")
+        window.postMessage({ messageType: 'eventRemoved', eventType: a, handler: b, path: jQuery(this).getPath()}, "*")
     };
 })();
 

@@ -1,28 +1,117 @@
 "use strict";
 var $action = $action || {};
 (function ($action) {
+    $action.UserInvokeableEvents = [
+        "cut",
+        "copy",
+        "paste",
+        "blur",
+        "click",
+        "compositionend",
+        "compisitionstart",
+        "compisitionupdate",
+        "dblclick",
+        "focus",
+        "focusin",
+        "focusout",
+        "input",
+        "keydown",
+        "keyup",
+        "mousedown",
+        "mouseenter",
+        "mouseleave",
+        "mousemove",
+        "mouseout",
+        "mouseover",
+        "mouseup",
+        "resize",
+        "scroll",
+        "select",
+        "wheel",
+        "change",
+        "contextmenu",
+        "show",
+        "submit"
+        // TOOD: rest of HTML DOM events, Drag & Drop events, Touch events
+    ];
+
+    $action.TagEnglishWordMappings = {
+        "div": "container",
+        "h1": "header",
+        "h2": "header",
+        "h3": "header",
+        "h4": "header",
+        "h5": "header",
+        "h6": "header",
+        "img": "image",
+        "button": "button",
+        "ul": "bulleted list",
+        "li": "list item",
+        "header": "header",
+        "footer": "footer",
+        "nav": "navigation element",
+        "hr": "horizontal rule",
+        "ol": "numbered list",
+        "input": "field",
+        "p": "paragraph",
+        "iframe": "inline frame element",
+        "a": "link",
+        "u": "underline element",
+        "span": "inline container",
+        "cite": "citation",
+        "code": "code block",
+        "abbr": "abbreviation",
+        "main": "main content",
+        "figcaption": "figure caption",
+        "hgroup": "headings group",
+        "var": "variable",
+        "select": "selectable menu",
+        "meta": "metadata element",
+        "tbody": "table body",
+        "tr": "table row",
+        "td": "table cell",
+        "th": "table header cell",
+        "tfoot": "table footer",
+        "thead": "table header",
+        "col": "column",
+        "fieldset": "form group",
+        "svg": "graphic",
+        "body": "body",
+        "form": "form",
+        "html": "html",
+        "dd": "description element",
+        "section": "section",
+        "article": "article"
+    };
+
     class UI {
         constructor() {
-            
+
         }
-        
+
+        init() {}
+
         show() {}
-        
+
         hide() {}
-        
-        dom() {}
+
+        remove() {}
+
+        addCommand() {}
+
+        removeCommand() {}
     }
-    
+
     class KeyboardUI {
         constructor() {
             this.dialog = undefined;
             this.commandItems = [];
             this.elements = [];
-            this.commandManager = new $action.CommandManager();
             this.actionCount = 0;
+            this.init();
         }
 
-        initializeDialog() {
+        init() {
             var dialog = document.createElement("div");
             dialog.classList.add("action-search");
             var list = document.createElement("ul");
@@ -39,19 +128,17 @@ var $action = $action || {};
             this.list = list;
             this.label = label;
 
-            this.hideDialog();
+            this.hide();
             $(window).scroll(_.throttle(this.repositionDialog, 1));
             this.repositionDialog();
         };
 
         addCommand(element, command) {
-            var allowed = command.commandType == 'default' || $action.AllowedCommands.indexOf(command.commandType) > -1;
-            if (this.commandIsVisible(element) && allowed) {
-                var newCommand = this.commandManager.createCommand(element, command, this.actionCount);
+            if (command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1) {
+                var newCommand = new $action.KeyboardUICommandItem(command.eventType, element, command.handler)
 
                 var index = this.elements.indexOf(element);
                 if (index == -1) {
-                    // What happens when an element is removed to this object? 
                     this.elements.push(element);
                     index = this.elements.length - 1;
                 }
@@ -61,7 +148,7 @@ var $action = $action || {};
 
                 this.commandItems[index].push(newCommand);
                 this.actionCount++;
-                this.list.appendChild(newCommand.commandItem);
+                this.list.appendChild(newCommand.dom());
                 this.label.textContent = "There were " + this.actionCount + " actions found ...";
             }
         };
@@ -74,7 +161,7 @@ var $action = $action || {};
                 var remove = -1;
                 for (var i = 0; i < commands.length; i++) {
                     var cmd = commands[i];
-                    if (cmd.commandType == command.commandType) {
+                    if (cmd.eventType == command.eventType) {
                         remove = i;
                         this.actionCount--;
                         this.list.removeChild(cmd.commandItem);
@@ -97,72 +184,61 @@ var $action = $action || {};
             dialog[0].style.top = top + "px";
         };
 
-        showDialog() {
+        show() {
             this.dialog.style.display = "";
         };
 
-        hideDialog() {
+        hide() {
             this.dialog.style.display = "none";
         };
 
-        disposeDialog() {
+        remove() {
             $('.action-search').remove();
             $(window).unbind("scroll", this.repositionDialog);
         }
-
-        commandIsVisible(domNode) {
-            //  var visible = $(domNode).is(':visible');
-            var element = $(domNode);
-            var displayed = element.css('display') != "none";
-            var visibility = element.css('visibility') != "hidden";
-            var heightBigEnough = element.height() > 10;
-            var widthBigEnough = element.width() > 10;
-            var notClear = element.css('opacity') != "0" && element.css('opacity') != "0.0";
-            var offLeftRight = (element.offset().left >= window.innerWidth) || ((element.offset().left + element.offsetWidth) <= 0);
-            var hidden = $(domNode).attr('type') == 'hidden';
-            var visible = $(domNode).is(':visible');
-
-            if (visible && displayed && visibility && heightBigEnough && widthBigEnough && notClear && !offLeftRight && !hidden) {
-                return true;
-            }
-
-            return false;
-        };
-
-        commandIsAvailable(domNode) {
-            // Ways that a command can not be available
-            // 1. Command is not visible
-            //    - Display set to None
-            //    - Visibility set to hidden
-            //    - Height or width too small
-            //    - Opaque (opacity)
-            //    - Offscreen
-            //    - Hidden attribute
-            //    - Z-index is hiding it behind something else
-            // 2. Command is disabled 
-            // 3. Command results in no effect because of input guards or conditions in the code
-            // 4. Command is not yet in the DOM (Hovering over a menu adds menu items with commands to DOM)
-        };
     };
 
-    $action.DialogManager = DialogManager;
+    $action.KeyboardUI = KeyboardUI;
 
     class CommandItem {
-        constructor() {
+        constructor(eventType, element, handler) {
+            this.command = new $action.Command(eventType, element, handler);
+        }
 
+        get Command() {
+            return this.command;
+        }
+
+        /**
+         * A label string to use for the command item
+         * @private
+         * @property undefined
+         */
+        label() {
+
+        }
+
+        dom() {
+
+        }
+    };
+
+    class KeyboardUICommandItem extends CommandItem {
+        constructor(eventType, element, handler) {
+            super(eventType, element, handler);
         }
 
         /**
          * Return a suitable label for the command
          */
         label() {
-            var tagname = element.tagName;
+            var tagname = this.command.Element.tagName;
             if (tagname != "IFRAME") { // Cannot request contents of iframe due to cross origin frame error
                 var label = "";
-                if ($action.ElementLabels[tagname]) {
-                    label = $action.ElementLabels[tagname](element);
+                if ($action.CommandLabels[tagname]) {
+                    label = $action.CommandLabels[tagname](this.command.Element);
                 } else {
-                    label = jQuery(element).contents().first().text().trim();
+                    label = jQuery(this.command.Element).contents().first().text().trim();
                 }
 
                 if (label && label.length > 0) {
@@ -172,19 +248,26 @@ var $action = $action || {};
             return "";
         };
 
-        
+
         dom() {
             var listItem = document.createElement("li");
-            var action = command.commandType != 'default' ? command.commandType : $action.ActionableElementsActionLabel[element.tagName];
+            var action = this.command.EventType != 'default' ? this.command.EventType : $action.ActionableElementsActionLabel[this.command.Element.tagName];
             listItem.classList.add("action-search-list-item");
 
-            var label = action + " the " + this.label(element) + " " + $action.TagEnglishWordMappings[element.tagName.toLowerCase()];
-            listItem.textContent = label;
+            var label = action + " the " + this.label(this.command.Element) + " " + $action.TagEnglishWordMappings[this.command.Element.tagName.toLowerCase()];
+            listItem.textContent = label;      
+            listItem.addEventListener("click", this.command.execute()); 
+            
+            return listItem;
 
-            var modifierLabel = document.createElement("span");
-            modifierLabel.classList.add("action-search-modifier");
-            modifierLabel.textContent = 'ctrl+shift+' + modifier;
-            listItem.appendChild(modifierLabel);
+            /*
+                        var modifierLabel = document.createElement("span");
+                        modifierLabel.classList.add("action-search-modifier");
+                        modifierLabel.textContent = 'ctrl+shift+' + modifier;
+                        listItem.appendChild(modifierLabel);
+            */
         };
     };
+
+    $action.KeyboardUICommandItem = KeyboardUICommandItem;
 })($action);
