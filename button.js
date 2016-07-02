@@ -1,9 +1,5 @@
 $(document).ready(function () {
     var button = $('#mybutton');
-    
-    document.body.addEventListener("mousedown", function(evt) {
-        console.log("mousedown on body"); 
-    });
 
     button[0].addEventListener("click", function (evt) {
         console.log("click");
@@ -62,6 +58,7 @@ $(document).ready(function () {
     });
 
 
+/*
     button[0].addEventListener("mouseenter", function (evt) {
         console.log("mouseenter");
     });
@@ -81,6 +78,7 @@ $(document).ready(function () {
     button[0].addEventListener("mouseover", function (evt) {
         console.log("mouseover");
     });
+*/
 
     button[0].addEventListener("mouseup", function (evt) {
         console.log("mouseup");

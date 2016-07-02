@@ -19,6 +19,8 @@ window.addEventListener("message", receiveMessage, false);
  * @method receiveMessage
  * @param {Object} event
  */
+
+// REMINDER: Don't add dependencies on JQuery in here because the webpage may not be using it
 function receiveMessage(event) {
     var origin = event.origin || event.originalEvent.origin; // For Chrome, the origin property is in the event.originalEvent object.
     if (event.source != window) {
@@ -28,8 +30,8 @@ function receiveMessage(event) {
     // Handle triggering the evnet
     var data = event.data;
     if (data && data.selector) {
-        var element = jQuery(data.selector);
-        if (element.length) {
+        var element = document.querySelector(data.selector);
+        if (element) {
             // Execute the action using the trigger or the associated action function
             if (data.event != 'default') {
                 var event = data.event;
@@ -42,10 +44,10 @@ function receiveMessage(event) {
 
                 element[0].dispatchEvent(eventObj);
             } else {
-                var actionFunction = $action.ActionableElementsActionFunction[element[0].tagName];
+                var actionFunction = $action.ActionableElementsActionFunction[element.tagName];
                 if (actionFunction) {
                     if (actionFunction) {
-                        actionFunction(element[0]);
+                        actionFunction(element);
                     }
                 }
             }

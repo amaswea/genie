@@ -103,8 +103,7 @@ function receiveMessage(event) {
             }
         }
     }
-}
-
+};
 
 
 /**

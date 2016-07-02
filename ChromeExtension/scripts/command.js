@@ -1,12 +1,11 @@
 "use strict";
-var $action = $action || {};
+var $action = $action|| {};
 (function ($action) {
-
 
     $action.ActionableElementsActionLabel = {
         "A": "Click",
         "INPUT": "Fill out"
-    };
+    }
 
     $action.ActionableElements = {
         "A": function (element) {
@@ -17,7 +16,7 @@ var $action = $action || {};
             var type = jQuery(element).attr("type");
             return type && type != "hidden";
         }
-    };
+    }
 
     $action.CommandLabels = {
         "INPUT": function (element) { // Get the label from the placeholder attribute
@@ -32,8 +31,14 @@ var $action = $action || {};
 
             var innerText = jQuery(element).contents().first().text().trim();
             return innerText;
+        },
+        "TEXTAREA": function (element) {
+            var title = jQuery(element).attr("title");
+            if (title && title.length) {
+                return title;
+            }
         }
-    };
+    }
 
     $action.GlobalEventHandlers = [
         "onclick", "onmouseover"
@@ -70,6 +75,7 @@ var $action = $action || {};
             this._eventType = eventType;
             this._domElement = domElement; // The DOM element the command is associated with
             this._handler = handler;
+            this._parser = new PLParser(this.handler);
         }
 
         get EventType() {
@@ -78,6 +84,15 @@ var $action = $action || {};
 
         get Element() {
             return this._domElement;
+        }
+        
+        /**
+        * Returns a string representing the source code of the associated event handler
+        * @private
+        * @property Handler
+        */
+        get Handler() {
+            return this._handler;
         }
 
         /**
@@ -95,10 +110,23 @@ var $action = $action || {};
             //    - Offscreen
             //    - Hidden attribute
             //    - Z-index is hiding it behind something else
+            if(!this.visible()) {
+                return false;
+            }
+            
             // 2. Command is disabled 
+            if(!this.enabled()){
+                return false;
+            }
+            
             // 3. Command results in no effect because of input guards or conditions in the code
             // 4. Command is not yet in the DOM (Hovering over a menu adds menu items with commands to DOM)
-        };
+            // If it isn't in the DOM yet, we shouldn't find any event handlers for it in which case it won't make it here??
+            
+            // 5. Command is not clickable (there is a transparent div or element above it preventing it from being clicked)
+            
+            // If the command cannot be invoked, it should still remain in the list of commands, but not be shown in the UI
+        }
 
         /**
          * The set of data dependencies that the command has (control dependencies)
@@ -112,13 +140,26 @@ var $action = $action || {};
          * Returns whether the command is currently enabled (can be performed)
          */
         enabled() {
-
+            // Look for disabled attribute on the element
+            var element = this.Element;
+            var tagName = element.tagName; 
+            var hasDisabled = $action.DisabledAttributeElements[tagName.toLowerCase()];
+            if(hasDisabled) {
+                let disabled = element.attributes.disabled; 
+                if(disabled && disabled.value == "disabled") {
+                    return false;
+                }
+            }
         };
 
 
+        /**
+        * Returns whether the command is currently visible on the screen
+        * @private
+        * @property undefined
+        */
         visible() {
-            //  var visible = $(domNode).is(':visible');
-            var element = $(domNode);
+            var element = this.Element; 
             var displayed = element.css('display') != "none";
             var visibility = element.css('visibility') != "hidden";
             var heightBigEnough = element.height() > 10;
@@ -139,7 +180,7 @@ var $action = $action || {};
          * Command or set of commands that the command is dependent on being executed before it can be executed
          */
         eventDependencies() {
-
+            // Not show the command 
         };
 
         /**
@@ -153,6 +194,8 @@ var $action = $action || {};
 
         /**
          * Attach this callback to the keystrokes or action that you want to execute the command
+         * Injects a script into the page in question to perform the action.. This is necessary becauuse
+         * content scripts to not have access to any events nor can trigger events in the associated page. 
          */
         execute() {
             var self = this;
