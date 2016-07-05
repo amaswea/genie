@@ -1,4 +1,4 @@
-import { ParsingError, Token, Tokenizer } from "./../pl";
+import { ParsingError, Token, Tokenizer } from "./pl";
 import { JavaScriptPushInstruction } from "./instructions";
 import { ERROR_MESSAGES, EXPLANATIONS } from "./strings.js";
 import _ from "lodash";

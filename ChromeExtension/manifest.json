@@ -32,8 +32,7 @@
                 "scripts/util.js",
                 "scripts/mutationWatcher.js",
                 "scripts/constants.js",
-                "scripts/plparser/ast.js",
-                "scripts/plparser/plparser.js"
+                "scripts/esprima/esprima.js"
             ],
             "run_at": "document_start"
         }

@@ -1,6 +1,6 @@
 "use strict";
 import _ from "lodash";
-import { Token, AST } from "./../pl";
+import { Token, AST } from "./pl";
 import {
     JavaScriptNoOpInstruction,
     JavaScriptClearInstruction,

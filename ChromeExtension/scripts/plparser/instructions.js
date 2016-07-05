@@ -4,7 +4,7 @@ import {
     ParsingError,
     RuntimeError,
     Token
-} from "./../pl";
+} from "./pl";
 
 import { ERROR_MESSAGES } from "./strings";
 import {

@@ -42,7 +42,7 @@ function receiveMessage(event) {
                     "cancelable": false
                 });
 
-                element[0].dispatchEvent(eventObj);
+                element.dispatchEvent(eventObj);
             } else {
                 var actionFunction = $action.ActionableElementsActionFunction[element.tagName];
                 if (actionFunction) {

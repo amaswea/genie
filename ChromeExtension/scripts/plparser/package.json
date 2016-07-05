@@ -2,7 +2,7 @@
   "name": "PLTutor",
   "version": "0.1.0",
   "scripts": {
-    "build": "browserify -t [ babelify ] pl.js > plparser.js",
+    "build": "browserify -s PLParser -t [ babelify ] file.js > plparser.js",
     "watch": "watch \"npm run build\" ."
   },
   "browserify": {

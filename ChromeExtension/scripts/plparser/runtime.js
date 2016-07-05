@@ -1,4 +1,4 @@
-import { Token, Runtime, RuntimeValue, RuntimeError } from "./../pl";
+import { Token, Runtime, RuntimeValue, RuntimeError } from "./pl";
 import { ERROR_MESSAGES } from "./strings"
 import _ from "lodash";
 

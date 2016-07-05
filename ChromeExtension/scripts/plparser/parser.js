@@ -1,5 +1,11 @@
-import { ERROR_MESSAGES } from "./strings";
-import { Parser, ParsingError, Token, ErrorAST } from "./../pl";
+import {
+    ERROR_MESSAGES
+}
+from "./strings";
+import {
+    Parser, ParsingError, Token, ErrorAST
+}
+from "./pl";
 import {
     JavaScriptProgramAST,
     JavaScriptFunctionAST,
@@ -34,7 +40,8 @@ import {
     JavaScriptExpressionStatementAST,
     JavaScriptArrayLiteralAST,
     JavaScriptObjectLiteralAST
-} from './ast';
+}
+from './ast';
 
 /**
  * Parses a sequence of JavaScript tokens into a single abstract syntax tree.
@@ -49,7 +56,9 @@ class JavaScriptParser extends Parser {
 
     }
 
-    getAST() { return this._ast; }
+    getAST() {
+        return this._ast;
+    }
 
     // Program:
     //      empty
@@ -59,7 +68,7 @@ class JavaScriptParser extends Parser {
         var elements = [];
 
         // Parse elements until we run out of tokens.
-        while(tokens.hasNext())
+        while (tokens.hasNext())
             elements.push(this.parseElement(tokens));
 
         return new JavaScriptProgramAST(elements);
@@ -84,16 +93,16 @@ class JavaScriptParser extends Parser {
 
         try {
 
-            if(tokens.nextIs("comment"))
+            if (tokens.nextIs("comment"))
                 return this.parseComment(tokens);
             else if (tokens.nextIs("keyword", "function"))
                 return this.parseFunctionDeclaration(tokens);
             else
                 return this.parseStatement(tokens);
 
-        } catch(ex) {
+        } catch (ex) {
 
-            if(ex instanceof ParsingError) {
+            if (ex instanceof ParsingError) {
 
                 // Remember the token we got stuck on.
                 var problematicToken = tokens.previous();
@@ -129,11 +138,11 @@ class JavaScriptParser extends Parser {
     //      function Identifier ( OptionalParameterList ) CompoundStatement
     parseFunctionDeclaration(tokens) {
 
-        if(tokens.nextIs("keyword", "function")) {
+        if (tokens.nextIs("keyword", "function")) {
             return new JavaScriptFunctionAST(
                 false,
                 tokens.consume(),
-                tokens.consume("name"),
+                this.parseOptionalFunctionName(tokens),
                 tokens.consume("punctuation", "("),
                 this.parseOptionalParameterList(tokens),
                 tokens.consume("punctuation", ")"),
@@ -152,9 +161,9 @@ class JavaScriptParser extends Parser {
 
         var first = true;
         // Have we hit a paren yet? If not, read another name.
-        while(!tokens.nextIs("punctuation", ")")) {
+        while (!tokens.nextIs("punctuation", ")")) {
             // Require commas after the first name.
-            if(!first)
+            if (!first)
                 tokens.consume("punctuation", ",");
             // Read the next name.
             parameters.push(tokens.consume("name"));
@@ -163,6 +172,14 @@ class JavaScriptParser extends Parser {
 
         return new JavaScriptParametersAST(parameters);
 
+    }
+    
+    // Return the function name if it is provided. 
+    // Otherwise, return undefined
+    parseOptionalFunctionName(tokens) {
+        if (!tokens.nextIs("punctuation", "(")) {
+            return tokens.consume("name");
+        }
     }
 
     // CompoundStatement:
@@ -173,11 +190,11 @@ class JavaScriptParser extends Parser {
 
         tokens.consume("punctuation", "{");
 
-        while(tokens.hasNext() && !tokens.nextIs("punctuation", "}")) {
+        while (tokens.hasNext() && !tokens.nextIs("punctuation", "}")) {
 
-            if(tokens.nextIs("comment"))
+            if (tokens.nextIs("comment"))
                 statements.push(this.parseComment(tokens));
-            else if(tokens.nextIs("keyword", "function"))
+            else if (tokens.nextIs("keyword", "function"))
                 statements.push(this.parseFunctionDeclaration(tokens));
             else
                 statements.push(this.parseStatement(tokens));
@@ -215,8 +232,7 @@ class JavaScriptParser extends Parser {
 
             if (tokens.nextIs("punctuation", ";")) {
                 return new JavaScriptEmptyStatementAST(tokens.consume("punctuation", ";"));
-            }
-            else if (tokens.nextIs("keyword", "if")) {
+            } else if (tokens.nextIs("keyword", "if")) {
 
                 var keywordIf = tokens.consume("keyword", "if");
                 var condition = this.parseCondition(tokens);
@@ -238,15 +254,13 @@ class JavaScriptParser extends Parser {
                     otherwise
                 );
 
-            }
-            else if (tokens.nextIs("keyword", "while")) {
+            } else if (tokens.nextIs("keyword", "while")) {
                 return new JavaScriptWhileStatementAST(
                     tokens.consume("keyword", "while"),
                     this.parseCondition(tokens),
                     this.parseStatement(tokens)
                 );
-            }
-            else if (tokens.nextIs("keyword", "do")) {
+            } else if (tokens.nextIs("keyword", "do")) {
                 return new JavaScriptDoWhileStatementAST(
                     tokens.consume("keyword", "do"),
                     this.parseStatement(tokens),
@@ -254,41 +268,33 @@ class JavaScriptParser extends Parser {
                     this.parseCondition(tokens),
                     tokens.consume("punctuation", ";")
                 );
-            }
-            else if (tokens.nextIs("keyword", "break")) {
+            } else if (tokens.nextIs("keyword", "break")) {
                 return new JavaScriptBreakStatementAST(
                     tokens.consume("keyword", "break"),
                     tokens.consume("punctuation", ";")
                 )
-            }
-            else if (tokens.nextIs("keyword", "continue")) {
+            } else if (tokens.nextIs("keyword", "continue")) {
                 return new JavaScriptContinueStatementAST(
                     tokens.consume("keyword", "continue"),
                     tokens.consume("punctuation", ";")
                 )
-            }
-            else if (tokens.nextIs("keyword", "return")) {
+            } else if (tokens.nextIs("keyword", "return")) {
                 return new JavaScriptReturnStatementAST(
                     tokens.consume("keyword", "return"),
                     tokens.nextIs("punctuation", ";") ?
-                        null :
-                        this.parseExpression(tokens),
+                    null :
+                    this.parseExpression(tokens),
                     tokens.consume("punctuation", ";")
                 )
-            }
-            else if (tokens.nextIs("punctuation", "{")) {
+            } else if (tokens.nextIs("punctuation", "{")) {
                 return this.parseCompoundStatement(tokens);
-            }
-            else if (tokens.nextIs("keyword", "try")) {
+            } else if (tokens.nextIs("keyword", "try")) {
                 return this.parseTryStatement(tokens);
-            }
-            else if (tokens.nextIs("keyword", "for")) {
+            } else if (tokens.nextIs("keyword", "for")) {
                 return this.parseForStatement(tokens);
-            }
-            else if (tokens.nextIs("keyword", "switch")) {
+            } else if (tokens.nextIs("keyword", "switch")) {
                 return this.parseSwitchStatement(tokens);
-            }
-            else if (tokens.nextIs("keyword", "with")) {
+            } else if (tokens.nextIs("keyword", "with")) {
                 throw new ParsingError(tokens.peek(), ERROR_MESSAGES.UNSUPPORTED_WITH);
             }
             // If none of the above matched, parse a variable declaration or expression.
@@ -301,9 +307,9 @@ class JavaScriptParser extends Parser {
 
             }
 
-        } catch(ex) {
+        } catch (ex) {
 
-            if(ex instanceof ParsingError) {
+            if (ex instanceof ParsingError) {
 
                 // Remember the token we got stuck on.
                 var problematicToken = tokens.previous();
@@ -351,7 +357,7 @@ class JavaScriptParser extends Parser {
         var cases = [];
 
         // Read all of the cases
-        while(tokens.nextIs("keyword", "case") || tokens.nextIs("keyword", "default")) {
+        while (tokens.nextIs("keyword", "case") || tokens.nextIs("keyword", "default")) {
 
             var data = {
                 keyword: tokens.consume("keyword"),
@@ -360,12 +366,12 @@ class JavaScriptParser extends Parser {
                 statements: []
             };
 
-            if(data.keyword.getText() === "case")
+            if (data.keyword.getText() === "case")
                 data.expression = this.parseExpression(tokens);
 
             data.colon = tokens.consume("punctuation", ":");
 
-            while(!tokens.nextIs("punctuation", "}") && !tokens.nextIs("keyword", "case") && !tokens.nextIs("keyword", "default"))
+            while (!tokens.nextIs("punctuation", "}") && !tokens.nextIs("keyword", "case") && !tokens.nextIs("keyword", "default"))
                 data.statements.push(this.parseStatement(tokens));
 
             cases.push(data);
@@ -392,7 +398,7 @@ class JavaScriptParser extends Parser {
         tokens.consume("punctuation", ")");
         var catchStatements = this.parseCompoundStatement(tokens);
 
-        if(tokens.nextIs("keyword", "finally")) {
+        if (tokens.nextIs("keyword", "finally")) {
 
             tokens.consume("keyword", "finally");
             finallyStatements = this.parseCompoundStatement(tokens);
@@ -415,23 +421,23 @@ class JavaScriptParser extends Parser {
 
         tokens.consume("punctuation", "(");
 
-        if(!tokens.nextIs("punctuation", ";") && !tokens.nextIs("operator", "in")) {
+        if (!tokens.nextIs("punctuation", ";") && !tokens.nextIs("operator", "in")) {
             variablesOrExpression = this.parseVariablesOrExpression(tokens);
         }
 
         // Loop with condition
-        if(tokens.nextIs("punctuation", ";")) {
+        if (tokens.nextIs("punctuation", ";")) {
 
             var firstSemi = tokens.consume("punctuation", ";");
 
             var condition = null;
-            if(!tokens.nextIs("punctuation", ";"))
+            if (!tokens.nextIs("punctuation", ";"))
                 condition = this.parseExpression(tokens);
 
             var secondSemi = tokens.consume("punctuation", ";");
 
             var incrementor = null;
-            if(!tokens.nextIs("punctuation", ")"))
+            if (!tokens.nextIs("punctuation", ")"))
                 incrementor = this.parseExpression(tokens);
 
             tokens.consume("punctuation", ")");
@@ -442,7 +448,7 @@ class JavaScriptParser extends Parser {
 
         }
         // List loop
-        else if(tokens.nextIs("operator", "in")) {
+        else if (tokens.nextIs("operator", "in")) {
 
             tokens.consume("operator", "in");
 
@@ -454,8 +460,7 @@ class JavaScriptParser extends Parser {
 
             return new JavaScriptListIteratorStatementAST(variablesOrExpression, list, statement);
 
-        }
-        else {
+        } else {
 
             throw new ParsingError(tokens.peek(), ERROR_MESSAGES.INVALID_FOR);
 
@@ -481,7 +486,7 @@ class JavaScriptParser extends Parser {
     //      Expression
     parseVariablesOrExpression(tokens) {
 
-        if(tokens.nextIs("keyword", "var"))
+        if (tokens.nextIs("keyword", "var"))
             return this.parseVariables(tokens);
         else
             return this.parseExpression(tokens);
@@ -499,7 +504,7 @@ class JavaScriptParser extends Parser {
 
         variables.push(this.parseVariable(tokens));
 
-        while(tokens.nextIs("punctuation", ",")) {
+        while (tokens.nextIs("punctuation", ",")) {
             tokens.consume("punctuation", ",");
             variables.push(this.parseVariable(tokens));
         }
@@ -517,7 +522,7 @@ class JavaScriptParser extends Parser {
         var assignment = null;
         var expression = null;
 
-        if(tokens.nextIs("operator", "=")) {
+        if (tokens.nextIs("operator", "=")) {
             assignment = tokens.consume("operator", "=");
             expression = this.parseAssignmentExpression(tokens);
         }
@@ -536,13 +541,13 @@ class JavaScriptParser extends Parser {
 
         expressions.push(this.parseAssignmentExpression(tokens));
 
-        while(tokens.nextIs("punctuation", ",")) {
+        while (tokens.nextIs("punctuation", ",")) {
             commas.push(tokens.consume("punctuation", ","));
             expressions.push(this.parseAssignmentExpression(tokens));
         }
 
         // Don't bother returning a list if it's just one.
-        if(expressions.length === 1)
+        if (expressions.length === 1)
             return expressions[0];
         else
             return new JavaScriptExpressionsAST(expressions, commas);
@@ -555,7 +560,7 @@ class JavaScriptParser extends Parser {
     parseAssignmentExpression(tokens) {
 
         var left = this.parseConditionalExpression(tokens);
-        if(tokens.nextIs("operator", "=") ||
+        if (tokens.nextIs("operator", "=") ||
             tokens.nextIs("operator", "+=") ||
             tokens.nextIs("operator", "-=") ||
             tokens.nextIs("operator", "*=") ||
@@ -568,7 +573,7 @@ class JavaScriptParser extends Parser {
             tokens.nextIs("operator", "^=") ||
             tokens.nextIs("operator", "|=")) {
 
-            if( (left instanceof Token && left.getType() === "name") ||
+            if ((left instanceof Token && left.getType() === "name") ||
                 (left instanceof JavaScriptDotExpressionAST && left.getMember().getType() === "name") ||
                 (left instanceof JavaScriptArrayExpressionAST))
                 return new JavaScriptAssignmentAST(left, tokens.consume("operator"), this.parseAssignmentExpression(tokens));
@@ -588,7 +593,7 @@ class JavaScriptParser extends Parser {
 
         var left = this.parseOrExpression(tokens);
 
-        if(tokens.nextIs("operator", "?")) {
+        if (tokens.nextIs("operator", "?")) {
             return new JavaScriptConditionalExpressionAST(
                 left,
                 tokens.consume("operator", "?"),
@@ -608,7 +613,7 @@ class JavaScriptParser extends Parser {
     parseOrExpression(tokens) {
 
         var left = this.parseAndExpression(tokens);
-        if(tokens.nextIs("operator", "||")) {
+        if (tokens.nextIs("operator", "||")) {
             return new JavaScriptBinaryOperatorAST(left, tokens.consume("operator"), this.parseOrExpression(tokens));
         } else {
             return left;
@@ -622,7 +627,7 @@ class JavaScriptParser extends Parser {
     parseAndExpression(tokens) {
 
         var left = this.parseBitwiseOrExpression(tokens);
-        if(tokens.nextIs("operator", "&&")) {
+        if (tokens.nextIs("operator", "&&")) {
             return new JavaScriptBinaryOperatorAST(left, tokens.consume("operator"), this.parseAndExpression(tokens));
         } else {
             return left;
@@ -636,7 +641,7 @@ class JavaScriptParser extends Parser {
     parseBitwiseOrExpression(tokens) {
 
         var left = this.parseBitwiseXorExpression(tokens);
-        if(tokens.nextIs("operator", "|")) {
+        if (tokens.nextIs("operator", "|")) {
             return new JavaScriptBinaryOperatorAST(left, tokens.consume("operator"), this.parseBitwiseOrExpression(tokens));
         } else {
             return left;
@@ -650,7 +655,7 @@ class JavaScriptParser extends Parser {
     parseBitwiseXorExpression(tokens) {
 
         var left = this.parseBitwiseAndExpression(tokens);
-        if(tokens.nextIs("operator", "^")) {
+        if (tokens.nextIs("operator", "^")) {
             return new JavaScriptBinaryOperatorAST(left, tokens.consume("operator"), this.parseBitwiseXorExpression(tokens));
         } else {
             return left;
@@ -664,7 +669,7 @@ class JavaScriptParser extends Parser {
     parseBitwiseAndExpression(tokens) {
 
         var left = this.parseEqualityExpression(tokens);
-        if(tokens.nextIs("operator", "&")) {
+        if (tokens.nextIs("operator", "&")) {
             return new JavaScriptBinaryOperatorAST(left, tokens.consume("operator"), this.parseBitwiseAndExpression(tokens));
         } else {
             return left;
@@ -678,7 +683,7 @@ class JavaScriptParser extends Parser {
     parseEqualityExpression(tokens) {
 
         var left = this.parseRelationalExpression(tokens);
-        if(tokens.nextIs("operator", "==") || tokens.nextIs("operator", "===") || tokens.nextIs("operator", "!=") || tokens.nextIs("operator", "!==")) {
+        if (tokens.nextIs("operator", "==") || tokens.nextIs("operator", "===") || tokens.nextIs("operator", "!=") || tokens.nextIs("operator", "!==")) {
             return new JavaScriptBinaryOperatorAST(left, tokens.consume("operator"), this.parseEqualityExpression(tokens));
         } else {
             return left;
@@ -692,7 +697,7 @@ class JavaScriptParser extends Parser {
     parseRelationalExpression(tokens) {
 
         var left = this.parseShiftExpression(tokens);
-        if(tokens.nextIs("operator", ">") || tokens.nextIs("operator", ">=") || tokens.nextIs("operator", "<") || tokens.nextIs("operator", "<=")) {
+        if (tokens.nextIs("operator", ">") || tokens.nextIs("operator", ">=") || tokens.nextIs("operator", "<") || tokens.nextIs("operator", "<=")) {
             return new JavaScriptBinaryOperatorAST(left, tokens.consume("operator"), this.parseShiftExpression(tokens));
         } else {
             return left;
@@ -706,7 +711,7 @@ class JavaScriptParser extends Parser {
     parseShiftExpression(tokens) {
 
         var left = this.parseAdditiveExpression(tokens);
-        if(tokens.nextIs("operator", "<<") || tokens.nextIs("operator", ">>") || tokens.nextIs("operator", ">>>")) {
+        if (tokens.nextIs("operator", "<<") || tokens.nextIs("operator", ">>") || tokens.nextIs("operator", ">>>")) {
             return new JavaScriptBinaryOperatorAST(left, tokens.consume("operator"), this.parseShiftExpression(tokens));
         } else {
             return left;
@@ -721,7 +726,7 @@ class JavaScriptParser extends Parser {
     parseAdditiveExpression(tokens) {
 
         var left = this.parseMultiplicativeExpression(tokens);
-        if(tokens.nextIs("operator", "+") || tokens.nextIs("operator", "-")) {
+        if (tokens.nextIs("operator", "+") || tokens.nextIs("operator", "-")) {
             return new JavaScriptBinaryOperatorAST(left, tokens.consume("operator"), this.parseAdditiveExpression(tokens));
         } else {
             return left;
@@ -735,7 +740,7 @@ class JavaScriptParser extends Parser {
     parseMultiplicativeExpression(tokens) {
 
         var left = this.parseUnaryExpression(tokens);
-        if(tokens.nextIs("operator", "*") || tokens.nextIs("operator", "/") || tokens.nextIs("operator", "%")) {
+        if (tokens.nextIs("operator", "*") || tokens.nextIs("operator", "/") || tokens.nextIs("operator", "%")) {
             return new JavaScriptBinaryOperatorAST(left, tokens.consume("operator"), this.parseMultiplicativeExpression(tokens));
         } else {
             return left;
@@ -754,7 +759,7 @@ class JavaScriptParser extends Parser {
     parseUnaryExpression(tokens) {
 
         // If next is primary...
-        if(tokens.nextIs("punctuation", "(") ||
+        if (tokens.nextIs("punctuation", "(") ||
             tokens.nextIs("punctuation", "[") ||
             tokens.nextIs("punctuation", "{") ||
             tokens.nextIs("keyword", "function") ||
@@ -766,14 +771,14 @@ class JavaScriptParser extends Parser {
 
             var member = this.parseMemberExpression(tokens);
 
-            if(tokens.nextIs("operator", "--") || tokens.nextIs("operator", "++"))
+            if (tokens.nextIs("operator", "--") || tokens.nextIs("operator", "++"))
                 return new JavaScriptIncrementAST(tokens.consume("operator"), member, false);
             else
                 return member;
 
         }
         // If next is unary operator
-        else if(
+        else if (
             tokens.nextIs("operator", "typeof") ||
             tokens.nextIs("operator", "void") ||
             tokens.nextIs("operator", "!") ||
@@ -782,18 +787,14 @@ class JavaScriptParser extends Parser {
             tokens.nextIs("operator", "+")
         ) {
             return new JavaScriptUnaryOperatorAST(tokens.consume("operator"), this.parseUnaryExpression(tokens));
-        }
-        else if(tokens.nextIs("operator", "--") ||
+        } else if (tokens.nextIs("operator", "--") ||
             tokens.nextIs("operator", "++")) {
             return new JavaScriptIncrementAST(tokens.consume("operator"), this.parseMemberExpression(tokens), true);
-        }
-        else if(tokens.nextIs("operator", "new")) {
+        } else if (tokens.nextIs("operator", "new")) {
             return this.parseNewExpression(tokens);
-        }
-        else if(tokens.nextIs("operator", "delete")) {
+        } else if (tokens.nextIs("operator", "delete")) {
             return new JavaScriptDeleteExpressionAST(tokens.consume("operator", "delete"), this.parseMemberExpression(tokens));
-        }
-        else {
+        } else {
             throw new ParsingError(tokens.peek(), ERROR_MESSAGES.INVALID_EXPRESSION);
         }
 
@@ -806,8 +807,8 @@ class JavaScriptParser extends Parser {
         var keyword = tokens.consume("operator", "new");
 
         // Read one or more . separated identifiers.
-        var identifiers = [ tokens.consume("name") ];
-        while(tokens.nextIs("punctuation", ".")) {
+        var identifiers = [tokens.consume("name")];
+        while (tokens.nextIs("punctuation", ".")) {
 
             tokens.consume("punctuation", ".");
             identifiers.push(tokens.consume("name"));
@@ -816,7 +817,7 @@ class JavaScriptParser extends Parser {
 
         // Read the arguments if there are any.
         var args = null;
-        if(tokens.nextIs("punctuation", "(")) {
+        if (tokens.nextIs("punctuation", "(")) {
             tokens.consume("punctuation", "(");
             args = this.parseArgumentList(tokens);
             tokens.consume("punctuation", ")");
@@ -833,7 +834,7 @@ class JavaScriptParser extends Parser {
         var primary = this.parsePrimaryExpression(tokens);
 
         // Chain member expressions until we run out.
-        while(tokens.nextIs("punctuation", ".") || tokens.nextIs("punctuation", "[") || tokens.nextIs("punctuation", "(")) {
+        while (tokens.nextIs("punctuation", ".") || tokens.nextIs("punctuation", "[") || tokens.nextIs("punctuation", "(")) {
 
             if (tokens.nextIs("punctuation", ".")) {
                 primary = new JavaScriptDotExpressionAST(
@@ -841,16 +842,14 @@ class JavaScriptParser extends Parser {
                     tokens.consume("punctuation", "."),
                     tokens.consume("name")
                 );
-            }
-            else if (tokens.nextIs("punctuation", "[")) {
+            } else if (tokens.nextIs("punctuation", "[")) {
                 primary = new JavaScriptArrayExpressionAST(
                     primary,
                     tokens.consume("punctuation", "["),
                     this.parseExpression(tokens),
                     tokens.consume("punctuation", "]")
                 );
-            }
-            else if (tokens.nextIs("punctuation", "(")) {
+            } else if (tokens.nextIs("punctuation", "(")) {
                 primary = new JavaScriptFunctionCallAST(
                     primary,
                     tokens.consume("punctuation", "("),
@@ -874,8 +873,8 @@ class JavaScriptParser extends Parser {
         var args = [];
         var first = true;
 
-        while(!tokens.nextIs("punctuation", ")")) {
-            if(!first) {
+        while (!tokens.nextIs("punctuation", ")")) {
+            if (!first) {
                 tokens.consume("punctuation", ",");
             }
             args.push(this.parseAssignmentExpression(tokens));
@@ -901,39 +900,34 @@ class JavaScriptParser extends Parser {
     //      function [name] ( Params ) CompoundStatement
     parsePrimaryExpression(tokens) {
 
-        if(tokens.nextIs("punctuation", "(")) {
+        if (tokens.nextIs("punctuation", "(")) {
 
             tokens.consume("punctuation", "(");
             var expression = this.parseExpression(tokens);
             tokens.consume("punctuation", ")");
             return expression;
 
-        }
-        else if(tokens.nextIs("name")) {
+        } else if (tokens.nextIs("name")) {
             return tokens.consume("name");
-        }
-        else if(tokens.nextIs("number")) {
+        } else if (tokens.nextIs("number")) {
             return tokens.consume("number");
-        }
-        else if(tokens.nextIs("string")) {
+        } else if (tokens.nextIs("string")) {
             return tokens.consume("string");
-        }
-        else if(tokens.nextIs("atom")) {
+        } else if (tokens.nextIs("atom")) {
             return tokens.consume("atom");
-        }
-        else if(tokens.nextIs("regexp")) {
+        } else if (tokens.nextIs("regexp")) {
             return tokens.consume("regexp");
         }
         // Array literal
-        else if(tokens.nextIs("punctuation", "[")) {
+        else if (tokens.nextIs("punctuation", "[")) {
             return this.parseArrayLiteral(tokens);
         }
         // Object literal
-        else if(tokens.nextIs("punctuation", "{")) {
+        else if (tokens.nextIs("punctuation", "{")) {
             return this.parseObjectLiteral(tokens);
         }
         // Function
-        else if(tokens.nextIs("keyword", "function")) {
+        else if (tokens.nextIs("keyword", "function")) {
             return new JavaScriptFunctionAST(
                 true,
                 tokens.consume(),
@@ -956,9 +950,9 @@ class JavaScriptParser extends Parser {
         var expressions = [];
         var first = true;
 
-        while(!tokens.nextIs("punctuation", "]")) {
+        while (!tokens.nextIs("punctuation", "]")) {
 
-            if(!first)
+            if (!first)
                 tokens.consume("punctuation", ",");
             first = false;
             expressions.push(this.parseAssignmentExpression(tokens));
@@ -978,13 +972,13 @@ class JavaScriptParser extends Parser {
         var values = [];
         var first = true;
 
-        while(!tokens.nextIs("punctuation", "}")) {
+        while (!tokens.nextIs("punctuation", "}")) {
 
-            if(!first)
+            if (!first)
                 tokens.consume("punctuation", ",");
             first = false;
 
-            if(!tokens.nextIs("name") && !tokens.nextIs("number") && !tokens.nextIs("string") && !tokens.nextIs("atom"))
+            if (!tokens.nextIs("name") && !tokens.nextIs("number") && !tokens.nextIs("string") && !tokens.nextIs("atom"))
                 throw new ParsingError(tokens.peek(), ERROR_MESSAGES.INVALID_OBJECT_KEY);
 
             keys.push(tokens.consume());
@@ -1004,4 +998,6 @@ class JavaScriptParser extends Parser {
 
 }
 
-export { JavaScriptParser }
+export {
+    JavaScriptParser
+}

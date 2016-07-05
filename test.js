@@ -4,7 +4,7 @@ $(document).ready(function () {
     var button4 = $('#mybutton4');
     var textarea = $('#mytextarea1');
 
-    button2[0].addEventListener("click", function () {
+    button2[0].addEventListener("click", function myfunction() {
         var event = document.createEvent('Event');
         event.initEvent('mouseup', true, true);
         button1[0].dispatchEvent(event);

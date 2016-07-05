@@ -1,5 +1,5 @@
 "use strict";
-var $action = $action|| {};
+var $action = $action || {};
 (function ($action) {
 
     $action.ActionableElementsActionLabel = {
@@ -75,7 +75,12 @@ var $action = $action|| {};
             this._eventType = eventType;
             this._domElement = domElement; // The DOM element the command is associated with
             this._handler = handler;
-            this._parser = new PLParser(this.handler);
+
+            if (this._handler) {
+                this._parser = esprima.parse(this._handler);
+              //  this._parser = acorn.parse(this._handler);
+               // this._parser = new PLParser.JavaScriptFile("", this._handler);
+            }
         }
 
         get EventType() {
@@ -85,12 +90,12 @@ var $action = $action|| {};
         get Element() {
             return this._domElement;
         }
-        
+
         /**
-        * Returns a string representing the source code of the associated event handler
-        * @private
-        * @property Handler
-        */
+         * Returns a string representing the source code of the associated event handler
+         * @private
+         * @property Handler
+         */
         get Handler() {
             return this._handler;
         }
@@ -110,21 +115,21 @@ var $action = $action|| {};
             //    - Offscreen
             //    - Hidden attribute
             //    - Z-index is hiding it behind something else
-            if(!this.visible()) {
+            if (!this.visible()) {
                 return false;
             }
-            
+
             // 2. Command is disabled 
-            if(!this.enabled()){
+            if (!this.enabled()) {
                 return false;
             }
-            
+
             // 3. Command results in no effect because of input guards or conditions in the code
             // 4. Command is not yet in the DOM (Hovering over a menu adds menu items with commands to DOM)
             // If it isn't in the DOM yet, we shouldn't find any event handlers for it in which case it won't make it here??
-            
+
             // 5. Command is not clickable (there is a transparent div or element above it preventing it from being clicked)
-            
+
             // If the command cannot be invoked, it should still remain in the list of commands, but not be shown in the UI
         }
 
@@ -142,11 +147,11 @@ var $action = $action|| {};
         enabled() {
             // Look for disabled attribute on the element
             var element = this.Element;
-            var tagName = element.tagName; 
+            var tagName = element.tagName;
             var hasDisabled = $action.DisabledAttributeElements[tagName.toLowerCase()];
-            if(hasDisabled) {
-                let disabled = element.attributes.disabled; 
-                if(disabled && disabled.value == "disabled") {
+            if (hasDisabled) {
+                let disabled = element.attributes.disabled;
+                if (disabled && disabled.value == "disabled") {
                     return false;
                 }
             }
@@ -154,12 +159,12 @@ var $action = $action|| {};
 
 
         /**
-        * Returns whether the command is currently visible on the screen
-        * @private
-        * @property undefined
-        */
+         * Returns whether the command is currently visible on the screen
+         * @private
+         * @property undefined
+         */
         visible() {
-            var element = this.Element; 
+            var element = this.Element;
             var displayed = element.css('display') != "none";
             var visibility = element.css('visibility') != "hidden";
             var heightBigEnough = element.height() > 10;
