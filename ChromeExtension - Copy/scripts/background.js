@@ -79,21 +79,7 @@ $(document).ready(function () {
         }
     });
 
-    /**
-     * Intercept completed script requests and notify the content script to update its script cache
-     * @private
-     * @method undefined
-     * @param {Object} function (details)
-     */
-    chrome.webRequest.onCompleted.addListener(function (details) {
-        var tabID = details.tabId;
-        if (tabID !== -1 && details.type == "script") {
-            chrome.tabs.sendMessage(tabID, {
-                text: "scriptReceived",
-                url: details.url
-            });
-        }
-    }, {
-        urls: ["<all_urls>"]
+    chrome.webRequest.onCompleted.addListener(function(details) {
+        console.log('request complete');
     });
 });

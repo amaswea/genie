@@ -173,23 +173,6 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     if (msg.text === 'close') {
         $action.interface.hide();
     }
-
-    if (msg.text === 'scriptReceived') {
-        var url = msg.url;
-        if (url && url.length) {
-            $.ajax(url)
-                .done(function (data) {
-                    var parsed = esprima.parse(data);
-                    console.log("success");
-                })
-                .fail(function () {
-                    console.log("error");
-                })
-                .always(function () {
-                    console.log("complete");
-                });
-        }
-    }
 });
 
 $(document).ready(function () {
