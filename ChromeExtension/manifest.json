@@ -10,6 +10,7 @@
     "background": {
         "scripts": [
             "scripts/ext/jquery-3.0.0.js",
+            "scripts/esprima/esprima.js",
             "scripts/background.js"
         ]
     },
@@ -31,7 +32,8 @@
                 "scripts/util.js",
                 "scripts/mutationWatcher.js",
                 "scripts/constants.js",
-                "scripts/esprima/esprima.js"
+                "scripts/esprima/esprima.js", 
+                "scripts/script.js"
             ],
             "run_at": "document_start"
         }

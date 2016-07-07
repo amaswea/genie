@@ -59,6 +59,7 @@ var $action = $action || {};
             var label = action + " the " + this.label(this.command.Element) + " " + $action.TagEnglishWordMappings[this.command.Element.tagName.toLowerCase()];
             listItem.textContent = label;
             listItem.addEventListener("click", this.command.execute());
+            
             this._domElement = listItem;
         }
 

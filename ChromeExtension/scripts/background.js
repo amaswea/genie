@@ -85,14 +85,25 @@ $(document).ready(function () {
      * @method undefined
      * @param {Object} function (details)
      */
+    // Potentially cache scripts later if performance becomes an issue
     chrome.webRequest.onCompleted.addListener(function (details) {
         var tabID = details.tabId;
         if (tabID !== -1 && details.type == "script") {
-            chrome.tabs.sendMessage(tabID, {
-                text: "scriptReceived",
-                url: details.url
-            });
+            $.get(details.url)
+                .done(function (data) {
+                    chrome.tabs.sendMessage(tabID, {
+                        text: 'scriptReceived',
+                        data: data
+                    });
+                })
+                .fail(function () {
+                    console.log("error");
+                })
+                .always(function () {
+                    console.log("complete");
+                });
         }
+
     }, {
         urls: ["<all_urls>"]
     });

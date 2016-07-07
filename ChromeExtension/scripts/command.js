@@ -1,4 +1,5 @@
 "use strict";
+
 var $action = $action || {};
 (function ($action) {
 
@@ -60,8 +61,11 @@ var $action = $action || {};
             this._handler = handler;
 
             if (this._handler) {
-                this._parser = esprima.parse(this._handler);
+                this._ast = esprima.parse(this._handler);
+                this._domElement.parsedAST = this._ast;
             }
+            
+            this.postCommands = [];
         }
 
         get EventType() {
@@ -71,14 +75,18 @@ var $action = $action || {};
         get Element() {
             return this._domElement;
         }
-        
+
         get CommandItem() {
             return this._commandItem;
         }
-        
+
         set CommandItem(item) {
             this._commandItem = item;
         }
+
+        get PostCommands() {
+            return this._postCommands;
+        };
 
         /**
          * Returns a string representing the source code of the associated event handler
@@ -87,6 +95,16 @@ var $action = $action || {};
          */
         get Handler() {
             return this._handler;
+        }
+        
+        /**
+        * Adds a command to the list of post commands that must be executed directly after this command
+        * @private
+        * @property undefined
+        * @param {Object} command
+        */
+        addPostCommand(command){
+            this._postCommands.push(command);
         }
 
         /**
@@ -123,10 +141,10 @@ var $action = $action || {};
 
 
             // 6. Command is not available yet because other commands need to be executed first based on the nature of the device
-            if (this.eventDependencies()) {
+            /*if (this.commandDependencies()) {
                 return false;
             }
-            
+*/
             return true;
         }
 
@@ -152,7 +170,7 @@ var $action = $action || {};
                     return false;
                 }
             }
-            
+
             return true;
         };
 
@@ -183,7 +201,7 @@ var $action = $action || {};
         /**
          * Command or set of commands that the command is dependent on being executed before it can be executed
          */
-        eventDependencies() {
+        commandDependencies() {
             // Not show the command 
             var preDep = this.preDeviceDependencies();
             if (preDep && preDep.length) {
@@ -251,12 +269,16 @@ var $action = $action || {};
                 s.src = chrome.extension.getURL("scripts/performAction.js");
                 (document.head || document.documentElement).appendChild(s);
 
+                // Perform the action
                 var action = {
                     event: self.EventType,
                     selector: $action.getElementPath(self.Element)
                 }
 
                 window.postMessage(action, "*");
+
+                // Perform any of the post dependency commands that are set for this command; 
+
 
                 // Unload the script
                 (document.head || document.documentElement).removeChild(s);
@@ -267,7 +289,7 @@ var $action = $action || {};
 
     class CommandManager {
         constructor(ui) {
-            this.commandItems = [];
+            this.commands = [];
             this.elements = [];
             this.commandCount = 0;
             this.ui = ui; // The instance of UI that is creating this instance
@@ -288,10 +310,10 @@ var $action = $action || {};
                     index = this.elements.length - 1;
                 }
 
-                if (!this.commandItems[index])
-                    this.commandItems[index] = [];
+                if (!this.commands[index])
+                    this.commands[index] = [];
 
-                this.commandItems[index].push(newCommand);
+                this.commands[index].push(newCommand);
             }
         };
 
@@ -299,10 +321,10 @@ var $action = $action || {};
         removeCommand(element, command) {
             var index = this.elements.indexOf(element);
             if (index > -1) {
-                var commands = this.commandItems[index];
+                var cmds = this.commands[index];
                 var remove = -1;
-                for (var i = 0; i < commands.length; i++) {
-                    var cmd = commands[i];
+                for (var i = 0; i < cmds.length; i++) {
+                    var cmd = cmd[i];
                     if (cmd.EventType == command.eventType) {
                         remove = i;
                         this.commandCount--;
@@ -312,7 +334,7 @@ var $action = $action || {};
                 }
 
                 if (remove != -1) {
-                    this.commandItems[index].splice(remove, 1);
+                    this.commands[index].splice(remove, 1);
                 }
             }
         };
