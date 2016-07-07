@@ -37,8 +37,8 @@ var $action = $action || {};
                     var commandData = {
                         eventType: 'default'
                     }
-
-                    $action.interface.addCommand(element, commandData);
+                    
+                    $action.commandManager.addCommand(element, commandData);
                 }
             }
 
@@ -52,7 +52,7 @@ var $action = $action || {};
                         handler: attributeValue
                     }
 
-                    $action.interface.addCommand(element, commandData);
+                    $action.commandManager.addCommand(element, commandData);
                 }
             }
         };
@@ -73,7 +73,7 @@ var $action = $action || {};
                         eventType: 'default'
                     }
 
-                    $action.interface.removeCommand(element, commandData);
+                    $action.commandManager.removeCommand(element, commandData);
                 }
             }
 
@@ -87,7 +87,7 @@ var $action = $action || {};
                         handler: attributeValue
                     }
 
-                    $action.interface.removeCommand(element, commandData);
+                    $action.commandManager.removeCommand(element, commandData);
                 }
             }
         };

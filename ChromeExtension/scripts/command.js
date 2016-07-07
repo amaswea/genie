@@ -49,23 +49,6 @@ var $action = $action || {};
         "onmouseover": "mouseover"
     };
 
-    /*    $action.MouseOrders = {
-            "click": ["mousedown", "mouseup", "click"], // TODO: right click 
-            "dblclick": ["mousedown", "mouseup", "click", "mousedown", "mouseup", "click"],
-            "cut": ["mousedown", "mouseup", "select", "copy"],
-            "copy": ["mousedown", "mouseup", "select", "cut", "input"],
-            "paste": ["mousedown", "mouseup", "paste", "input"]
-        }
-
-        $action.KeyboardOrders = {
-            "click": ["keydown", "keypress", "click", "keyup"], // TODO: right click 
-            //"dblclick":  Cannot be executed by a seqence of two enter keys.. Might be different in other browsers? Need to test
-            "cut": ["keydown", "keydown", "cut", "input", "keyup", "keyup"], // TOOD: Need to pass in the right keycodes for input
-            "paste": ["keydown", "keydown", "paste", "input", "keyup", "keyup"],
-            "copy": ["keydown", "keydown", "copy", "input", "keyup", "keyup"],
-            "input": ["keydown", "keypress", "input", "keyup"]
-        }*/
-
     /* $action.CommandInputs = {
          "cut": ["ctrl", "x", "" "", "ctrl", "x"]
      };*/
@@ -78,8 +61,6 @@ var $action = $action || {};
 
             if (this._handler) {
                 this._parser = esprima.parse(this._handler);
-              //  this._parser = acorn.parse(this._handler);
-               // this._parser = new PLParser.JavaScriptFile("", this._handler);
             }
         }
 
@@ -89,6 +70,14 @@ var $action = $action || {};
 
         get Element() {
             return this._domElement;
+        }
+        
+        get CommandItem() {
+            return this._commandItem;
+        }
+        
+        set CommandItem(item) {
+            this._commandItem = item;
         }
 
         /**
@@ -105,7 +94,7 @@ var $action = $action || {};
          * @private
          * @property undefined
          */
-        userInvokable() {
+        userInvokeable() {
             // Ways that a command can not be available
             // 1. Command is not visible
             //    - Display set to None
@@ -131,6 +120,14 @@ var $action = $action || {};
             // 5. Command is not clickable (there is a transparent div or element above it preventing it from being clicked)
 
             // If the command cannot be invoked, it should still remain in the list of commands, but not be shown in the UI
+
+
+            // 6. Command is not available yet because other commands need to be executed first based on the nature of the device
+            if (this.eventDependencies()) {
+                return false;
+            }
+            
+            return true;
         }
 
         /**
@@ -155,6 +152,8 @@ var $action = $action || {};
                     return false;
                 }
             }
+            
+            return true;
         };
 
 
@@ -164,15 +163,15 @@ var $action = $action || {};
          * @property undefined
          */
         visible() {
-            var element = this.Element;
+            var element = $(this.Element);
             var displayed = element.css('display') != "none";
             var visibility = element.css('visibility') != "hidden";
             var heightBigEnough = element.height() > 10;
             var widthBigEnough = element.width() > 10;
             var notClear = element.css('opacity') != "0" && element.css('opacity') != "0.0";
             var offLeftRight = (element.offset().left >= window.innerWidth) || ((element.offset().left + element.offsetWidth) <= 0);
-            var hidden = $(domNode).attr('type') == 'hidden';
-            var visible = $(domNode).is(':visible');
+            var hidden = element.attr('type') == 'hidden';
+            var visible = element.is(':visible');
 
             if (visible && displayed && visibility && heightBigEnough && widthBigEnough && notClear && !offLeftRight && !hidden) {
                 return true;
@@ -186,6 +185,15 @@ var $action = $action || {};
          */
         eventDependencies() {
             // Not show the command 
+            var preDep = this.preDeviceDependencies();
+            if (preDep && preDep.length) {
+                return true;
+            }
+
+            var dataDep = this.dataDependencies();
+            if (dataDep && dataDep.length) {
+                return true;
+            }
         };
 
         /**
@@ -193,8 +201,39 @@ var $action = $action || {};
          * @private
          * @property undefined
          */
-        deviceDependencies() {
+        preDeviceDependencies() {
+            if (!this._cachedPreDeviceDependences) {
+                // If this command were executed, which commands would need to be executed first
+                var mouseOrder = $action.MouseOrders[this.EventType];
+                if (mouseOrder) {
+                    var index = mouseOrder.indexOf(this.EventType);
+                    if (index > -1) {
+                        this._cachedPreDeviceDependencies = _.slice(mouseOrder, 0, index);
+                    }
+                }
+            }
 
+            return this._cachedPreDeviceDependencies;
+        };
+
+        /**
+         * The set of events that need to be executed directly after this command
+         * @private
+         * @property undefined
+         */
+        postDeviceDependencies() {
+            if (!this._cachedPostDeviceDependencies) {
+                // If this command were executed, which commands would need to be executed first
+                var mouseOrder = $action.MouseOrders[this.EventType];
+                if (mouseOrder) {
+                    var index = mouseOrder.indexOf(this.EventType);
+                    if (index > -1) {
+                        this._cachedPostDeviceDependencies = _.slice(mouseOrder, index + 1, mouseOrder.length);
+                    }
+                }
+            }
+
+            return this._cachedPostDeviceDependencies;
         };
 
         /**
@@ -225,5 +264,61 @@ var $action = $action || {};
         };
     };
 
+
+    class CommandManager {
+        constructor(ui) {
+            this.commandItems = [];
+            this.elements = [];
+            this.commandCount = 0;
+            this.ui = ui; // The instance of UI that is creating this instance
+        }
+
+        addCommand(element, command) {
+            if (command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1) {
+                var newCommand = new $action.Command(command.eventType, element, command.handler)
+
+                if (newCommand.userInvokeable()) {
+                    this.commandCount++;
+                    this.ui.appendCommand(newCommand, this.commandCount);
+                }
+
+                var index = this.elements.indexOf(element);
+                if (index == -1) {
+                    this.elements.push(element);
+                    index = this.elements.length - 1;
+                }
+
+                if (!this.commandItems[index])
+                    this.commandItems[index] = [];
+
+                this.commandItems[index].push(newCommand);
+            }
+        };
+
+
+        removeCommand(element, command) {
+            var index = this.elements.indexOf(element);
+            if (index > -1) {
+                var commands = this.commandItems[index];
+                var remove = -1;
+                for (var i = 0; i < commands.length; i++) {
+                    var cmd = commands[i];
+                    if (cmd.EventType == command.eventType) {
+                        remove = i;
+                        this.commandCount--;
+                        this.ui.removeCommand(cmd, this.commandCount);
+                        break;
+                    }
+                }
+
+                if (remove != -1) {
+                    this.commandItems[index].splice(remove, 1);
+                }
+            }
+        };
+
+    };
+
     $action.Command = Command;
+    $action.CommandManager = CommandManager;
 })($action);

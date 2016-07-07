@@ -139,7 +139,7 @@ function receiveMessage(event) {
             if (elementPath && elementPath.length) {
                 var element = $(elementPath);
                 if (element && element.length) {
-                    $action.interface.addCommand(element[0], event.data);
+                    $action.commandManager.addCommand(element[0], event.data);
                 }
             }
         }
@@ -149,7 +149,7 @@ function receiveMessage(event) {
             if (elementPath && elementPath.length) {
                 var element = $(elementPath);
                 if (element && element.length) {
-                    $action.interface.removeCommand(element[0], event.data);
+                    $action.commandManager.removeCommand(element[0], event.data);
                 }
             }
         }
@@ -177,7 +177,7 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     if (msg.text === 'scriptReceived') {
         var url = msg.url;
         if (url && url.length) {
-            $.ajax(url)
+/*            $.get(url)
                 .done(function (data) {
                     var parsed = esprima.parse(data);
                     console.log("success");
@@ -187,14 +187,17 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
                 })
                 .always(function () {
                     console.log("complete");
-                });
+                });*/
         }
     }
 });
 
 $(document).ready(function () {
     $action.interface = new $action.KeyboardUI(); // Instantiate a new type of interface 
-    // For other types of interfaces, they could be instantiated here or through a setting? 
+    // For other types of interfaces, they could be instantiated here or through a setting?
+    
+    // Create a new instance of the command manager with this instance of the UI
+    $action.commandManager = new $action.CommandManager($action.interface); 
 
     injectMonitorScript();
 
