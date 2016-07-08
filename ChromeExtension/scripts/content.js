@@ -64,6 +64,7 @@ function injectMonitorScript() {
             Element.prototype._addEventListener = Element.prototype.addEventListener;
             Element.prototype.addEventListener = function (a, b, c) {
                 this._addEventListener(a, b, c);
+                debugger;
                 var handlerString = b.toString();
                 if (handlerString != $_IGNOREJQUERYFUNCTION) {
                     window.postMessage({
@@ -115,6 +116,9 @@ function injectMonitorScript() {
                     }, "*");
                 }
             };`;
+
+    // TODO: ensure this ID is unique
+    s.id = "genie_monitor_script";
 
     var header = document.head || document.documentElement;
     var script = $(header).children("script").first();
@@ -198,4 +202,19 @@ $(document).ready(function () {
     // Add an observer to watch when new elements are added to the page
     var mutationObserver = new $action.MutationWatcher();
     mutationObserver.init();
+
+    // Initialize the script manager if not already initialized
+    if (!$action.scriptManager) {
+        $action.scriptManager = new $action.ScriptManager();
+    }
+
+    // Parse all script tags in the page and add them as scripts
+    var scripts = $('script').not('#genie_monitor_script');
+    for (var i = 0; i < scripts.length; i++) {
+        var script = scripts[i];
+        if (!script.attributes.src) {
+            var innerHTML = script.innerHTML;
+            $action.scriptManager.addScript(innerHTML);
+        }
+    }
 });

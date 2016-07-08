@@ -63,10 +63,10 @@ var $action = $action || {};
     ];
 
     /**
-    * The list of events that are invokeable by the user through mouse or keyboard
-    * @private
-    * @property undefined
-    */
+     * The list of events that are invokeable by the user through mouse or keyboard
+     * @private
+     * @property undefined
+     */
     $action.UserInvokeableEvents = [
         "cut",
         "copy",
@@ -100,35 +100,35 @@ var $action = $action || {};
         "submit"
         // TOOD: rest of HTML DOM events, Drag & Drop events, Touch events
     ];
-    
+
     /**
-    * Orders for mouse related events
-    * @private
-    * @property undefined
-    */
+     * Orders for mouse related events
+     * @private
+     * @property undefined
+     */
     $action.MouseOrders = {
-        "mouseup" : ["mousedown", "mouseup"],
-        "click": ["mousedown", "mouseup", "click"], 
-        "dblclick": ["mousedown", "mouseup", "click", "mousedown", "mouseup", "click" ],
+        "mouseup": ["mousedown", "mouseup"],
+        "click": ["mousedown", "mouseup", "click"],
+        "dblclick": ["mousedown", "mouseup", "click", "mousedown", "mouseup", "click"],
         "copy": ["mousedown", "mouseup", "select", "copy"],
         "cut": ["mousedown", "mouseup", "select", "cut", "input"],
         "paste": ["mousedown", "mouseup", "paste", "input"]
-        // compositionStart
-        // compositionEnd
-        // compositionUpdate
-        // mouseenter
-        // mouseleave
-        // mouseout
-        // mouseover
-        // mouseup
-        // resize
-        // scroll
-        // select
-        // wheel
-        // change
-        // contextmenu
-        // show
-        // submit
+            // compositionStart
+            // compositionEnd
+            // compositionUpdate
+            // mouseenter
+            // mouseleave
+            // mouseout
+            // mouseover
+            // mouseup
+            // resize
+            // scroll
+            // select
+            // wheel
+            // change
+            // contextmenu
+            // show
+            // submit
     }
 
     $action.KeyboardOrders = {
@@ -139,4 +139,9 @@ var $action = $action || {};
         "copy": ["keydown", "keydown", "copy", "input", "keyup", "keyup"],
         "input": ["keydown", "keypress", "input", "keyup"]
     }
+
+    // List of W3C inline GlobalEventHandlers that are supported
+    $action.GlobalEventHandlers = [
+        "onclick", "onmouseover"
+    ];
 })($action);

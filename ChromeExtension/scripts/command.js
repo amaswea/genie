@@ -41,10 +41,6 @@ var $action = $action || {};
         }
     }
 
-    $action.GlobalEventHandlers = [
-        "onclick", "onmouseover"
-    ];
-
     $action.GlobalEventHandlerMappings = { // TODO: Add the rest
         "onclick": "click",
         "onmouseover": "mouseover"
@@ -296,7 +292,8 @@ var $action = $action || {};
         }
 
         addCommand(element, command) {
-            if (command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1) {
+            if (command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1
+                || $action.GlobalEventHandlers.indexOf(command.eventType) > -1) {
                 var newCommand = new $action.Command(command.eventType, element, command.handler)
 
                 if (newCommand.userInvokeable()) {
@@ -324,7 +321,7 @@ var $action = $action || {};
                 var cmds = this.commands[index];
                 var remove = -1;
                 for (var i = 0; i < cmds.length; i++) {
-                    var cmd = cmd[i];
+                    var cmd = cmds[i];
                     if (cmd.EventType == command.eventType) {
                         remove = i;
                         this.commandCount--;

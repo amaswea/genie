@@ -18,17 +18,17 @@ var $action = $action || {};
             var allElements = document.querySelectorAll("*");
             for (var i = 0; i < allElements.length; i++) {
                 var element = allElements[i];
-                this.addCommandFromElement(element);
+                this.addCommandsFromElement(element);
             }
         };
 
         /**
-         * Description for addCommandFromElement
+         * Description for addCommandsFromElement
          * @private
          * @method addCommandFromElement
          * @param {Object} element
          */
-        addCommandFromElement(element) {
+        addCommandsFromElement(element) {
             var tagAdded = element.tagName;
             var hasAction = $action.ActionableElements[tagAdded] != undefined;
             if (hasAction) {
@@ -37,7 +37,7 @@ var $action = $action || {};
                     var commandData = {
                         eventType: 'default'
                     }
-                    
+
                     $action.commandManager.addCommand(element, commandData);
                 }
             }
@@ -48,7 +48,7 @@ var $action = $action || {};
                 var attributeValue = $element.attr(eventHandler);
                 if (attributeValue && attributeValue.length > 0) {
                     var commandData = {
-                        eventType: eventHandler, 
+                        eventType: eventHandler,
                         handler: attributeValue
                     }
 
@@ -58,12 +58,12 @@ var $action = $action || {};
         };
 
         /**
-         * Description for removeCommandFromElement
+         * Description for removeCommandsFromElement
          * @private
          * @method removeCommandFromElement
          * @param {Object} element
          */
-        removeCommandFromElement(element) {
+        removeCommandsFromElement(element) {
             var tagRemoved = element.tagName;
             var hasAction = $action.ActionableElements[tagRemoved] != undefined;
             if (hasAction) {
@@ -105,22 +105,50 @@ var $action = $action || {};
             // create an observer instance
             var observer = new MutationObserver(function (mutations) {
                 mutations.forEach(function (mutation) {
-                    var addedNodes = mutation.addedNodes;
-                    if (addedNodes && addedNodes.length) {
-                        for (var i = 0; i < addedNodes.length; i++) {
-                            var added = addedNodes[i];
-                            if (added.tagName) {
-                                self.addCommandFromElement(added);
+                    if (mutation.type === 'childList') {
+                        var addedNodes = mutation.addedNodes;
+                        if (addedNodes && addedNodes.length) {
+                            for (var i = 0; i < addedNodes.length; i++) {
+                                var added = addedNodes[i];
+                                if (added.tagName) {
+                                    self.addCommandFromElement(added);
+                                }
                             }
                         }
-                    }
 
-                    var removedNodes = mutation.removedNodes;
-                    if (removedNodes && removedNodes.length) {
-                        for (var i = 0; i < removedNodes.length; i++) {
-                            var removed = removedNodes[i];
-                            if (removed.tagName) {
-                                self.removeCommandFromElement(removed);
+                        var removedNodes = mutation.removedNodes;
+                        if (removedNodes && removedNodes.length) {
+                            for (var i = 0; i < removedNodes.length; i++) {
+                                var removed = removedNodes[i];
+                                if (removed.tagName) {
+                                    self.removeCommandFromElement(removed);
+                                }
+                            }
+                        }
+                    } else if (mutation.type == "attributes") {
+                        // If any updates were made to the element attributes, remove the command associated with the old 
+                        // value if there was one. Add the new command associated with the new value, if it is set to any // value
+                        var attribute = mutation.attributeName;
+                        if (attribute && attribute.length && $action.GlobalEventHandlers.indexOf(attribute) > -1) {
+                            var newValue = mutation.target.attributes[attribute].value;
+                            var oldValue = mutation.oldValue;
+                            if (oldValue) {
+                                var oldCommandData = {
+                                    eventType: attribute,
+                                    handler: oldValue
+                                }
+
+                                // remove old command
+                                $action.commandManager.removeCommand(mutation.target, oldCommandData);
+                            }
+
+                            if (newValue) {
+                                var newCommandData = {
+                                    eventType: attribute,
+                                    handler: newValue
+                                };
+
+                                $action.commandManager.addCommand(mutation.target, newCommandData);
                             }
                         }
                     }
@@ -129,8 +157,10 @@ var $action = $action || {};
 
             // configuration of the observer:
             var config = {
-                childList: true, 
-                subtree: true
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeOldValue: true
             };
 
             // pass in the target node, as well as the observer options

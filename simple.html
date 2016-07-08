@@ -8,11 +8,18 @@
     <title>Test</title>
     <script type="text/javascript" src="ChromeExtension/scripts/ext/jquery-3.0.0.js"></script>
     <script type="text/javascript" src="simple.js"></script>
+    <script> 
+    $(document).ready(function() {
+        console.log("testing");
+    });
+    
+    </script>
 </head>
 
 <body>
     <button id="button">A button</button>
     <button id="button2" disabled="disabled">Disabled</button>
+    <button id="button3">Update button attributes</button>
     <div class="blocking"></div>
 </body>
 

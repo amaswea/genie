@@ -89,6 +89,7 @@ $(document).ready(function () {
     chrome.webRequest.onCompleted.addListener(function (details) {
         var tabID = details.tabId;
         if (tabID !== -1 && details.type == "script") {
+            console.log(details.url);
             $.get(details.url)
                 .done(function (data) {
                     chrome.tabs.sendMessage(tabID, {
