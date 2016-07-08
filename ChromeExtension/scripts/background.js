@@ -94,7 +94,8 @@ $(document).ready(function () {
                 .done(function (data) {
                     chrome.tabs.sendMessage(tabID, {
                         text: 'scriptReceived',
-                        data: data
+                        data: data, 
+                        url: details.url
                     });
                 })
                 .fail(function () {

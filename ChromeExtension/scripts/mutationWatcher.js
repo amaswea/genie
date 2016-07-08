@@ -160,7 +160,8 @@ var $action = $action || {};
                 childList: true,
                 subtree: true,
                 attributes: true,
-                attributeOldValue: true
+                attributeOldValue: true, 
+                // characterData: true 
             };
 
             // pass in the target node, as well as the observer options

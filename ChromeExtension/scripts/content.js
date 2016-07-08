@@ -64,7 +64,6 @@ function injectMonitorScript() {
             Element.prototype._addEventListener = Element.prototype.addEventListener;
             Element.prototype.addEventListener = function (a, b, c) {
                 this._addEventListener(a, b, c);
-                debugger;
                 var handlerString = b.toString();
                 if (handlerString != $_IGNOREJQUERYFUNCTION) {
                     window.postMessage({
@@ -180,12 +179,13 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 
     if (msg.text === 'scriptReceived') {
         var data = msg.data;
+        var url = msg.url;
         if (data && data.length) {
             if (!$action.scriptManager) {
                 $action.scriptManager = new $action.ScriptManager();
             }
 
-            $action.scriptManager.addScript(data);
+            $action.scriptManager.addScript(url, data);
         }
     }
 });
@@ -214,7 +214,7 @@ $(document).ready(function () {
         var script = scripts[i];
         if (!script.attributes.src) {
             var innerHTML = script.innerHTML;
-            $action.scriptManager.addScript(innerHTML);
+            $action.scriptManager.addScript("page", innerHTML);
         }
     }
 });

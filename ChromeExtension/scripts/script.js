@@ -1,19 +1,29 @@
-"use strict";
-
 var $action = $action || {};
 (function ($action) {
+    "use strict";
+    var ast = require('./ast');
     class ScriptManager {
         constructor(ui) {
-            this.asts = []; 
+            this.asts = {};
         }
 
-        addScript(data){
+        addScript(url, data) {
+            if (url == "page" && !this.asts.page) {
+                this.asts.page= [];
+            }
+
             var scriptAST = esprima.parse(data);
-            this.asts.push(scriptAST);
+            var cfg = cfg.buildCFG(scriptAST);
+
+            if (url == "page") {
+                this.asts.page.push(scriptAST);
+            } else {
+                this.asts[url] = scriptAST;
+            }
         }
-        
+
         // removeScript ? 
-    };
+    }
 
     $action.ScriptManager = ScriptManager;
 })($action);
