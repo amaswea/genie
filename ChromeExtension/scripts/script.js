@@ -1,7 +1,6 @@
 var $action = $action || {};
 (function ($action) {
     "use strict";
-    var ast = require('./ast');
     class ScriptManager {
         constructor(ui) {
             this.asts = {};
@@ -13,7 +12,7 @@ var $action = $action || {};
             }
 
             var scriptAST = esprima.parse(data);
-            var cfg = cfg.buildCFG(scriptAST);
+          //  var cfg = cfg.buildCFG(scriptAST);
 
             if (url == "page") {
                 this.asts.page.push(scriptAST);

@@ -111,7 +111,7 @@ var $action = $action || {};
                             for (var i = 0; i < addedNodes.length; i++) {
                                 var added = addedNodes[i];
                                 if (added.tagName) {
-                                    self.addCommandFromElement(added);
+                                    self.addCommandsFromElement(added);
                                 }
                             }
                         }
@@ -121,7 +121,7 @@ var $action = $action || {};
                             for (var i = 0; i < removedNodes.length; i++) {
                                 var removed = removedNodes[i];
                                 if (removed.tagName) {
-                                    self.removeCommandFromElement(removed);
+                                    self.removeCommandsFromElement(removed);
                                 }
                             }
                         }

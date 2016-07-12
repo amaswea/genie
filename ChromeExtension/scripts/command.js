@@ -59,8 +59,9 @@ var $action = $action || {};
             if (this._handler) {
                 this._ast = esprima.parse(this._handler);
                 this._domElement.parsedAST = this._ast;
+                //  this.analyzeHandler(this._ast);
             }
-            
+
             this.postCommands = [];
         }
 
@@ -92,14 +93,14 @@ var $action = $action || {};
         get Handler() {
             return this._handler;
         }
-        
+
         /**
-        * Adds a command to the list of post commands that must be executed directly after this command
-        * @private
-        * @property undefined
-        * @param {Object} command
-        */
-        addPostCommand(command){
+         * Adds a command to the list of post commands that must be executed directly after this command
+         * @private
+         * @property undefined
+         * @param {Object} command
+         */
+        addPostCommand(command) {
             this._postCommands.push(command);
         }
 
@@ -140,7 +141,7 @@ var $action = $action || {};
             /*if (this.commandDependencies()) {
                 return false;
             }
-*/
+            */
             return true;
         }
 
@@ -280,6 +281,377 @@ var $action = $action || {};
                 (document.head || document.documentElement).removeChild(s);
             };
         };
+
+        // Go through the AST & traverse it to find the conditions
+        analyzeHandler(astNode) {
+            var body = astNode.body;
+            if (body instanceof Array) {
+                for (var i = 0; i < body.length; i++) {
+                    var statement = body[i];
+                    if (statement.type == "IfStatement") {
+                        var test = statement.test;
+                        if (test.type == "Identifier") {
+                            console.log("Dependency: " + test.name)
+                        } else if (test.type == "BinaryExpression") {
+                            searchBinaryExpression(test);
+
+                        } else if (test.type == "ConditionalExpression") {
+
+                        } else {
+                            console.log("Unexpected expression inside of an IF statement");
+                        }
+                    }
+
+                    if (statement.body) {
+                        this.analyzeHandler(astNode);
+                    }
+                }
+            } else {
+
+            }
+        }
+
+        searchStatement(statement) {
+            if (statement.type == "BlockStatement") {
+                this.searchBlockStatement(statement);
+            } else if (statement.type == "ExpressionStatement") {
+                this.searchExpression(statement.expression);
+            } else if (statement.type == "IfStatement") {
+                this.searchIfStatement(statement);
+            } else if (statement.type == "LabeledStatement") {
+                // TBD 
+            } else if (statement.type == "BreakStatement") {
+                // TBD
+            } else if (statement.type == "ContinueStatement") {
+                // TBD
+            } else if (statement.type == "WithStatement") {
+                // Deprecated
+            } else if (statement.type == "SwitchStatement") {
+                // TBD
+            } else if (statement.type == "ReturnStatement" || expression.type == "ThrowStatement") {
+                this.searchExpression(expression.argument);
+            } else if (statement.type == "TryStatement") {
+                this.searchTryStatement(statement);
+            } else if (statement.type == "WhileStatement" || statement.type == "DoWhileStatement") {
+                this.searchWhileStatement(statement);
+            } else if (statement.type == "ForStatement") {
+                this.searchForStatement(statement);
+            } else if (statement.type == "ForInStatement" || statement.type == "ForOfStatement") {
+                this.searchForInStatement(statement);
+            } else if (statement.type == "LeftStatement") {
+                this.searchLetStatement(statement);
+            } else if (statement.type == "DebuggerStatement") {
+                this.searchDebuggerStatement(statement)
+            }
+        }
+
+        // Statements 
+        searchForStatement(statement) {
+            if (statement.init) {
+                if (statement.init.type == "Expression") {
+                    this.searchExpression(statement.init);
+                } else {
+                    // Variable Declaration
+                    if (statement.init.type == "VariableDeclaration") {
+                        this.searchVariableDeclaration(statement.init);
+                    }
+                }
+            }
+
+            if (statement.test) {
+                this.searchExpression(statement.test);
+            }
+
+            if (statement.update) {
+                this.searchExpression(statement.update);
+            }
+
+            this.searchStatement(statement.body);
+        }
+
+        searchForInStatement(statement) {
+            // if statement.each is true, it is a for each/in instead of a for/in
+            // If statement.each is undefined, it is a for/of statement
+            if (this.left.type == "VariableDeclaration") {
+                this.searchVariableDeclaration(this.left);
+            } else {
+                this.searchExpression(this.left);
+            }
+
+            this.searchExpression(this.right);
+            this.searchStatement(this.body);
+        }
+
+        searchWhileStatement(statement) {
+            this.searchExpression(statement.test);
+            this.searchStatement(statement.body);
+        }
+
+        searchTryStatement(statement) {
+            // TBD
+        }
+
+        searchBlockStatement(statement) {
+            var statements = expression.body;
+            for (var i = 0; i < statements.length; i++) {
+                var statement = statements[i];
+                this.searchStatement(statement);
+            }
+        }
+
+        searchIfStatement(statement) {
+            if (statement.alternate.type == "Identifier") {
+                this.searchIdentifier(statement.alternate);
+            } else {
+                this.searchExpression(statement.alternate);
+            }
+
+            if (statement.consequent.type == "Identifier") {
+                this.searchIdentifier(statement.consequent);
+            } else {
+                this.searchExpression(statement.consequent);
+            }
+
+            if (statement.test.type == "Identifier") {
+                this.searchIdentifier(statement.test);
+            } else {
+                this.searchExpression(statement.test);
+            }
+        }
+
+        searchLetStatement(statement) {
+            for (var i = 0; i < statement.head.length; i++) {
+                this.searchVariableDeclarator(statement.head);
+            }
+            this.searchStatement(statement.body);
+        }
+
+        searchDebuggerStatement(statement) {
+            // Do nothing? 
+        }
+
+        // Expressions
+        searchExpression(expression) {
+            switch (expression) {
+            case "Identifier":
+                this.searchIdentifier(expression);
+                break;
+            case "ThisExpression":
+                console.log("Found a this expression!");
+                break;
+            case "ArrayExpression":
+                this.searchArrayExpression(expression);
+                break;
+            case "ObjectExpression":
+                this.searchObjectExpression(expression);
+                break;
+            case "FunctionExpression" || "ArrowExpression":
+                this.searchFunctionExpression(expression)
+                break;
+            case "SequenceExpression":
+                this.searchSequenceExpression(expression);
+                break;
+            case "UnaryExpression":
+                this.searchUnaryExpression(expression);
+                break;
+            case "BinaryExpression":
+                this.searchBinaryExpression(expression);
+                break;
+            case "AssignmentExpression":
+                this.searchAssignmentExpression(expression);
+                break;
+            case "UpdateExpression":
+                this.searchUpdateExpression(expression);
+                break;
+            case "LogicalExpression":
+                this.searchLogicalExpression(expression);
+                break;
+            case "ConditionalExpression":
+                this.searchConditionalExpression(expression);
+                break;
+            case "NewExpression":
+                this.searchNewExpression(expression);
+                break;
+            case "CallExpression":
+                this.searchCallExpression(expression);
+                break;
+            case "MemberExpression":
+                this.searchMemberExpression(expression);
+                break;
+            case "YieldExpression":
+                this.searchYieldExpression(expression);
+                break;
+            case "ComprehensionExpression":
+                this.searchComprehensionExpression(expression);
+                break;
+            case "LetExpression":
+                this.searchLetExpression(expression);
+                break;
+
+                // Not supported in ECMAScript
+                // ComprehensionExpression
+                // GEneratorExpression
+                // GraphExpression
+                // GraphIndexExpression
+                // 
+            }
+        };
+
+        searchBinaryExpression(expression) {
+            // Parse left and right hand sides
+            this.searchExpression(expression.left);
+            this.searchOperator(expression.operator);
+            this.searchExpression(expression.right);
+        }
+
+        searchAssignmentExpression(expression) {
+            this.searchPattern(expression.left);
+            this.searchOperator(expression.operator);
+            this.searchExpression(expression.right);
+        }
+
+        searchUpdateExpression(expression) {
+            this.searchOperator(expression.operator);
+            this.searchExpression(expression.argument);
+        }
+
+        searchLogicalExpression(expression) {
+            // Parse left and right hand sides
+            this.searchExpression(expression.left);
+            this.searchOperator(expression.operator);
+            this.searchExpression(expression.right);
+        }
+
+        searchConditionalExpression(expression) {
+            this.searchExpression(expression.test);
+            this.searchExpression(expression.alternate);
+            this.searchExpression(expression.consequent);
+        }
+
+        searchNewExpression(expression) {
+            this.searchExpression(expression);
+            for (var i = 0; i < expression.arguments.length; i++) {
+                this.searchExpression(expression.arguments[i]);
+            }
+        }
+
+        searchCallExpression(expression) {
+            this.searchExpression(expression);
+            for (var i = 0; i < expression.arguments.length; i++) {
+                this.searchExpression(expression.arguments[i]);
+            }
+        }
+
+        searchMemberExpression(expression) {
+            this.searchExpression(expression.object);
+            this.searchExpression(expression.property);
+        }
+
+        searchYieldExpression(expression) {
+            if (expression.argument) {
+                this.searchExpression(expression.argument);
+            }
+        }
+
+        searchComprehensionExpression(expression) {
+            // Not supported in ECMAScript standard
+        }
+
+        searchLetExpression(expression) {
+            for (var i = 0; i < expression.head.length; i++) {
+                this.searchVariableDeclarator(expression.head[i]);
+            }
+
+            this.searchExpression(expression.body);
+        }
+
+        searchArrayExpression(expression) {
+            if (expression.elements && expression.elements.length) {
+                for (var i = 0; i < expression.elements.length; i++) {
+                    var expr = expression.elements[i];
+                    if (expr) {
+                        this.searchExpression(expr);
+                    }
+                }
+            }
+        }
+
+        searchObjectExpression(expression) {
+            for (var i = 0; i < expression.properties.length; i++) {
+                this.searchProperty(expression.properties[i]);
+            }
+        }
+
+        searchFunctionExpression(expression) {
+            if (expression.id) {
+                this.searchIdentifier(expression.id);
+            }
+
+            for (var i = 0; i < expression.params.length; i++) {
+                this.searchPattern(expression.params[i]);
+            }
+
+            for (var j = 0; j < expression.defaults.length; j++) {
+                this.searchExpression(expression.defaults[j]);
+            }
+
+            // rest
+            if (expression.rest) {
+                this.searchIdentifier(expression.rest);
+            }
+
+            // BlockStatement or Expression
+            if (epxression.body.type == "BlockStatement") {
+                this.searchBlockStatement(expression.body);
+            } else {
+                this.searchExpression(expression.body);
+            }
+
+            // generator
+            // expression
+        }
+
+        searchSequenceExpression(expression) {
+            for (var i = 0; i < expression.expressions.length; i++) {
+                this.searchExpression(expression.expressions[i]);
+            }
+        }
+
+        searchUnaryExpression(expression) {
+            this.searchOperator(expression.operator);
+            this.searchExpression(expression.argument);
+        }
+
+        // Patterns
+        searchPattern(pattern) {
+            // TODO
+        }
+
+        searchIdentifier(identifier) {
+            console.log("Identifier found: " + identifier.name);
+        }
+
+        searchOperator(operator) {
+            /// I don't really care what the operator is right now so leaving this empty!
+        }
+
+        searchProperty(property) {
+            // Only supported by object expressions
+            if (property.key.type == "Literal") {
+                this.searchLiteral(property.key);
+            } else {
+                this.searchIdentifier(property.key);
+            }
+
+            this.searchExpression(property.value);
+
+            //property.kind contains the kind "init" for ordinary property initializers. 
+            // "get" and "set" are the kind values for getters and setters
+        }
+
+        searchVariableDeclarator(declarator) {
+
+        }
     };
 
 
@@ -292,8 +664,7 @@ var $action = $action || {};
         }
 
         addCommand(element, command) {
-            if (command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1
-                || $action.GlobalEventHandlers.indexOf(command.eventType) > -1) {
+            if (command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1) {
                 var newCommand = new $action.Command(command.eventType, element, command.handler)
 
                 if (newCommand.userInvokeable()) {
@@ -335,7 +706,6 @@ var $action = $action || {};
                 }
             }
         };
-
     };
 
     $action.Command = Command;
