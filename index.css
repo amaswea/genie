@@ -1,0 +1,14 @@
+.dependencies {
+    background-color: lightgray; 
+}
+
+.dependent-commands {
+    margin-top: 10px;
+    background-color: lightblue; 
+}
+
+// Layout related
+.layout-horizontal {
+    display: flex;
+    flex-direction: row;
+}

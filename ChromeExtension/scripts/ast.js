@@ -3,191 +3,232 @@ var $action = $action || {};
 (function ($action) {
     class ASTAnalyzer {
         // Format of abstract syntax tree follows: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
-        constructor(ast) {
-            this._ast = ast;
+        constructor() {}
+
+        static searchAST(ast, visitor) {
+            if (ast.type == "Program") {
+                if (visitor.within == "Program") {
+                    visitor.collect = true;
+                }
+
+                for (var i = 0; i < ast.body.length; i++) {
+                    this.searchStatement(ast.body[i], visitor);
+                }
+
+                visitor.collect = false;
+            } else {
+                console.log("Not a valid AST");
+            }
+
+            // Searching for any identifiers referenced within the If statement conditional and return their names as dependencies
+            // Search for any function calls found within the handlers and return their names 
         }
 
+        static searchStatement(statement, visitor) {
+            if (visitor.collect && visitor.lookFor.indexOf(statement.type) > -1) {
+                // TODO: Not all statement nodes go through this
+                // Shoudl refactor so that there is a base method with a switch for all Node objects and everything gets
+                // called from there
+                visitor.items.push(expression);
+            }
 
-        searchStatement(statement) {
             switch (statement.type) {
             case "Identifier":
-                this.searchIdentifier(statement);
+                this.searchIdentifier(statement, visitor);
                 break;
             case "BlockStatement":
-                this.searchBlockStatement(statement);
+                this.searchBlockStatement(statement, visitor);
                 break;
             case "ExpressionStatement":
-                this.searchExpression(statement.expression);
+                this.searchExpression(statement.expression, visitor);
                 break;
             case "IfStatement":
-                this.searchIfStatement(statement);
+                this.searchIfStatement(statement, visitor);
                 break;
             case "LabeledStatement":
-                this.searchLabeledStatement(statement);
+                this.searchLabeledStatement(statement, visitor);
                 break;
             case "BreakStatement" || "ContinueStatement":
-                this.searchBreakStatement(statement);
+                this.searchBreakStatement(statement, visitor);
                 break;
             case "WithStatement":
-                this.searchWithStatement(statement);
+                this.searchWithStatement(statement, visitor);
                 break;
             case "SwitchStatement":
-                this.searchSwitchStatement(statement);
+                this.searchSwitchStatement(statement, visitor);
                 break;
-            case "ReturnSatement" || "ThrowStatement":
-                this.searchExpression(statement.argument);
+            case "ReturnStatement" || "ThrowStatement":
+                this.searchExpression(statement.argument, visitor);
                 break;
             case "TryStatement":
                 this.searchTryStatement(statement);
                 break;
             case "WhileStatement" || "DoWhileStatement":
-                this.searchWhileStatement(statement);
+                this.searchWhileStatement(statement, visitor);
                 break;
             case "ForStatement":
-                this.searchForStatement(statement);
+                this.searchForStatement(statement, visitor);
                 break;
             case "ForInStatement" || "ForOfStatement":
-                this.searchForInStatement(statement);
+                this.searchForInStatement(statement, visitor);
                 break;
             case "LetStatement":
-                this.searchLetStatement(statement);
+                this.searchLetStatement(statement, visitor);
                 break;
             case "DebuggerStatement":
-                this.searchDebuggerStatement(statement);
+                this.searchDebuggerStatement(statement, visitor);
                 break;
             case "EmptyStatement":
                 // TBD 
                 break;
             case "FunctionDeclaration":
-                this.searchFunctionDeclaration(statement);
+                this.searchFunctionDeclaration(statement, visitor);
                 break;
+            case "VariableDeclaration":
+                this.searchVariableDeclaration(statement, visitor);
             default:
                 break;
             }
         }
 
         // Statements 
-        searchForStatement(statement) {
+        static searchForStatement(statement, visitor) {
             if (statement.init) {
                 if (statement.init.type == "Expression") {
-                    this.searchExpression(statement.init);
+                    this.searchExpression(statement.init, visitor);
                 } else {
-                    this.searchVariableDeclaration(statement.init);
+                    this.searchVariableDeclaration(statement.init, visitor);
                 }
             }
 
             if (statement.test) {
-                this.searchExpression(statement.test);
+                this.searchExpression(statement.test, visitor);
             }
 
             if (statement.update) {
-                this.searchExpression(statement.update);
+                this.searchExpression(statement.update, visitor);
             }
 
-            this.searchStatement(statement.body);
+            this.searchStatement(statement.body, visitor);
         }
 
-        searchForInStatement(statement) {
+        static searchForInStatement(statement) {
             // if statement.each is true, it is a for each/in instead of a for/in
             // If statement.each is undefined, it is a for/of statement
             if (this.left.type == "VariableDeclaration") {
-                this.searchVariableDeclaration(this.left);
+                this.searchVariableDeclaration(this.left, visitor);
             } else {
-                this.searchExpression(this.left);
+                this.searchExpression(this.left, visitor);
             }
 
-            this.searchExpression(this.right);
-            this.searchStatement(this.body);
+            this.searchExpression(this.right, visitor);
+            this.searchStatement(this.body, visitor);
         }
 
-        searchWhileStatement(statement) {
-            this.searchExpression(statement.test);
-            this.searchStatement(statement.body);
+        static searchWhileStatement(statement, visitor) {
+            this.searchExpression(statement.test, visitor);
+            this.searchStatement(statement.body, visitor);
         }
 
-        searchTryStatement(statement) {
-            this.searchBlockStatement(statement.block);
+        static searchTryStatement(statement, visitor) {
+            this.searchBlockStatement(statement.block, visitor);
             if (statement.handler) {
-                this.searchCatchClause(statement.handler);
+                this.searchCatchClause(statement.handler, visitor);
             }
 
             for (var i = 0; i < statement.guardedHandlers.length; i++) {
-                this.searchCatchClause(statement.handler);
+                this.searchCatchClause(statement.handler, visitor);
             }
 
             if (statement.finalizer) {
-                this.searchBlockStatement(statement.finalizer);
+                this.searchBlockStatement(statement.finalizer, visitor);
             }
         }
 
-        searchBreakStatement(statement) {
-            this.searchStatement(statement.label);
+        static searchBreakStatement(statement, visitor) {
+            if (statement.label) {
+                this.searchStatement(statement.label, visitor);
+            }
         }
 
-        searchWithStatement(statement) {
-            this.searchExpression(statement.object);
-            this.searchStatement(statement.body);
+        static searchWithStatement(statement, visitor) {
+            this.searchExpression(statement.object, visitor);
+            this.searchStatement(statement.body, visitor);
         }
 
-        searchSwitchStatement(statement) {
-            this.searchExpression(statement.discriminant);
+        static searchSwitchStatement(statement, visitor) {
+            this.searchExpression(statement.discriminant, visitor);
             for (var i = 0; i < statement.cases.length; i++) {
-                this.searchSwitchCase(statement.cases[i]);
+                this.searchSwitchCase(statement.cases[i], visitor);
             }
             // lexical - does it contain any unnested let declarations
         }
 
-        searchBlockStatement(statement) {
-            var statements = expression.body;
+        static searchBlockStatement(statement, visitor) {
+            var statements = statement.body;
             for (var i = 0; i < statements.length; i++) {
-                var statement = statements[i];
-                this.searchStatement(statement);
+                var stmt = statements[i];
+                this.searchStatement(stmt, visitor);
             }
         }
 
-        searchIfStatement(statement) {
-            this.searchExpression(statement.test);
-            this.searchStatement(statement.consequent);
+        static searchIfStatement(statement, visitor) {
+            var collect = visitor.collect;
+            if (visitor.within.indexOf("IfStatement") > -1 && visitor.property == "test" && !collect) {
+                visitor.collect = true;
+            }
+            
+            this.searchExpression(statement.test, visitor);
+            
+            if(!collect){
+                visitor.collect = false;
+            }
+
+            this.searchStatement(statement.consequent, visitor);
             if (statement.alternate) {
-                this.searchStatement(statement.alternate);
+                this.searchStatement(statement.alternate, visitor);
             }
         }
 
-        searchLetStatement(statement) {
+        static searchLetStatement(statement) {
             for (var i = 0; i < statement.head.length; i++) {
-                this.searchVariableDeclarator(statement.head);
+                this.searchVariableDeclarator(statement.head, visitor);
             }
-            this.searchStatement(statement.body);
+            this.searchStatement(statement.body, visitor);
         }
 
-        searchDebuggerStatement(statement) {
+        static searchDebuggerStatement(statement, visitor) {
             // Do nothing? 
         }
 
-        searchLabeledStatement(statement) {
-            this.searchStatement(statement.label);
-            this.searchStatement(statement.body);
+        static searchLabeledStatement(statement, visitor) {
+            this.searchStatement(statement.label, visitor);
+            this.searchStatement(statement.body, visitor);
         }
 
-        searchFunctionDeclaration(statement) {
-            this.searchStatement(statement.id);
-
-            for (var i = 0; i < params.length; i++) {
-                this.searchPattern(statement.params[i]);
+        static searchFunctionDeclaration(statement, visitor) {
+            if (statement.id) {
+                this.searchStatement(statement.id, visitor);
             }
 
-            for (var j = 0; j < statement.params.length; j++) {
-                this.searchExpression(statement.params.length);
+            for (var i = 0; i < statement.params.length; i++) {
+                this.searchPattern(statement.params[i], visitor);
+            }
+
+            if (statement.defaults) {
+                for (var j = 0; j < statement.defaults.length; j++) {
+                    this.searchExpression(statement.defaults[j], visitor);
+                }
             }
 
             if (statement.rest) {
-                this.searchStatement(statement.rest);
+                this.searchStatement(statement.rest, visitor);
             }
 
             if (statement.body.type == "BlockStatement") {
-                this.searchBlockStatement(statement.body);
+                this.searchBlockStatement(statement.body, visitor);
             } else {
-                this.searchExpression(statement.body);
+                this.searchExpression(statement.body, visitor);
             }
 
             //  generator
@@ -195,63 +236,66 @@ var $action = $action || {};
         }
 
         // Expressions
-        searchExpression(expression) {
-            switch (expression) {
+        static searchExpression(expression, visitor) {
+            if (visitor.collect && visitor.lookFor.indexOf(expression.type) > -1) {
+                visitor.items.push(expression);
+            }
+
+            switch (expression.type) {
             case "Identifier":
-                this.searchIdentifier(expression);
+                this.searchIdentifier(expression, visitor);
                 break;
             case "ThisExpression":
-                this.searchThisExpression(expression);
+                this.searchThisExpression(expression, visitor);
                 break;
             case "ArrayExpression":
-                this.searchArrayExpression(expression);
+                this.searchArrayExpression(expression, visitor);
                 break;
             case "ObjectExpression":
-                this.searchObjectExpression(expression);
+                this.searchObjectExpression(expression, visitor);
                 break;
             case "FunctionExpression" || "ArrowExpression":
-                this.searchFunctionExpression(expression)
+                this.searchFunctionExpression(expression, visitor)
                 break;
             case "SequenceExpression":
-                this.searchSequenceExpression(expression);
+                this.searchSequenceExpression(expression, visitor);
                 break;
             case "UnaryExpression":
-                this.searchUnaryExpression(expression);
+                this.searchUnaryExpression(expression, visitor);
                 break;
             case "BinaryExpression":
-                this.searchBinaryExpression(expression);
+                this.searchBinaryExpression(expression, visitor);
                 break;
             case "AssignmentExpression":
-                this.searchAssignmentExpression(expression);
+                this.searchAssignmentExpression(expression, visitor);
                 break;
             case "UpdateExpression":
-                this.searchUpdateExpression(expression);
+                this.searchUpdateExpression(expression, visitor);
                 break;
             case "LogicalExpression":
-                this.searchLogicalExpression(expression);
+                this.searchLogicalExpression(expression, visitor);
                 break;
             case "ConditionalExpression":
-                this.searchConditionalExpression(expression);
+                this.searchConditionalExpression(expression, visitor);
                 break;
             case "NewExpression":
-                this.searchNewExpression(expression);
+                this.searchNewExpression(expression, visitor);
                 break;
             case "CallExpression":
-                this.searchCallExpression(expression);
+                this.searchCallExpression(expression, visitor);
                 break;
-            case "MemberExpression":
-                this.searchMemberExpression(expression);
+            case "MemberExpression" || "StaticMemberExpression" || "ComputedMemberExpression":
+                this.searchMemberExpression(expression, visitor);
                 break;
             case "YieldExpression":
-                this.searchYieldExpression(expression);
+                this.searchYieldExpression(expression, visitor);
                 break;
             case "ComprehensionExpression":
-                this.searchComprehensionExpression(expression);
+                this.searchComprehensionExpression(expression, visitor);
                 break;
             case "LetExpression":
-                this.searchLetExpression(expression);
+                this.searchLetExpression(expression, visitor);
                 break;
-
                 // Not supported in ECMAScript
                 // ComprehensionExpression
                 // GEneratorExpression
@@ -262,202 +306,214 @@ var $action = $action || {};
             }
         };
 
-        searchThisExpression(expression) {
+        static searchThisExpression(expression, visitor) {
             // Do nothing!
         }
 
-        searchBinaryExpression(expression) {
+        static searchBinaryExpression(expression, visitor) {
             // Parse left and right hand sides
-            this.searchExpression(expression.left);
-            this.searchOperator(expression.operator);
-            this.searchExpression(expression.right);
+            this.searchExpression(expression.left, visitor);
+            this.searchOperator(expression.operator, visitor);
+            this.searchExpression(expression.right, visitor);
         }
 
-        searchAssignmentExpression(expression) {
-            this.searchPattern(expression.left);
-            this.searchOperator(expression.operator);
-            this.searchExpression(expression.right);
+        static searchAssignmentExpression(expression, visitor) {
+            this.searchPattern(expression.left, visitor);
+            this.searchOperator(expression.operator, visitor);
+            this.searchExpression(expression.right, visitor);
         }
 
-        searchUpdateExpression(expression) {
-            this.searchOperator(expression.operator);
-            this.searchExpression(expression.argument);
+        static searchUpdateExpression(expression, visitor) {
+            this.searchOperator(expression.operator, visitor);
+            this.searchExpression(expression.argument, visitor);
         }
 
-        searchLogicalExpression(expression) {
+        static searchLogicalExpression(expression, visitor) {
             // Parse left and right hand sides
-            this.searchExpression(expression.left);
-            this.searchOperator(expression.operator);
-            this.searchExpression(expression.right);
+            this.searchExpression(expression.left, visitor);
+            this.searchOperator(expression.operator, visitor);
+            this.searchExpression(expression.right, visitor);
         }
 
-        searchConditionalExpression(expression) {
-            this.searchExpression(expression.test);
-            this.searchExpression(expression.alternate);
-            this.searchExpression(expression.consequent);
+        static searchConditionalExpression(expression, visitor) {
+            var collect = visitor.collect;
+            if (visitor.within.indexOf("ConditionalExpression") > -1 && visitor.property == "test" && !collect) {
+                visitor.collect = true;
+            }
+            
+            this.searchExpression(expression.test, visitor);
+            
+            if(!collect){
+                visitor.collect = false;
+            }
+            
+            this.searchExpression(expression.alternate, visitor);
+            this.searchExpression(expression.consequent, visitor);
         }
 
-        searchNewExpression(expression) {
-            this.searchExpression(expression.callee);
+        static searchNewExpression(expression, visitor) {
+            this.searchExpression(expression.callee, visitor);
             for (var i = 0; i < expression.arguments.length; i++) {
-                this.searchExpression(expression.arguments[i]);
+                this.searchExpression(expression.arguments[i], visitor);
             }
         }
 
-        searchCallExpression(expression) {
-            this.searchExpression(expression.callee);
+        static searchCallExpression(expression, visitor) {
+            this.searchExpression(expression.callee, visitor);
             for (var i = 0; i < expression.arguments.length; i++) {
-                this.searchExpression(expression.arguments[i]);
+                this.searchExpression(expression.arguments[i], visitor);
             }
         }
 
-        searchMemberExpression(expression) {
-            this.searchExpression(expression.object);
-            this.searchExpression(expression.property);
+        static searchMemberExpression(expression, visitor) {
+            this.searchExpression(expression.object, visitor);
+            this.searchExpression(expression.property, visitor);
         }
 
-        searchYieldExpression(expression) {
+        static searchYieldExpression(expression, visitor) {
             if (expression.argument) {
-                this.searchExpression(expression.argument);
+                this.searchExpression(expression.argument, visitor);
             }
         }
 
-        searchComprehensionExpression(expression) {
+        static searchComprehensionExpression(expression, visitor) {
             // Not supported in ECMAScript standard
         }
 
-        searchLetExpression(expression) {
+        static searchLetExpression(expression, visitor) {
             for (var i = 0; i < expression.head.length; i++) {
-                this.searchVariableDeclarator(expression.head[i]);
+                this.searchVariableDeclarator(expression.head[i], visitor);
             }
 
-            this.searchExpression(expression.body);
+            this.searchExpression(expression.body, visitor);
         }
 
-        searchArrayExpression(expression) {
+        static searchArrayExpression(expression, visitor) {
             if (expression.elements && expression.elements.length) {
                 for (var i = 0; i < expression.elements.length; i++) {
                     var expr = expression.elements[i];
                     if (expr) {
-                        this.searchExpression(expr);
+                        this.searchExpression(expr, visitor);
                     }
                 }
             }
         }
 
-        searchObjectExpression(expression) {
+        static searchObjectExpression(expression, visitor) {
             for (var i = 0; i < expression.properties.length; i++) {
-                this.searchProperty(expression.properties[i]);
+                this.searchProperty(expression.properties[i], visitor);
             }
         }
 
-        searchFunctionExpression(expression) {
+        static searchFunctionExpression(expression, visitor) {
             if (expression.id) {
-                this.searchIdentifier(expression.id);
+                this.searchIdentifier(expression.id, visitor);
             }
 
             for (var i = 0; i < expression.params.length; i++) {
-                this.searchPattern(expression.params[i]);
+                this.searchPattern(expression.params[i], visitor);
             }
 
             for (var j = 0; j < expression.defaults.length; j++) {
-                this.searchExpression(expression.defaults[j]);
+                this.searchExpression(expression.defaults[j], visitor);
             }
 
             // rest
             if (expression.rest) {
-                this.searchIdentifier(expression.rest);
+                this.searchIdentifier(expression.rest, visitor);
             }
 
             // BlockStatement or Expression
             if (epxression.body.type == "BlockStatement") {
-                this.searchBlockStatement(expression.body);
+                this.searchBlockStatement(expression.body, visitor);
             } else {
-                this.searchExpression(expression.body);
+                this.searchExpression(expression.body, visitor);
             }
 
             // generator
             // expression
         }
 
-        searchSequenceExpression(expression) {
+        static searchSequenceExpression(expression, visitor) {
             for (var i = 0; i < expression.expressions.length; i++) {
-                this.searchExpression(expression.expressions[i]);
+                this.searchExpression(expression.expressions[i], visitor);
             }
         }
 
-        searchUnaryExpression(expression) {
-            this.searchOperator(expression.operator);
-            this.searchExpression(expression.argument);
+        static searchUnaryExpression(expression, visitor) {
+            this.searchOperator(expression.operator, visitor);
+            this.searchExpression(expression.argument, visitor);
         }
-        
+
         // Clauses
-        searchSwitchCase(switchCase){
-            if(switchCase.test){
-                this.searchExpression(switchCase.test); 
+        static searchSwitchCase(switchCase, visitor) {
+            if (switchCase.test) {
+                this.searchExpression(switchCase.test, visitor);
             }
-            
-            for(var i=0; i<switchCase.consequent.length; i++){
-                this.searchStatement(switchCase.consequent[i]);
+
+            for (var i = 0; i < switchCase.consequent.length; i++) {
+                this.searchStatement(switchCase.consequent[i], visitor);
             }
         }
-        
-        searchCatchClause(catchClause){
-            this.searchPattern(catchClause.param);
-            if(catchClause.guard){
-                this.searchExpression(catchClause.guard);
+
+        static searchCatchClause(catchClause, visitor) {
+            this.searchPattern(catchClause.param, visitor);
+            if (catchClause.guard) {
+                this.searchExpression(catchClause.guard, visitor);
             }
-            
-            this.searchBlockStatement(catchClause.body);
+
+            this.searchBlockStatement(catchClause.body, visitor);
         }
 
         // Patterns
-        searchPattern(pattern) {
+        static searchPattern(pattern, visitor) {
             switch (pattern.type) {
             case "ObjectPattern":
-                this.searchObjectPattern(pattern);
+                this.searchObjectPattern(pattern, visitor);
                 break;
             case "ArrayPattern":
-                this.searchArrayPattern(pattern);
+                this.searchArrayPattern(pattern, visitor);
                 break;
+            case "Identifier":
+                this.searchIdentifier(pattern, visitor);
             default:
                 break;
             }
         }
 
-        searchObjectPattern(pattern) {
+        static searchObjectPattern(pattern, visitor) {
             for (var i = 0; i < pattern.properties; i++) {
                 var p = patterns.properties[i];
                 var key = p.key;
                 var value = p.value;
                 if (key.type == "Literal") {
-                    this.searchLiteral(key);
+                    this.searchLiteral(key, visitor);
                 } else {
-                    this.searchIdentifier(key);
+                    this.searchIdentifier(key, visitor);
                 }
-                
-                this.searchPattern(value);
+
+                this.searchPattern(value, visitor);
             }
         }
-        
-        searchArrayPattern(pattern){
-            for(var i=0; i<pattern.elements.length; i++){
-                if(pattern.elements[i]){
-                    this.searchPattern(pattern.elements[i]);
+
+        static searchArrayPattern(pattern, visitor) {
+            for (var i = 0; i < pattern.elements.length; i++) {
+                if (pattern.elements[i]) {
+                    this.searchPattern(pattern.elements[i], visitor);
                 }
             }
         }
 
         // Miscellaneous
-        searchIdentifier(identifier) {
-            console.log("Identifier found: " + identifier.name);
+        static searchIdentifier(identifier, visitor) {
+            // Do nothing
         }
-        
-        searchLiteral(literal){
+
+        static searchLiteral(literal, visitor) {
             // value : string | boolean | null | number | RegExp
         }
 
-        searchOperator(operator) {
+        static searchOperator(operator, visitor) {
             /// I don't really care what the operator is right now so leaving this empty!
             // UnaryOperator
             // "-" | "+" | "!" | "~" | "typeof" | "void" | "delete"
@@ -478,33 +534,35 @@ var $action = $action || {};
             //  "++" | "--"
         }
 
-        searchProperty(property) {
+        static searchProperty(property, visitor) {
             // Only supported by object expressions
             if (property.key.type == "Literal") {
-                this.searchLiteral(property.key);
+                this.searchLiteral(property.key, visitor);
             } else {
-                this.searchIdentifier(property.key);
+                this.searchIdentifier(property.key, visitor);
             }
 
-            this.searchExpression(property.value);
+            this.searchExpression(property.value, visitor);
 
             //property.kind contains the kind "init" for ordinary property initializers. 
             // "get" and "set" are the kind values for getters and setters
         }
 
-        searchVariableDeclarator(declarator) {
-            this.searchPattern(declarator.id);
+        static searchVariableDeclarator(declarator, visitor) {
+            this.searchPattern(declarator.id, visitor);
             if (declarator.init) {
-                this.searchExpression(declarator.init);
+                this.searchExpression(declarator.init, visitor);
             }
         }
 
-        searchVariableDeclaration(declaration) {
+        static searchVariableDeclaration(declaration, visitor) {
             for (var i = 0; i < declaration.declarations.length; i++) {
-                this.searchVariableDeclarator(declaration.declarations[i]);
+                this.searchVariableDeclarator(declaration.declarations[i], visitor);
             }
 
             // kind "var" | "let" | "const"
         }
     }
+
+    $action.ASTAnalyzer = ASTAnalyzer;
 })($action);

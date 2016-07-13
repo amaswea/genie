@@ -1,27 +1,31 @@
 <!DOCTYPE html>
 <html>
-	<head>
-        <meta charset="utf-8">        
-        <meta name="author" content="Amanda Swearngin">
-        <meta name="description" content="A New Website">
-        <title>Test</title>
-        <script type="text/javascript" src="ChromeExtension/scripts/ext/jquery-3.0.0.js"></script>
-        <script type="text/javascript" src="test.js"></script>
-    </head>
 
-    <body>    
-        <button id="mybutton">Testing event handlers added dynamically</button>
-        <button id="mybutton2">Button using addEventListener</button>
-        <button id="mybutton3" onclick="alert('hello!');">Button with inline event handler</button>
-        <button id="mybutton4">Double click me</button>
-        <a href="about.html">A link to navigate</a>
-        <button id="mybutton5">Click to add content to DOM</button>
-        <button id="mybutton6">Remove an element</button>
-        <button id="mybutton7">Move an element</button>
-        <button id="add">Add event listener</button>
-        <button id="remove">Remove event listener</button>
-        <button id="click">Event listener added</button>
-        <textarea id="mytextarea1" title="A text box"></textarea>
-        <div id="container1"></div>
-    </body>
+<head>
+    <meta charset="utf-8">
+    <meta name="author" content="Amanda Swearngin">
+    <meta name="description" content="A New Website">
+    <title>Test</title>
+    <script type="text/javascript" src="ChromeExtension/scripts/ext/jquery-3.0.0.js"></script>
+    <script type="text/javascript" src="index.js"></script>
+    <link rel="stylesheet" type="text/css" href="index.css">
+</head>
+
+<body>
+    <h2>Command Dependency Test Scenarios Page</h2>
+    <div class="dependencies">
+        <div class="layout-vertical">
+            <h3>Dependencies</h3>
+            <div class="layout-horizontal">
+                <button class="button1">Button1</button>
+                <button class="disable-button1">Click to disable button1</button>
+            </div>
+        </div>
+    </div>
+    <div class="dependent-commands">
+        <h3>Dependent Commands</h3>
+        <button class="button1-dependent">Button 1</button>
+    </div>
+</body>
+
 </html>

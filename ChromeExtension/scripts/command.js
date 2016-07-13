@@ -59,7 +59,7 @@ var $action = $action || {};
             if (this._handler) {
                 this._ast = esprima.parse(this._handler);
                 this._domElement.parsedAST = this._ast;
-                //  this.analyzeHandler(this._ast);
+                this.analyzeHandler(this._ast);
             }
 
             this.postCommands = [];
@@ -284,31 +284,31 @@ var $action = $action || {};
 
         // Go through the AST & traverse it to find the conditions
         analyzeHandler(astNode) {
-            var body = astNode.body;
-            if (body instanceof Array) {
-                for (var i = 0; i < body.length; i++) {
-                    var statement = body[i];
-                    if (statement.type == "IfStatement") {
-                        var test = statement.test;
-                        if (test.type == "Identifier") {
-                            console.log("Dependency: " + test.name)
-                        } else if (test.type == "BinaryExpression") {
-                            searchBinaryExpression(test);
-
-                        } else if (test.type == "ConditionalExpression") {
-
-                        } else {
-                            console.log("Unexpected expression inside of an IF statement");
-                        }
-                    }
-
-                    if (statement.body) {
-                        this.analyzeHandler(astNode);
-                    }
-                }
-            } else {
-
+            // Look for identifiers that are contained within IfStatements
+            var findIdentifiersWithinIfs = {
+                lookFor:"Identifier",
+                within: ["IfStatement", "ConditionalExpression"],
+                property: "test",
+                items: [] // Will contain the collection of requested elements you are lookign for
             }
+            
+            $action.ASTAnalyzer.searchAST(astNode, findIdentifiersWithinIfs);
+            
+            // Find call expressions within if statements and search for those we can resolve to jQuery expressions
+            var findJQueryCallExpressionsWithinIfs = {
+                lookFor: "CallExpression", 
+                within: ["IfStatement", "ConditionalExpression"], 
+                property: "test", 
+            }
+            
+            // Look for any function calls (side-effects)
+            var findFunctionCallsAnywhere = {
+                lookFor: "CallExpression", 
+                within: "Program", 
+                items: []
+            }
+            
+            $action.ASTAnalyzer.searchAST(astNode, findFunctionCallsAnywhere);
         }
     };
 

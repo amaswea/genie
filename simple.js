@@ -24,7 +24,10 @@ $(document).ready(function () {
         
         for(var i=0; i<items.length; i++){
             console.log('testing');
-        }
+        } 
         
+        if($('#button').attr("disabled")){
+            simpleFunction();
+        }
     });
 });

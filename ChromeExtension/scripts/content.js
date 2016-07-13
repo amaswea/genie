@@ -87,8 +87,12 @@ function injectMonitorScript() {
             };
 
             jQuery.fn._on = jQuery.fn.on;
-            jQuery.fn.on = function (events, selector, handler) {
+            jQuery.fn.on = function (events, selector, handler) { // TODO: handle when selector, data options are used
                 jQuery.fn._on.apply(this, arguments);
+                var handle = handler;
+                if(selector != null && !handle){
+                    handler = selector;
+                }
                 var eventList = events.split(" ");
                 for (var i = 0; i < eventList.length; i++) {
                     var evt = eventList[i];
@@ -104,13 +108,16 @@ function injectMonitorScript() {
             jQuery.fn._off = jQuery.fn.off;
             jQuery.fn.off = function (events, selector, handler) {
                 jQuery.fn._off.apply(this, arguments);
+                console.log(events); 
+                console.log(selector); 
+                console.log(handler);
                 var eventList = events.split(" ");
                 for (var i = 0; i < eventList.length; i++) {
                     var evt = eventList[i];
                     window.postMessage({
                         messageType: 'eventRemoved',
                         eventType: evt,
-                        handler: handler.toString(),
+                        handler: handler ? handler.toString() : undefined, 
                         path: getElementPath(this)
                     }, "*");
                 }

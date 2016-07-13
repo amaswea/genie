@@ -33,7 +33,8 @@
                 "scripts/mutationWatcher.js",
                 "scripts/constants.js",
                 "scripts/esprima/esprima.js", 
-                "scripts/script.js"
+                "scripts/script.js", 
+                "scripts/ast.js"
             ],
             "run_at": "document_start"
         }
