@@ -288,18 +288,23 @@ var $action = $action || {};
             var findIdentifiersWithinIfs = {
                 lookFor:"Identifier",
                 within: ["IfStatement", "ConditionalExpression"],
-                property: "test",
+                property: "test", // The property within the 'within' statements to search 
                 items: [] // Will contain the collection of requested elements you are lookign for
             }
             
             $action.ASTAnalyzer.searchAST(astNode, findIdentifiersWithinIfs);
             
-            // Find call expressions within if statements and search for those we can resolve to jQuery expressions
+            /*// Find call expressions within if statements and search for those we can resolve to jQuery expressions
             var findJQueryCallExpressionsWithinIfs = {
                 lookFor: "CallExpression", 
                 within: ["IfStatement", "ConditionalExpression"], 
                 property: "test", 
-            }
+            }*/
+            
+            // Global variables will be those Identifiers that do not have the LastDeclared property set
+            
+        
+            
             
             // Look for any function calls (side-effects)
             var findFunctionCallsAnywhere = {

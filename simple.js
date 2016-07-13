@@ -1,9 +1,16 @@
+"use strict";
 $(document).ready(function () {
     $("#button").click(function () {
         // Locate the script tags
         var enabled = false;
         var good = true;
         var bad = false;
+        
+        if(good)
+            good = false;
+        else 
+            good = true;
+        
         if (good ? good : bad) {
             simpleFunction();
         }
