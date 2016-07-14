@@ -3,22 +3,25 @@ var $action = $action || {};
     "use strict";
     class ScriptManager {
         constructor(ui) {
-            this.asts = {};
+            this._asts = {};
+        }
+        
+        get ASTs() {
+            return this._asts; 
         }
 
         addScript(url, data) {
-            if (url == "page" && !this.asts.page) {
-                this.asts.page= [];
+            if (url == "page" && !this._asts.page) {
+                this._asts.page= [];
             }
 
             var scriptAST = esprima.parse(data);
-          //  var cfg = cfg.buildCFG(scriptAST);
-
             if (url == "page") {
-                this.asts.page.push(scriptAST);
+                this._asts.page.push(scriptAST);
             } else {
-                this.asts[url] = scriptAST;
+                this._asts[url] = scriptAST;
             }
+
         }
 
         // removeScript ? 

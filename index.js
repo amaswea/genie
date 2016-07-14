@@ -2,7 +2,7 @@ $(document).ready(function () {
     // TODO: Test different types of event handler registrations
 
     // Listeners to update dependencies
-   /* $(".disable-button1").click(function () {
+    $(".disable-button1").click(function () {
         if ($('.button1').attr("disabled")) {
             $('.button1').attr("disabled", false);
         } else {
@@ -33,21 +33,21 @@ $(document).ready(function () {
         if (!$('.button1').attr('disabled')) {
             alert("The button was clicked");
         }
-    });*/
+    });
 
     $('.button2-dependent').click(function () {
         var disabled = $('.button2').attr('disabled');
-        disabled = $('.button3').attr('disabled');
+        disabled = $('.button3').attr('disabled'); 
         if (!disabled) {
             alert("The button was clicked");
         }
     });
 
-/*    $('.button3-dependent').click(function () {
+    $('.button3-dependent').click(function () {
         var button = $('.button2');
         var disabled = button.attr('disabled');
         if (!disabled) {
             alert("The button was clicked");
         }
-    });*/
+    });
 });

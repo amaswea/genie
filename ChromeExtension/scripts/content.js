@@ -200,20 +200,19 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 $(document).ready(function () {
     $action.interface = new $action.KeyboardUI(); // Instantiate a new type of interface 
     // For other types of interfaces, they could be instantiated here or through a setting?
+    // Initialize the script manager if not already initialized
+    if (!$action.scriptManager) {
+        $action.scriptManager = new $action.ScriptManager();
+    }
 
     // Create a new instance of the command manager with this instance of the UI
-    $action.commandManager = new $action.CommandManager($action.interface);
+    $action.commandManager = new $action.CommandManager($action.interface, $action.scriptManager);
 
     injectMonitorScript();
 
     // Add an observer to watch when new elements are added to the page
     var mutationObserver = new $action.MutationWatcher();
     mutationObserver.init();
-
-    // Initialize the script manager if not already initialized
-    if (!$action.scriptManager) {
-        $action.scriptManager = new $action.ScriptManager();
-    }
 
     // Parse all script tags in the page and add them as scripts
     var scripts = $('script').not('#genie_monitor_script');

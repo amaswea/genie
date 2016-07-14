@@ -59,7 +59,6 @@ var $action = $action || {};
             if (this._handler) {
                 this._ast = esprima.parse(this._handler);
                 this._domElement.parsedAST = this._ast;
-                this.analyzeHandler(this._ast);
             }
 
             this.postCommands = [];
@@ -84,6 +83,10 @@ var $action = $action || {};
         get PostCommands() {
             return this._postCommands;
         };
+
+        get AST() {
+            return this._ast;
+        }
 
         /**
          * Returns a string representing the source code of the associated event handler
@@ -281,49 +284,16 @@ var $action = $action || {};
                 (document.head || document.documentElement).removeChild(s);
             };
         };
-
-        // Go through the AST & traverse it to find the conditions
-        analyzeHandler(astNode) {
-            // Look for identifiers that are contained within IfStatements
-            var findIdentifiersWithinIfs = {
-                lookFor:"Identifier",
-                within: ["IfStatement", "ConditionalExpression"],
-                property: "test", // The property within the 'within' statements to search 
-                items: [] // Will contain the collection of requested elements you are lookign for
-            }
-            
-            $action.ASTAnalyzer.searchAST(astNode, findIdentifiersWithinIfs);
-            
-            /*// Find call expressions within if statements and search for those we can resolve to jQuery expressions
-            var findJQueryCallExpressionsWithinIfs = {
-                lookFor: "CallExpression", 
-                within: ["IfStatement", "ConditionalExpression"], 
-                property: "test", 
-            }*/
-            
-            // Global variables will be those Identifiers that do not have the LastDeclared property set
-            
-        
-            
-            
-            // Look for any function calls (side-effects)
-            var findFunctionCallsAnywhere = {
-                lookFor: "CallExpression", 
-                within: "Program", 
-                items: []
-            }
-            
-            $action.ASTAnalyzer.searchAST(astNode, findFunctionCallsAnywhere);
-        }
     };
 
 
     class CommandManager {
-        constructor(ui) {
+        constructor(ui, scripts) {
             this.commands = [];
             this.elements = [];
             this.commandCount = 0;
             this.ui = ui; // The instance of UI that is creating this instance
+            this._scripts = scripts;
         }
 
         addCommand(element, command) {
@@ -345,6 +315,8 @@ var $action = $action || {};
                     this.commands[index] = [];
 
                 this.commands[index].push(newCommand);
+                
+                this.analyzeCommandHandler(newCommand.AST); 
             }
         };
 
@@ -369,6 +341,72 @@ var $action = $action || {};
                 }
             }
         };
+
+
+        analyzeCommandHandler(handlerAST) {
+            // Look for identifiers that are contained within IfStatements
+            var findIdentifiersWithinConditionals = {
+                lookFor: "Identifier",
+                within: [
+                    "IfStatement",
+                    "ConditionalExpression",
+                    "WhileStatement",
+                    "DoWhileStatement",
+                    "ForStatement",
+                    "ForInStatement",
+                    "ForOfStatement"],
+                property: "test", // The property within the 'within' statements to search 
+                items: [] // Will contain the collection of requested elements you are lookign for
+            }
+
+            $action.ASTAnalyzer.searchAST(handlerAST, findIdentifiersWithinConditionals);
+
+            // Look for identifiers that are contained within SwitchStatements (uses the discriminant property instead of 'test')
+            var findIdentifiersWithinSwitch = {
+                lookFor: "Identifier",
+                within: ["SwitchStatement"],
+                property: "discriminant",
+                items: []
+            }
+
+            $action.ASTAnalyzer.searchAST(handlerAST, findIdentifiersWithinSwitch);
+
+            /*// Find call expressions within if statements and search for those we can resolve to jQuery expressions
+            var findJQueryCallExpressionsWithinIfs = {
+                lookFor: "CallExpression", 
+                within: ["IfStatement", "ConditionalExpression"], 
+                property: "test", 
+            }*/
+
+            // Global variables will be those Identifiers that do not have the LastDeclared property set
+
+            // Finding value of Expression statement referenced by the assignment or delcarator
+            // - Is this statement referring to any element on the page? (selector or document.getElementById)
+            // - Is this statement referring to any global variable (outside the function)
+
+
+            // Look for any function calls (side-effects)
+            var findFunctionCallsAnywhere = {
+                lookFor: "CallExpression",
+                within: "Program",
+                items: []
+            }
+
+            $action.ASTAnalyzer.searchAST(handlerAST, findFunctionCallsAnywhere);
+
+            // Find all function expressions within each script AST
+            var scriptASTs = this._scripts.ASTs;
+            var findFunctionExpressionsInProgram = {
+                lookFor: ["FunctionExpression", "FunctionDeclaration", "ArrowExpression"],
+                within: ["Program"],
+                items: []
+            }
+            
+            // TODO: reconsider how this works because the commands are added one at a time so this requires calling again and again on all scripts. 
+            for (var i = 0; i < scriptASTs; i++) {
+              $action.ASTAnalyzer.searchAST(scriptASTs[i], findFunctionExpressionsInProgram);
+            }
+        }
     };
 
     $action.Command = Command;

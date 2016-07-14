@@ -246,10 +246,21 @@ var $action = $action || {};
         }
 
         static searchSwitchStatement(statement, visitor) {
+            var collect = visitor.collect;
+            if (visitor.property == "discriminant") {
+                visitor.collect = true;
+            }
+
             this.searchNode(statement.discriminant, visitor);
+
+            if (!collect) {
+                visitor.collect = false;
+            }
+
             for (var i = 0; i < statement.cases.length; i++) {
                 this.searchNode(statement.cases[i], visitor);
             }
+
             // lexical - does it contain any unnested let declarations
         }
 
@@ -346,9 +357,7 @@ var $action = $action || {};
             // Currently, just look for Identifier types. Other options are ArrayPattern & ObjectPattern
             if (expression.left.type == "Identifier" && visitor.scopes && visitor.scopes.length) {
                 var scope = visitor.scopes[visitor.scopes.length - 1]; // The closest scope is the last on the stack
-                if (!scope.Assignments[expression.left.name]) {
-                    scope.addAssignment(expression.left.name, expression.right);
-                }
+                scope.addAssignment(expression.left.name, expression.right);
             }
 
             this.searchNode(expression.left, visitor);
@@ -427,12 +436,16 @@ var $action = $action || {};
                 this.searchNode(expression.id, visitor);
             }
 
-            for (var i = 0; i < expression.params.length; i++) {
-                this.searchnode(expression.params[i], visitor);
+            if (expression.params) {
+                for (var i = 0; i < expression.params.length; i++) {
+                    this.searchNode(expression.params[i], visitor);
+                }
             }
 
-            for (var j = 0; j < expression.defaults.length; j++) {
-                this.searchNode(expression.defaults[j], visitor);
+            if (expression.defaults) {
+                for (var j = 0; j < expression.defaults.length; j++) {
+                    this.searchNode(expression.defaults[j], visitor);
+                }
             }
 
             // rest
@@ -548,13 +561,19 @@ var $action = $action || {};
             // Currently, just look for Identifier types. Other options are ArrayPattern & ObjectPattern
             if (declarator.id.type == "Identifier" && visitor.scopes && visitor.scopes.length) {
                 var scope = visitor.scopes[visitor.scopes.length - 1]; // The closest scope is the last on the stack
-                if (!scope.Declarations[declarator.id.name]) {
-                    scope.addDeclaration(declarator.id.name, declarator.init);
-                }
+                scope.addDeclaration(declarator.id.name, declarator.init);
             }
 
             this.searchNode(declarator.id, visitor);
             if (declarator.init) {
+
+                // If the init is a function expression, assign the referenceID on the node to the 
+                // identifier of the VariableDeclarator that the function is being assigned to
+                if (declarator.init.type == "FunctionExpression") {
+                    declarator.init.referenceID = declarator.id.name; 
+                    // TODO: This won't work for ObjectPattern or ArrayPattern node types. decorator.id is a Pattern node.
+                }
+
                 this.searchNode(declarator.init, visitor);
             }
         }
