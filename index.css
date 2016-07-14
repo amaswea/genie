@@ -7,6 +7,11 @@
     background-color: lightblue; 
 }
 
+.external-functions{
+    margin-top: 10px;
+    background-color: lightgreen; 
+}
+
 // Layout related
 .layout-horizontal {
     display: flex;

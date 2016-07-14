@@ -66,10 +66,10 @@ var $action = $action || {};
                 this.searchSwitchStatement(node, visitor);
                 break;
             case "ReturnStatement" || "ThrowStatement":
-                this.searchReturnStatement(statement.argument, visitor);
+                this.searchReturnStatement(node, visitor);
                 break;
             case "TryStatement":
-                this.searchTryStatement(statement);
+                this.searchTryStatement(node, visitor);
                 break;
             case "WhileStatement" || "DoWhileStatement":
                 this.searchWhileStatement(node, visitor);
@@ -94,9 +94,6 @@ var $action = $action || {};
                 break;
             case "VariableDeclaration":
                 this.searchVariableDeclaration(node, visitor);
-                break;
-            case "Identifier":
-                this.searchIdentifier(node, visitor);
                 break;
             case "ThisExpression":
                 this.searchThisExpression(node, visitor);
@@ -169,8 +166,16 @@ var $action = $action || {};
                 break;
             case "ArrayPattern":
                 this.searchArrayPattern(node, visitor);
+                break;
+            case "AssignmentPattern":
+                this.searchAssignmentPattern(node, visitor);
+                break;
             case "Property":
                 this.searchProperty(node, visitor);
+                break;
+            case "RestElement":
+                this.searchRestElement(node, visitor);
+                break;
             default:
                 break;
                 // Not supported in ECMAScript
@@ -207,9 +212,9 @@ var $action = $action || {};
         static searchForInStatement(statement, visitor) {
             // if statement.each is true, it is a for each/in instead of a for/in
             // If statement.each is undefined, it is a for/of statement
-            this.searchNode(this.left, visitor);
-            this.searchNode(this.right, visitor);
-            this.searchNode(this.body, visitor);
+            this.searchNode(statement.left, visitor);
+            this.searchNode(statement.right, visitor);
+            this.searchNode(statement.body, visitor);
         }
 
         static searchWhileStatement(statement, visitor) {
@@ -223,8 +228,10 @@ var $action = $action || {};
                 this.searchNode(statement.handler, visitor);
             }
 
-            for (var i = 0; i < statement.guardedHandlers.length; i++) {
-                this.searchNode(statement.handler, visitor);
+            if (statement.guardedHandlers) {
+                for (var i = 0; i < statement.guardedHandlers.length; i++) {
+                    this.searchNode(statement.handler, visitor);
+                }
             }
 
             if (statement.finalizer) {
@@ -263,6 +270,13 @@ var $action = $action || {};
 
             // lexical - does it contain any unnested let declarations
         }
+
+        static searchReturnStatement(statement, visitor) {
+            if (statement.argument) {
+                this.searchNode(statement.argument, visitor);
+            }
+        }
+
 
         static searchBlockStatement(statement, visitor) {
             // Push the node onto the scope whenever a new block statement is reached
@@ -509,6 +523,14 @@ var $action = $action || {};
             }
         }
 
+        static searchAssignmentPattern(pattern, visitor) {
+            // TODO 
+        }
+
+        static searchRestElement(pattern, visitor) {
+            // TODO
+        }
+
         // Miscellaneous
         static searchIdentifier(identifier, visitor) {
             if (!identifier.lastAssigned) {
@@ -519,6 +541,10 @@ var $action = $action || {};
 
             if (!identifier.lastDeclared) {
                 identifier.lastDeclared = this.findLastDeclared(identifier, visitor);
+            }
+
+            if (!identifier.sideEffectFreeExpression) {
+                identifier.sideEffectFreeExpression = this.constructSideEffectFreeExpression(identifier);
             }
         }
 
@@ -570,7 +596,7 @@ var $action = $action || {};
                 // If the init is a function expression, assign the referenceID on the node to the 
                 // identifier of the VariableDeclarator that the function is being assigned to
                 if (declarator.init.type == "FunctionExpression") {
-                    declarator.init.referenceID = declarator.id.name; 
+                    declarator.init.referenceID = declarator.id.name;
                     // TODO: This won't work for ObjectPattern or ArrayPattern node types. decorator.id is a Pattern node.
                 }
 
@@ -606,6 +632,337 @@ var $action = $action || {};
                         return declaration;
                     }
                 }
+        }
+
+        static constructSideEffectFreeExpression(identifier) {
+            // Just construct expression now. Worry about side-effects later
+            if (identifier.lastAssigned) {
+
+            } else if (identifier.lastDeclared) {
+
+            } else {
+
+            }
+        }
+
+        static convertNodeToString(node) {
+            if (!node) {
+                return "";
+            }
+
+            switch (node.type) {
+            case "Identifier":
+                return node.name;
+            case "BlockStatement":
+                {
+                    var toStringValue = "{ ";
+                    for (var i = 0; i < node.body.length; i++) {
+                        toStringValue = toStringValue + this.convertNodeToString(node.body[i]) + "; ";
+                    }
+                    return toStringValue + " }"
+                }
+            case "ExpressionStatement":
+                return this.convertNodeToString(node.expression);
+            case "IfStatement" || "ConditionalExpression":
+                {
+                    var toStringValue = "if(" + this.convertNodeToString(node.test) + ") { " + this.convertNodeToString(node.consequent) + " } ";
+                    if (node.alternate) {
+                        if (node.alternate.type == "IfStatement") {
+                            toStringValue = toStringValue + "else " + this.convertNodeToString(node.alternate);
+                        } else {
+                            toStringValue = toStringValue + "else { " + this.convertNodeToString(node.alternate) + "}";
+                        }
+                    }
+                    return toStringValue;
+                }
+            case "LabeledStatement":
+                {
+                    return node.label.name + ": " + this.convertNodeToString(node.body);
+                }
+            case "BreakStatement":
+                {
+                    return "break" + node.label ? " " + this.convertNodeToString(node.label) : ";";
+                }
+            case "ContinueStatement":
+                {
+                    return "continue" + (node.label ? " " + this.convertNodeToString(node.label) : "") + ";";
+                }
+            case "WithStatement":
+                // TODO
+                return "";
+            case "SwitchStatement":
+                {
+                    var toStringValue = "switch(" + this.convertNodeToString(node.discriminant) + ") {";
+                    for (var i = 0; i < node.cases.length; i++) {
+                        toStringValue = " " + this.convertNodeToString(node.cases[i]);
+                    }
+                    return toStringValue + "}";
+                }
+            case "ReturnStatement":
+                {
+                    return "return" + (node.argument ? " " + this.convertNodeToString(node.expression) : ";");
+                }
+            case "ThrowStatement":
+                {
+                    return "throw" + (node.argument ? " " + this.convertNodeToString(node.expression) : ";");
+                }
+            case "TryStatement":
+                {
+                    var toStringValue = "try { " + this.convertNodeToString(node.block) + " } ";
+                    if (node.handler) {
+                        toStringValue = toStringValue + this.convertNodeToString(node.handler);
+                    }
+                    //  guardedHandlers - what are these? 
+                    if (node.finalizer) {
+                        toStringValue + "finally { " + this.convertNodeToString(node.finalizer); + " }";
+                    }
+                    return toStringValue;
+                }
+            case "WhileStatement":
+                {
+                    return "while (" + this.convertNodeToString(node.test) + ") { " + this.convertNodeToString(node.body) + " }";
+                }
+            case "DoWhileStatement":
+                {
+                    return "do { " + this.convertNodeToString(node.body) + " } while(" + this.convertNodeToString(node.test) + ")";
+                }
+            case "ForStatement":
+                {
+                    return "for (" + this.convertNodeToString(node.init) + "; " + this.convertNodeToString(node.test)
+                    "; " + this.convertNodeToString(node.update) + ") { " + this.convertNodeToString(node.body) + " }";
+                }
+            case "ForInStatement":
+                {
+                    return "for " + (node.each ? "each " : "") + "( " + this.convertNodeToString(node.left) + " in " + this.convertNodeToString(node.right) + ") { " + this.convertNodeToString(node.body) + " }";
+                }
+            case "ForOfStatement":
+                {
+                    return "for ( " + this.convertNodeToString(node.left) + " of " + this.convertNodeToString(node.right) + ") { " + this.convertNodeToString(node.body) + " }";
+                }
+            case "LetStatement":
+                {
+                    // TODO -- Not sure how this is different than a 'let' declaration
+                    return "";
+                }
+            case "DebuggerStatement":
+                return "debugger;";
+            case "EmptyStatement":
+                return ";";
+            case "FunctionDeclaration" || "FunctionExpression":
+                {
+                    var toStringValue = "function " + (node.id ? this.convertNodeToString(node.id) : "") + "(";
+                    for (var i = 0; i < node.params.length; i++) {
+                        toStringValue = toStringValue + this.convertNodeToString(node.params[i]);
+                        if (i < node.params.length - 1) {
+                            toStringValue = toStringValue + ", ";
+                        }
+                    }
+                    toStringValue = toStringValue + ") { " + this.convertNodeToString(node.body) + " }";
+                    return toStringValue;
+                }
+            case "VariableDeclaration":
+                {
+                    var toStringValue = node.kind;
+                    for (var i = 0; i < node.declarations.length; i++) {
+                        var declarator = node.declarations[i];
+                        toStringValue + ", " + this.convertNodeToString(declarator);
+                    }
+                    toStringValue = ";";
+                    return toStringValue;
+                }
+            case "ThisExpression":
+                return "this"; // Semicolon? 
+            case "ArrayExpression":
+                {
+                    var toStringValue = "[";
+                    for (var i = 0; i < node.elements.length; i++) {
+                        var element = node.elements[i];
+                        if (element) {
+                            toStringValue + " " + this.convertNodeToString(element);
+                            if (i < node.elements.length - 1) {
+                                toStringValue + ",";
+                            }
+                        }
+                    }
+                    toStringValue + ";";
+                    return toStringValue;
+                }
+            case "ObjectExpression":
+                {
+                    var toStringValue = "{ ";
+                    for (var i = 0; i < node.properties.length; i++) {
+                        toStringValue = toStringValue + this.convertNodeToString(node.properties[i]);
+                        if (i < node.properties.length - 1) {
+                            toStringValue = toStringValue + ",";
+                        }
+                    }
+                    toStringValue = toStringValue + " }";
+                    return toStringValue;
+                }
+            case "ArrowExpression":
+                {
+                    var toStringValue = "(";
+                    for (var i = 0; i < node.params.length; i++) {
+                        toStringValue = toStringValue + this.convertNodeToString(node.params[i]);
+                        if (i < node.params.length - 1) {
+                            toStringValue = toStringValue + ", ";
+                        }
+                    }
+                    toStringValue = toStringValue + ") => { " + this.convertNodeToString(node.body) + " }";
+                    return toStringValue;
+                }
+            case "SequenceExpression":
+                {
+                    var toStringValue = "";
+                    for (var i = 0; i < expressions.length; i++) {
+                        toStringValue = toStringValue + this.convertNodeToString(expressions[i]);
+                        if (i < expressions.length - 1) {
+                            toStringValue = toStringValue + ",";
+                        }
+                    }
+                    return toStringValue;
+                }
+            case "UnaryExpression":
+                {
+                    return this.convertNodeToString(node.operator) + this.convertNodeToString(node.argument);
+                }
+            case "BinaryExpression":
+                {
+                    return this.convertNodeToString(node.left) + " " + node.operator + this.convertNodeToString(node.right);
+                }
+            case "AssignmentExpression":
+                {
+                    return this.convertNodeToString(node.left) + " " + this.convertNodeToString(node.operator) + this.convertNodeToString(node.right);
+                }
+            case "UpdateExpression":
+                {
+                    var toStringValue = "";
+                    if (prefix) {
+                        toStringValue = toStringValue + this.convertNodeToString(node.operator) + this.convertNodeToString(node.argument);
+                    } else {
+                        toStringValue = toStringValue + this.convertNodeToString(node.argument) + this.convertNodeToString(node.operator);
+                    }
+                    return toStringValue;
+                }
+            case "LogicalExpression":
+                {
+                    return this.convertNodeToString(node.left) + " " + this.convertNodeToString(node.operator) + " " + this.convertNodeToString(node.right);
+                }
+            case "NewExpression":
+                {
+                    var toStringValue = "new " + this.convertNodeToString(node.callee) + "(";
+                    for (var i = 0; i < node.arguments.length; i++) {
+                        toStringValue = toStringValue + this.convertNodeToString(node.arguments[i]);
+                        if (i < node.arguments.length - 1) {
+                            toStringValue = toStringValue + ",";
+                        }
+                    }
+                    toStringValue = toStringValue + ")";
+                    return toStringValue;
+                }
+            case "CallExpression":
+                {
+                    var toStringValue = this.convertNodeToString(node.callee) + "(";
+                    for (var i = 0; i < node.arguments.length; i++) {
+                        toStringValue = toStringValue + this.convertNodeToString(node.arguments[i]);
+                        if (i < node.arguments.length - 1) {
+                            toStringValue = toStringValue + ",";
+                        }
+                    }
+                    toStringValue = toStringValue + ")";
+                    return toStringValue;
+                }
+            case "StaticMemberExpression":
+                {
+
+                }
+            case "ComputedMemberExpression":
+                {
+
+                }
+            case "YieldExpression":
+                {
+                    return "yield" + (node.argument ? " " + this.convertNodeToString(node.argument) : "");
+                }
+            case "ComprehensionExpression":
+                // TODO: Not supported in ECMAscript standard
+                return "";
+            case "LetExpression":
+                // TODO
+                return "";
+            case "VariableDeclaration":
+                {
+                    var toStringValue = node.kind;
+                    for (var i = 0; i < node.declarations.length; i++) {
+                        toStringValue = " " + this.convertNodeToString(node.declarations[i]);
+                        if (i < node.declarations.length - 1) {
+                            toStringValue = toStringValue + ",";
+                        }
+                    }
+                    return toStringValue + ";";
+                }
+            case "VariableDeclarator":
+                {
+                    return this.convertNodeToString(node.id) + (node.init ? " = " + this.convertNodeToString(node.init) : "");
+                }
+                // Clauses
+            case "CatchClause":
+                {
+                    return "catch (" + this.convertNodeToString(node.param) + ") { " + this.convertNodeToString(node.body) + " }";
+                    // There is a 'guard' property we aren't handling currently
+                }
+            case "SwitchCase":
+                {
+                    var toStringValue = "case " + this.convertNodeToString(node.test) + ":";
+                    for (var i = 0; i < node.consequent.length; i++) {
+                        toStringValue = toStringValue + " " + this.convertNodeToString(node.consequent[i]);
+                    }
+                    return toStringValue;
+                }
+                // Patterns
+            case "ObjectPattern":
+                {
+                    var toStringValue = "{ ";
+                    for (var i = 0; i < node.elements.length; i++) {
+                        toStringValue = toStringValue + this.convertNodeToString(node.elements[i]);
+                        if (i == node.elements.length - 1) {
+                            toStringValue = toStringValue + ", ";
+                        }
+                    }
+                    return toStringValue + " }";
+                }
+            case "ArrayPattern":
+                {
+                    var toStringValue = "[ ";
+                    for (var i = 0; i < node.elements.length; i++) {
+                        toStringValue = toStringValue + this.convertNodeToString(node.elements[i]);
+                        if (i == node.elements.length - 1) {
+                            toStringValue = toStringValue + ", ";
+                        }
+                    }
+                    return toStringValue + " ]";
+                }
+            case "AssignmentPattern":
+                {
+                    return this.convertNodeToString(node.left) + " = " + this.convertNodeToString(node.right);
+                }
+            case "RestElement":
+                {
+                    return "..." + this.convertNodeToString(node.argument);
+                }
+            case "Property":
+                // TODO
+                return "";
+            default:
+                break;
+                // Not supported in ECMAScript
+                // ComprehensionExpression
+                // GEneratorExpression
+                // GraphExpression
+                // GraphIndexExpression
+                // ComprehensionBlock
+                // ComprehensionIf
+            }
         }
     }
 

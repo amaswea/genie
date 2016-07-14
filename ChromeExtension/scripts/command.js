@@ -294,6 +294,24 @@ var $action = $action || {};
             this.commandCount = 0;
             this.ui = ui; // The instance of UI that is creating this instance
             this._scripts = scripts;
+            this.init();
+        }
+
+        init() {
+            // Gather up all the scripts on the page and find all function expressions in them to be resolved by the handlers later
+            var scriptASTs = this._scripts.ASTs;
+            var findFunctionExpressionsInProgram = {
+                lookFor: ["FunctionExpression", "FunctionDeclaration", "ArrowExpression"],
+                within: ["Program"],
+                items: []
+            }
+
+            var scripts = Object.keys(scriptASTs);
+            for (var i = 0; i < scripts.length; i++) {
+                $action.ASTAnalyzer.searchAST(scriptASTs[scripts[i]], findFunctionExpressionsInProgram);
+            }
+
+            this._functions = findFunctionExpressionsInProgram.items;
         }
 
         addCommand(element, command) {
@@ -315,8 +333,8 @@ var $action = $action || {};
                     this.commands[index] = [];
 
                 this.commands[index].push(newCommand);
-                
-                this.analyzeCommandHandler(newCommand.AST); 
+
+                this.analyzeCommandHandler(newCommand.AST);
             }
         };
 
@@ -393,19 +411,45 @@ var $action = $action || {};
             }
 
             $action.ASTAnalyzer.searchAST(handlerAST, findFunctionCallsAnywhere);
+            this.linkFunctionCalls(findFunctionCallsAnywhere.items);
+        }
 
-            // Find all function expressions within each script AST
-            var scriptASTs = this._scripts.ASTs;
-            var findFunctionExpressionsInProgram = {
-                lookFor: ["FunctionExpression", "FunctionDeclaration", "ArrowExpression"],
-                within: ["Program"],
-                items: []
+        linkFunctionCalls(callList) {
+            // Go through the returned list of function expressions and link them to those with the same name in the script cache
+            for (var i = 0; i < callList.length; i++) {
+                var call = callList[i];
+                var name = this.getCallReference(call);
+                // Search through the stored list of functions
+                for (var j = 0; j < this._functions.length; j++) {
+                    var storedFunction = this._functions[j];
+                    var storedName = this.getFunctionName(storedFunction);
+                    if (name.length && storedName.length && storedName == name) {
+                        call.referencedFunction = storedFunction;
+                        break;
+                    }
+                }
             }
-            
-            // TODO: reconsider how this works because the commands are added one at a time so this requires calling again and again on all scripts. 
-            for (var i = 0; i < scriptASTs; i++) {
-              $action.ASTAnalyzer.searchAST(scriptASTs[i], findFunctionExpressionsInProgram);
+        }
+
+        // Can be FunctionExpression, FunctionDefinition, or ArrowExpression
+        getFunctionName(functionExpr) {
+            var fnName = "";
+            if (functionExpr.id && functionExpr.id.type == "Identifier") {
+                fnName = functionExpr.id.name;
+            } else if (functionExpr.id) {
+                fnName = functionExpr.id;
             }
+            return fnName;
+        }
+
+        // Can be FunctionExpression, FunctionDefinition, or ArrowExpression
+        getCallReference(callExpr) {
+            var callRef = "";
+            if (callExpr.callee.type == "Identifier") {
+                callRef = callExpr.callee.name; 
+            } 
+            // TODO: more advanced calls later
+            return callRef;
         }
     };
 

@@ -2,6 +2,7 @@ $(document).ready(function () {
     // TODO: Test different types of event handler registrations
 
     // Listeners to update dependencies
+/*
     $(".disable-button1").click(function () {
         if ($('.button1').attr("disabled")) {
             $('.button1').attr("disabled", false);
@@ -9,6 +10,7 @@ $(document).ready(function () {
             $(".button1").attr("disabled", true);
         }
     });
+*/
 
     $(".disable-button2").click(function () {
         if ($('.button2').attr("disabled")) {
@@ -18,7 +20,7 @@ $(document).ready(function () {
         }
     });
 
-    $(".disable-button3").click(function () {
+/*    $(".disable-button3").click(function () {
         if ($('.button3').attr("disabled")) {
             $('.button3').attr("disabled", false);
         } else {
@@ -37,11 +39,11 @@ $(document).ready(function () {
 
     $('.button2-dependent').click(function () {
         var disabled = $('.button2').attr('disabled');
-        disabled = $('.button3').attr('disabled'); 
+        disabled = $('.button3').attr('disabled');
         if (!disabled) {
             alert("The button was clicked");
         }
-    });
+    });*/
 
     $('.button3-dependent').click(function () {
         var button = $('.button2');
@@ -50,4 +52,13 @@ $(document).ready(function () {
             alert("The button was clicked");
         }
     });
+
+/*    // Calling external functions
+    $('.button-external-1').click(function () {
+        externalFunction();
+    });
+
+    $('.button-external-2').click(function () {
+        externalFunctionWithDependencies();
+    });*/
 });
