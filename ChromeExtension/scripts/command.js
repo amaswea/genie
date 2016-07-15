@@ -55,6 +55,7 @@ var $action = $action || {};
             this._eventType = eventType;
             this._domElement = domElement; // The DOM element the command is associated with
             this._handler = handler;
+            this._dependencies = [];
 
             if (this._handler) {
                 this._ast = esprima.parse(this._handler);
@@ -88,6 +89,10 @@ var $action = $action || {};
             return this._ast;
         }
 
+        get DataDependencies() {
+            return this._dependencies;
+        }
+
         /**
          * Returns a string representing the source code of the associated event handler
          * @private
@@ -105,6 +110,23 @@ var $action = $action || {};
          */
         addPostCommand(command) {
             this._postCommands.push(command);
+        }
+
+        addDependencies(dependencies) {
+            this._dependencies.push(...dependencies);
+        }
+
+        /**
+         * Evaluates the current value of the dependency
+         * @private
+         * @property undefined
+         * @param {Object} dependency
+         */
+        evaluateDependency(dependency) {
+            var expr = dependency.testExpression;
+            if (expr) {
+                return eval(expr);
+            }
         }
 
         /**
@@ -132,6 +154,16 @@ var $action = $action || {};
             }
 
             // 3. Command results in no effect because of input guards or conditions in the code
+            if (this._dependencies.length) {
+                // Evaluate the current value of each dependency
+                for (var i = 0; i < this._dependencies.length; i++) {
+                    var result = this.evaluateDependency(this._dependencies[i]);
+                    if (!result) {
+                        return false;
+                    }
+                }
+            }
+
             // 4. Command is not yet in the DOM (Hovering over a menu adds menu items with commands to DOM)
             // If it isn't in the DOM yet, we shouldn't find any event handlers for it in which case it won't make it here??
 
@@ -308,7 +340,11 @@ var $action = $action || {};
 
             var scripts = Object.keys(scriptASTs);
             for (var i = 0; i < scripts.length; i++) {
-                $action.ASTAnalyzer.searchAST(scriptASTs[scripts[i]], findFunctionExpressionsInProgram);
+                var clone = $.extend(true, {}, scriptASTs[scripts[i]]);
+
+                if (scripts[i] !== 'http://localhost:3000/ChromeExtension/scripts/ext/jquery-3.0.0.js') {
+                    $action.ASTAnalyzer.searchAST(scriptASTs[scripts[i]], findFunctionExpressionsInProgram);
+                }
             }
 
             this._functions = findFunctionExpressionsInProgram.items;
@@ -317,11 +353,10 @@ var $action = $action || {};
         addCommand(element, command) {
             if (command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1) {
                 var newCommand = new $action.Command(command.eventType, element, command.handler)
+                this.analyzeCommandHandler(newCommand.AST, newCommand);
 
-                if (newCommand.userInvokeable()) {
-                    this.commandCount++;
-                    this.ui.appendCommand(newCommand, this.commandCount);
-                }
+                this.commandCount++;
+                var commandItem = this.ui.appendCommand(newCommand, this.commandCount);
 
                 var index = this.elements.indexOf(element);
                 if (index == -1) {
@@ -333,8 +368,6 @@ var $action = $action || {};
                     this.commands[index] = [];
 
                 this.commands[index].push(newCommand);
-
-                this.analyzeCommandHandler(newCommand.AST);
             }
         };
 
@@ -361,11 +394,13 @@ var $action = $action || {};
         };
 
 
-        analyzeCommandHandler(handlerAST) {
+        analyzeCommandHandler(handlerAST, command) {
+            // Clone of ast
+
             // Look for identifiers that are contained within IfStatements
-            var findIdentifiersWithinConditionals = {
-                lookFor: "Identifier",
-                within: [
+            var findConditionals = {
+                within: "Program",
+                lookFor: [
                     "IfStatement",
                     "ConditionalExpression",
                     "WhileStatement",
@@ -373,11 +408,12 @@ var $action = $action || {};
                     "ForStatement",
                     "ForInStatement",
                     "ForOfStatement"],
-                property: "test", // The property within the 'within' statements to search 
                 items: [] // Will contain the collection of requested elements you are lookign for
             }
 
-            $action.ASTAnalyzer.searchAST(handlerAST, findIdentifiersWithinConditionals);
+            $action.ASTAnalyzer.searchAST(handlerAST, findConditionals);
+            command.addDependencies(findConditionals.items);
+
 
             // Look for identifiers that are contained within SwitchStatements (uses the discriminant property instead of 'test')
             var findIdentifiersWithinSwitch = {
@@ -388,6 +424,7 @@ var $action = $action || {};
             }
 
             $action.ASTAnalyzer.searchAST(handlerAST, findIdentifiersWithinSwitch);
+            command.addDependencies(findIdentifiersWithinSwitch.items);
 
             /*// Find call expressions within if statements and search for those we can resolve to jQuery expressions
             var findJQueryCallExpressionsWithinIfs = {
@@ -446,8 +483,8 @@ var $action = $action || {};
         getCallReference(callExpr) {
             var callRef = "";
             if (callExpr.callee.type == "Identifier") {
-                callRef = callExpr.callee.name; 
-            } 
+                callRef = callExpr.callee.name;
+            }
             // TODO: more advanced calls later
             return callRef;
         }

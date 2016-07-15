@@ -43,3 +43,8 @@
     float: right;
     margin-right: 10px;
 }
+
+.action-search-disabled {
+    color: white; 
+    background-color: lightgray;
+}

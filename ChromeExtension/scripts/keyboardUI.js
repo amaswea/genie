@@ -59,7 +59,7 @@ var $action = $action || {};
             var label = action + " the " + this.label(this.command.Element) + " " + $action.TagEnglishWordMappings[this.command.Element.tagName.toLowerCase()];
             listItem.textContent = label;
             listItem.addEventListener("click", this.command.execute());
-            
+
             this._domElement = listItem;
         }
 
@@ -142,7 +142,13 @@ var $action = $action || {};
             var newCommand = new $action.KeyboardUICommandItem(command)
             command.CommandItem = newCommand;
 
+            if (!command.userInvokeable()) {
+                newCommand.DOM.classList.add('action-search-disabled');
+            }
+
             this.list.appendChild(newCommand.DOM);
+
+
             this.label.textContent = "There were " + commandCount + " actions found ...";
             return newCommand;
         }
@@ -152,7 +158,7 @@ var $action = $action || {};
          */
         removeCommand(command, commandCount) {
             var cmdItem = command.CommandItem;
-            if (cmdItem  && cmdItem.DOM) {
+            if (cmdItem && cmdItem.DOM) {
                 this.list.removeChild(cmdItem.DOM);
                 this.label.textContent = "There were " + commandCount + " actions found ...";
             }

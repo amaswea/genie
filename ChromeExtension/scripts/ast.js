@@ -32,11 +32,13 @@ var $action = $action || {};
         static searchNode(node, visitor) {
             var collect = visitor.collect;
             var hasProp = visitor.property != undefined;
-            if (visitor.within.indexOf(node.type) > -1 && !hasProp && !collect) {
+            if (visitor.within && visitor.within.length 
+                && visitor.within.indexOf(node.type) > -1 && !hasProp && !collect) {
                 visitor.collect = true;
             }
 
-            if (visitor.collect && visitor.lookFor.indexOf(node.type) > -1) {
+            if (visitor.collect && visitor.lookFor && visitor.lookFor.length 
+                &&  visitor.lookFor.indexOf(node.type) > -1) {
                 visitor.items.push(node);
             }
 
@@ -50,8 +52,12 @@ var $action = $action || {};
             case "ExpressionStatement":
                 this.searchNode(node.expression, visitor);
                 break;
-            case "IfStatement" || "ConditionalExpression":
-                this.searchIfStatement(node, visitor);
+            case "IfStatement" || "ConditionalExpression" || "WhileStatement" ||
+            "DoWhileStatement" || "ForStatement":
+                this.searchConditional(node, visitor);
+                break;
+            case "ForInStatement" || "ForOfStatement":
+                this.searchForInStatement(node, visitor);
                 break;
             case "LabeledStatement":
                 this.searchLabeledStatement(node, visitor);
@@ -70,15 +76,6 @@ var $action = $action || {};
                 break;
             case "TryStatement":
                 this.searchTryStatement(node, visitor);
-                break;
-            case "WhileStatement" || "DoWhileStatement":
-                this.searchWhileStatement(node, visitor);
-                break;
-            case "ForStatement":
-                this.searchForStatement(node, visitor);
-                break;
-            case "ForInStatement" || "ForOfStatement":
-                this.searchForInStatement(node, visitor);
                 break;
             case "LetStatement":
                 this.searchLetStatement(node, visitor);
@@ -252,6 +249,28 @@ var $action = $action || {};
             this.searchNode(statement.body, visitor);
         }
 
+        static searchConditional(statement, visitor) {
+            switch (statement.type) {
+            case "WhileStatement" || "DoWhileStatement":
+                this.searchWhileStatement(statement, visitor);
+                break;
+            case "IfStatement" || "ConditionalExpression":
+                this.searchIfStatement(statement, visitor);
+                break;
+            case "ForStatement":
+                this.searchForStatement(statement, visitor);
+                break;
+            default:
+                break;
+            }
+
+            if (!statement.testExpression) {
+                var clonedStatement = $.extend(true, {}, statement.test);
+                this.searchIdentifiersInPath(clonedStatement);
+                statement.testExpression = this.convertNodeToString(clonedStatement);
+            }
+        }
+
         static searchSwitchStatement(statement, visitor) {
             var collect = visitor.collect;
             if (visitor.property == "discriminant") {
@@ -367,6 +386,9 @@ var $action = $action || {};
         }
 
         static searchAssignmentExpression(expression, visitor) {
+            // Search from left to right so that identifiers on the right will be resolved to their mapped nodes in the scope before the assigned variable gets resolved. 
+            this.searchNode(expression.right, visitor);
+
             // The left property contains a Pattern node. 
             // Currently, just look for Identifier types. Other options are ArrayPattern & ObjectPattern
             if (expression.left.type == "Identifier" && visitor.scopes && visitor.scopes.length) {
@@ -374,9 +396,8 @@ var $action = $action || {};
                 scope.addAssignment(expression.left.name, expression.right);
             }
 
-            this.searchNode(expression.left, visitor);
             this.searchNode(expression.operator, visitor);
-            this.searchNode(expression.right, visitor);
+            this.searchNode(expression.left, visitor);
         }
 
         static searchUpdateExpression(expression, visitor) {
@@ -544,7 +565,8 @@ var $action = $action || {};
             }
 
             if (!identifier.sideEffectFreeExpression) {
-                identifier.sideEffectFreeExpression = this.constructSideEffectFreeExpression(identifier);
+                var exprNode = this.constructSideEffectFreeExpression(identifier);
+                identifier.sideEffectFreeExpression = this.convertNodeToString(exprNode);
             }
         }
 
@@ -583,16 +605,8 @@ var $action = $action || {};
         }
 
         static searchVariableDeclarator(declarator, visitor) {
-            // The left property contains a Pattern node. 
-            // Currently, just look for Identifier types. Other options are ArrayPattern & ObjectPattern
-            if (declarator.id.type == "Identifier" && visitor.scopes && visitor.scopes.length) {
-                var scope = visitor.scopes[visitor.scopes.length - 1]; // The closest scope is the last on the stack
-                scope.addDeclaration(declarator.id.name, declarator.init);
-            }
-
-            this.searchNode(declarator.id, visitor);
+            // Search from left to right so that identifiers on the right will be resolved to their mapped nodes in the scope before the assigned variable gets resolved. 
             if (declarator.init) {
-
                 // If the init is a function expression, assign the referenceID on the node to the 
                 // identifier of the VariableDeclarator that the function is being assigned to
                 if (declarator.init.type == "FunctionExpression") {
@@ -602,6 +616,15 @@ var $action = $action || {};
 
                 this.searchNode(declarator.init, visitor);
             }
+
+            // The left property contains a Pattern node. 
+            // Currently, just look for Identifier types. Other options are ArrayPattern & ObjectPattern
+            if (declarator.id.type == "Identifier" && visitor.scopes && visitor.scopes.length) {
+                var scope = visitor.scopes[visitor.scopes.length - 1]; // The closest scope is the last on the stack
+                scope.addDeclaration(declarator.id.name, declarator.init);
+            }
+
+            this.searchNode(declarator.id, visitor);
         }
 
         static searchVariableDeclaration(declaration, visitor) {
@@ -636,12 +659,58 @@ var $action = $action || {};
 
         static constructSideEffectFreeExpression(identifier) {
             // Just construct expression now. Worry about side-effects later
+            // Clone the lastAssigned node first so modifications to it do not alter the original tree
             if (identifier.lastAssigned) {
+                var previous = identifier.lastAssigned;
+                identifier.lastAssigned = $.extend(true, {}, identifier.lastAssigned);
+
+                if (identifier.lastAssigned.type == "Identifier") {
+                    return this.getLastAssigned(identifier.lastAssigned);
+                } else {
+                    this.searchIdentifiersInPath(identifier.lastAssigned);
+                    return identifier.lastAssigned;
+                }
 
             } else if (identifier.lastDeclared) {
+                var previous = identifier.lastDeclared;
+                identifier.lastDeclared = $.extend(true, {}, identifier.lastDeclared);
 
-            } else {
+                if (identifier.lastDeclared.type == "Identifier") {
+                    return this.getLastAssigned(identifier.lastDeclared);
+                } else {
+                    this.searchIdentifiersInPath(identifier.lastDeclared);
+                    return identifier.lastDeclared;
+                }
+            }
+        }
 
+        static getLastAssigned(identifier) {
+            return identifier.lastAssigned ? identifier.lastAssigned : identifier.lastDeclared;
+        }
+
+        static searchIdentifiersInPath(node) {
+            var propertyKeys = Object.keys(node);
+            for (var i = 0; i < propertyKeys.length; i++) {
+                var key = propertyKeys[i];
+                var propNode = node[key];
+                if (propNode) {
+                    if (propNode.type == "Identifier") {
+                        if (propNode.lastAssigned) {
+                            node[key] = propNode.lastAssigned;
+                            this.searchIdentifiersInPath(node[key]);
+                        } else if (propNode.lastDeclared) {
+                            node[key] = propNode.lastDeclared;
+                            this.searchIdentifiersInPath(node[key]);
+                        }
+                    } else if (Array.isArray(propNode)) {
+                        for (var j = 0; j < propNode.length; j++) {
+                            var item = propNode[j];
+                            this.searchIdentifiersInPath(item);
+                        }
+                    } else if (propNode.type) {
+                        this.searchIdentifiersInPath(propNode);
+                    }
+                }
             }
         }
 
@@ -824,7 +893,7 @@ var $action = $action || {};
                 }
             case "UnaryExpression":
                 {
-                    return this.convertNodeToString(node.operator) + this.convertNodeToString(node.argument);
+                    return node.operator + this.convertNodeToString(node.argument);
                 }
             case "BinaryExpression":
                 {
@@ -832,21 +901,21 @@ var $action = $action || {};
                 }
             case "AssignmentExpression":
                 {
-                    return this.convertNodeToString(node.left) + " " + this.convertNodeToString(node.operator) + this.convertNodeToString(node.right);
+                    return this.convertNodeToString(node.left) + " " + node.operator + this.convertNodeToString(node.right);
                 }
             case "UpdateExpression":
                 {
                     var toStringValue = "";
                     if (prefix) {
-                        toStringValue = toStringValue + this.convertNodeToString(node.operator) + this.convertNodeToString(node.argument);
+                        toStringValue = toStringValue + node.operator + this.convertNodeToString(node.argument);
                     } else {
-                        toStringValue = toStringValue + this.convertNodeToString(node.argument) + this.convertNodeToString(node.operator);
+                        toStringValue = toStringValue + this.convertNodeToString(node.argument) + node.operator;
                     }
                     return toStringValue;
                 }
             case "LogicalExpression":
                 {
-                    return this.convertNodeToString(node.left) + " " + this.convertNodeToString(node.operator) + " " + this.convertNodeToString(node.right);
+                    return this.convertNodeToString(node.left) + " " + node.operator + " " + this.convertNodeToString(node.right);
                 }
             case "NewExpression":
                 {
@@ -872,13 +941,15 @@ var $action = $action || {};
                     toStringValue = toStringValue + ")";
                     return toStringValue;
                 }
-            case "StaticMemberExpression":
+            case "MemberExpression":
                 {
+                    if (node.computed) {
+                        return this.convertNodeToString(node.object) + "[" + this.convertNodeToString(node.property) + "]";
 
-                }
-            case "ComputedMemberExpression":
-                {
+                    } else {
+                        return this.convertNodeToString(node.object) + "." + this.convertNodeToString(node.property);
 
+                    }
                 }
             case "YieldExpression":
                 {
@@ -953,6 +1024,8 @@ var $action = $action || {};
             case "Property":
                 // TODO
                 return "";
+            case "Literal":
+                return node.raw;
             default:
                 break;
                 // Not supported in ECMAScript
