@@ -32,13 +32,11 @@ var $action = $action || {};
         static searchNode(node, visitor) {
             var collect = visitor.collect;
             var hasProp = visitor.property != undefined;
-            if (visitor.within && visitor.within.length 
-                && visitor.within.indexOf(node.type) > -1 && !hasProp && !collect) {
+            if (visitor.within && visitor.within.length && visitor.within.indexOf(node.type) > -1 && !hasProp && !collect) {
                 visitor.collect = true;
             }
 
-            if (visitor.collect && visitor.lookFor && visitor.lookFor.length 
-                &&  visitor.lookFor.indexOf(node.type) > -1) {
+            if (visitor.collect && visitor.lookFor && visitor.lookFor.length && visitor.lookFor.indexOf(node.type) > -1) {
                 visitor.items.push(node);
             }
 
@@ -893,23 +891,23 @@ var $action = $action || {};
                 }
             case "UnaryExpression":
                 {
-                    return node.operator + this.convertNodeToString(node.argument);
+                    return node.operator + "(" + this.convertNodeToString(node.argument) + ")";
                 }
             case "BinaryExpression":
                 {
-                    return this.convertNodeToString(node.left) + " " + node.operator + this.convertNodeToString(node.right);
+                    return "(" + this.convertNodeToString(node.left) + " " + node.operator + this.convertNodeToString(node.right) + ")";
                 }
             case "AssignmentExpression":
                 {
-                    return this.convertNodeToString(node.left) + " " + node.operator + this.convertNodeToString(node.right);
+                    return "(" + this.convertNodeToString(node.left) + " " + node.operator + this.convertNodeToString(node.right) + ")";
                 }
             case "UpdateExpression":
                 {
                     var toStringValue = "";
                     if (prefix) {
-                        toStringValue = toStringValue + node.operator + this.convertNodeToString(node.argument);
+                        toStringValue = toStringValue + node.operator + "(" + this.convertNodeToString(node.argument) + ")";
                     } else {
-                        toStringValue = toStringValue + this.convertNodeToString(node.argument) + node.operator;
+                        toStringValue = toStringValue + "(" + this.convertNodeToString(node.argument) + ")" + node.operator;
                     }
                     return toStringValue;
                 }
