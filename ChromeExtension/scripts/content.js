@@ -34,6 +34,27 @@ function injectMonitorScript() {
 };
 
 /**
+ * Takes the data object passed in and returns a new object with the instrumented handler
+ * @private
+ * @method instrumentHandler
+ * @param {Object} data
+ */
+function instrumentHandler(data) {
+    var options = data.options;
+    var useCapture = data.useCapture;
+    var eventType = data.eventType;
+    var handler = data.handler;
+    var instrumented = $action.getInstrumentedHandler(handler);
+
+    return {
+        options: options,
+        useCapture: useCapture,
+        eventType: eventType,
+        handler: handler
+    }
+}
+
+/**
  * Receive the message from the getActions script and update the dialog with the new actions
  * @private
  * @property undefined
@@ -42,6 +63,11 @@ function injectMonitorScript() {
 function receiveMessage(event) {
     if (event.source != window) {
         return;
+    }
+
+    // Intialize the event cache
+    if (!$action.eventCache) {
+        $action.eventCache = [];
     }
 
     // Check the type of the message returned, and add or remove the command from the dialog accordingly
@@ -54,6 +80,12 @@ function receiveMessage(event) {
                     $action.commandManager.addCommand(element[0], event.data);
                 }
             }
+
+            var instrumented = instrumentHandler(event.data);
+            instrumented.messageType = 'eventAdded';
+            instrumented.path = event.data.path;
+
+            window.postMessage(instrumented, "*");
         }
 
         if (event.data.messageType == 'eventRemoved') {

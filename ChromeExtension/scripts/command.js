@@ -394,7 +394,6 @@ var $action = $action || {};
 
 
         analyzeCommandHandler(handlerAST, command) {
-
             /*// Find call expressions within if statements and search for those we can resolve to jQuery expressions
             var findJQueryCallExpressionsWithinIfs = {
                 lookFor: "CallExpression", 
@@ -407,20 +406,60 @@ var $action = $action || {};
             // Finding value of Expression statement referenced by the assignment or delcarator
             // - Is this statement referring to any element on the page? (selector or document.getElementById)
             // - Is this statement referring to any global variable (outside the function)
+            // Search the AST for any statements are are contained in any conditional statement
+            var findConditionals = {
+                within: "Program",
+                lookFor: [
+                    "IfStatement",
+                    "ConditionalExpression",
+                    "WhileStatement",
+                    "DoWhileStatement",
+                    "ForStatement",
+                    "ForInStatement",
+                    "ForOfStatement"],
+                items: [] // Will contain the collection of requested elements you are looking for
+            }
 
+            $action.ASTAnalyzer.searchAST(handlerAST, findConditionals);
 
+            var sideEffectFreeExpressions = [];
+            for (var i = 0; i < findConditionals.items.length; i++) {
+                let expr = findConditionals.items[i].sideEffectFreeExpression;
+                if (expr) {
+                    sideEffectFreeExpressions.push(expr);
+                }
+            }
+
+            // Look for identifiers that are contained within SwitchStatements (uses the discriminant property instead of 'test')
+            var findIdentifiersWithinSwitch = {
+                lookFor: "Identifier",
+                within: ["SwitchStatement"],
+                property: "discriminant",
+                items: []
+            }
+
+            $action.ASTAnalyzer.searchAST(handlerAST, findIdentifiersWithinSwitch);
+
+            for (var j = 0; j < findIdentifiersWithinSwitch.items.length; j++) {
+                let expr = findIdentifiersWithinSwitch.items[j].sideEffectFreeExpression;
+                if (expr) {
+                    sideEffectFreeExpressions.push(expr);
+                }
+            }
+
+            return sideEffectFreeExpressions;
+        };
+
+        linkFunctionCalls(callList) {;
             // Look for any function calls (side-effects)
-            var findFunctionCallsAnywhere = {
+            var callList = {
                 lookFor: "CallExpression",
                 within: "Program",
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(handlerAST, findFunctionCallsAnywhere);
-            this.linkFunctionCalls(findFunctionCallsAnywhere.items);
-        }
+            $action.ASTAnalyzer.searchAST(handlerAST, callList);
 
-        linkFunctionCalls(callList) {
             // Go through the returned list of function expressions and link them to those with the same name in the script cache
             for (var i = 0; i < callList.length; i++) {
                 var call = callList[i];
@@ -435,7 +474,7 @@ var $action = $action || {};
                     }
                 }
             }
-        }
+        };
 
         // Can be FunctionExpression, FunctionDefinition, or ArrowExpression
         getFunctionName(functionExpr) {
