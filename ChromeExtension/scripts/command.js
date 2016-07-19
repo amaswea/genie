@@ -59,7 +59,6 @@ var $action = $action || {};
 
             if (this._handler) {
                 this._ast = esprima.parse(this._handler);
-                this._domElement.parsedAST = this._ast;
             }
 
             this.postCommands = [];
@@ -395,36 +394,6 @@ var $action = $action || {};
 
 
         analyzeCommandHandler(handlerAST, command) {
-            // Clone of ast
-
-            // Look for identifiers that are contained within IfStatements
-            var findConditionals = {
-                within: "Program",
-                lookFor: [
-                    "IfStatement",
-                    "ConditionalExpression",
-                    "WhileStatement",
-                    "DoWhileStatement",
-                    "ForStatement",
-                    "ForInStatement",
-                    "ForOfStatement"],
-                items: [] // Will contain the collection of requested elements you are lookign for
-            }
-
-            $action.ASTAnalyzer.searchAST(handlerAST, findConditionals);
-            command.addDependencies(findConditionals.items);
-
-
-            // Look for identifiers that are contained within SwitchStatements (uses the discriminant property instead of 'test')
-            var findIdentifiersWithinSwitch = {
-                lookFor: "Identifier",
-                within: ["SwitchStatement"],
-                property: "discriminant",
-                items: []
-            }
-
-            $action.ASTAnalyzer.searchAST(handlerAST, findIdentifiersWithinSwitch);
-            command.addDependencies(findIdentifiersWithinSwitch.items);
 
             /*// Find call expressions within if statements and search for those we can resolve to jQuery expressions
             var findJQueryCallExpressionsWithinIfs = {

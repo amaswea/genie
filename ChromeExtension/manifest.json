@@ -25,16 +25,16 @@
             ],
             "js": [
                 "scripts/ext/jquery-3.0.0.js",
-                "scripts/content.js",
                 "scripts/ext/lodash.js",
                 "scripts/keyboardUI.js",
                 "scripts/command.js",
                 "scripts/util.js",
                 "scripts/mutationWatcher.js",
                 "scripts/constants.js",
-                "scripts/esprima/esprima.js", 
-                "scripts/script.js", 
-                "scripts/ast.js"
+                "scripts/esprima/esprima.js",
+                "scripts/script.js",
+                "scripts/ast.js",
+                "scripts/content.js" // Content script should load last. 
             ],
             "run_at": "document_start"
         }
@@ -42,8 +42,8 @@
     "permissions": [
         "tabs",
         "<all_urls>",
-        "storage", 
-        "webRequest", 
+        "storage",
+        "webRequest",
         "webRequestBlocking"
     ],
 
