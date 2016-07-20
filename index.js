@@ -29,20 +29,22 @@ $(document).ready(function () {
     // Command Handlers
 
     // jQuery selectors 
-    $('.button1-dependent').click(function () {
+    var test = false;
+    $('.button1-dependent')[0].addEventListener('click', function clickButton() {
+       // console.log("click button " + test);
         if (!$('.button1').attr('disabled')) {
             alert("The button was clicked");
         }
     });
-/*
-    $('.button2-dependent').click(function () {
+
+    $('.button2-dependent')[0].addEventListener('click', function (evt, arg2) {
         var disabled = $('.button2').attr('disabled');
         disabled = $('.button3').attr('disabled');
         if (!disabled) {
             alert("The button was clicked");
         }
     });
-
+/*
     $('.button3-dependent').click(function () {
         var button = $('.button3');
         var disabled = button.attr('disabled') == "disabled";

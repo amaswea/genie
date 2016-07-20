@@ -58,7 +58,7 @@ var $action = $action || {};
 
             var label = action + " the " + this.label(this.command.Element) + " " + $action.TagEnglishWordMappings[this.command.Element.tagName.toLowerCase()];
             listItem.textContent = label;
-            listItem.addEventListener("click", this.command.execute());
+            listItem.addEventListener("click", this.command.execute(), null, false, true); // Must pass in these arguments so that the addEventListener override knows to ignore this registration. 
 
             this._domElement = listItem;
         }
