@@ -64,10 +64,11 @@ function receiveMessage(event) {
             if (elementPath && elementPath.length) {
                 var element = $(elementPath);
                 if (element && element.length) {
-                    $action.commandManager.addCommand(element[0], event.data);
+                    $action.commandManager.addCommand(event.data);
                 }
             }
 
+            debugger;
             var instrumented = instrumentHandler(event.data);
             window.postMessage(instrumented, "*");
         }
@@ -92,8 +93,7 @@ function receiveMessage(event) {
                 console.log("id: " + keys[i] + " state: " + value);
             }
             
-            // TODO: update the state of the commands in the UI
-          //  $action.commandManager.updateCommandStates(newStates);
+           $action.commandManager.updateCommandStates(newStates);
         }
     }
 };

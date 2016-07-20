@@ -56,6 +56,7 @@ var $action = $action || {};
             this._domElement = domElement; // The DOM element the command is associated with
             this._handler = handler;
             this._dependencies = [];
+            this._dataDependent = false;
 
             if (this._handler) {
                 this._ast = esprima.parse(this._handler);
@@ -88,8 +89,12 @@ var $action = $action || {};
             return this._ast;
         }
 
-        get DataDependencies() {
-            return this._dependencies;
+        get DataDependent() {
+            return this._dataDependent;
+        }
+        
+        set DataDependent(state){
+            this._dataDependent = state;
         }
 
         /**
@@ -109,23 +114,6 @@ var $action = $action || {};
          */
         addPostCommand(command) {
             this._postCommands.push(command);
-        }
-
-        addDependencies(dependencies) {
-            this._dependencies.push(...dependencies);
-        }
-
-        /**
-         * Evaluates the current value of the dependency
-         * @private
-         * @property undefined
-         * @param {Object} dependency
-         */
-        evaluateDependency(dependency) {
-            var expr = dependency.testExpression;
-            if (expr) {
-                return eval(expr);
-            }
         }
 
         /**
@@ -153,14 +141,8 @@ var $action = $action || {};
             }
 
             // 3. Command results in no effect because of input guards or conditions in the code
-            if (this._dependencies.length) {
-                // Evaluate the current value of each dependency
-                for (var i = 0; i < this._dependencies.length; i++) {
-                    var result = this.evaluateDependency(this._dependencies[i]);
-                    if (!result) {
-                        return false;
-                    }
-                }
+            if (this.DataDependent) {
+                return false;
             }
 
             // 4. Command is not yet in the DOM (Hovering over a menu adds menu items with commands to DOM)
@@ -320,8 +302,7 @@ var $action = $action || {};
 
     class CommandManager {
         constructor(ui, scripts) {
-            this.commands = [];
-            this.elements = [];
+            this.commands = {};
             this.commandCount = 0;
             this.ui = ui; // The instance of UI that is creating this instance
             this._scripts = scripts;
@@ -349,49 +330,42 @@ var $action = $action || {};
             this._functions = findFunctionExpressionsInProgram.items;
         }
 
-        addCommand(element, command) {
+        addCommand(command) {
             if (command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1) {
-                var newCommand = new $action.Command(command.eventType, element, command.handler)
-                this.analyzeCommandHandler(newCommand.AST, newCommand);
+                var element = $(command.path);
+                if (element && element.length) {
+                    var newCommand = new $action.Command(command.eventType, element[0], command.handler)
+                        // this.analyzeCommandHandler(newCommand.AST, newCommand);
 
-                this.commandCount++;
-                var commandItem = this.ui.appendCommand(newCommand, this.commandCount);
+                    this.commandCount++;
+                    this.ui.appendCommand(newCommand, this.commandCount);
 
-                var index = this.elements.indexOf(element);
-                if (index == -1) {
-                    this.elements.push(element);
-                    index = this.elements.length - 1;
-                }
-
-                if (!this.commands[index])
-                    this.commands[index] = [];
-
-                this.commands[index].push(newCommand);
-            }
-        };
-
-
-        removeCommand(element, command) {
-            var index = this.elements.indexOf(element);
-            if (index > -1) {
-                var cmds = this.commands[index];
-                var remove = -1;
-                for (var i = 0; i < cmds.length; i++) {
-                    var cmd = cmds[i];
-                    if (cmd.EventType == command.eventType) {
-                        remove = i;
-                        this.commandCount--;
-                        this.ui.removeCommand(cmd, this.commandCount);
-                        break;
-                    }
-                }
-
-                if (remove != -1) {
-                    this.commands[index].splice(remove, 1);
+                    // Add the command to the command map
+                    this.commands[command.id] = newCommand;
                 }
             }
         };
 
+
+        removeCommand(command) {
+            var storedCommand = this.commands[command.id];
+            if (storedCommand) {
+                this.commandCount--;
+                this.ui.removeCommand(storedCommand);
+            }
+        };
+
+        updateCommandStates(commandStates){
+            var keys = Object.keys(commandStates); 
+            for(var i=0; i<keys.length; i++){
+                let commandState = commandStates[keys[i]];
+                let command = this.commands[keys[i]]; 
+                if(command.DataDependent != commandState) {
+                    command.DataDependent = commandState;
+                    this.ui.updateCommandState(command, commandState);
+                }
+            }
+        }
 
         analyzeCommandHandler(handlerAST, command) {
             /*// Find call expressions within if statements and search for those we can resolve to jQuery expressions

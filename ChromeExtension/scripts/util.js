@@ -54,7 +54,6 @@ var $action = $action || {};
             var bodyEnd = handler.lastIndexOf("}");
             var body = handler.substring(bodyStart + 1, bodyEnd);
             if (body) {
-                debugger;
                 var newHandlerFunction = new Function(args, body);
                 if (oldHandler.name) {
                     // newHandlerFunction.name = oldHandler.name; 
@@ -114,7 +113,6 @@ var $action = $action || {};
                             // Call the handler with this evnet as the argument
                             // Is this sufficient ? 
                             // TODO: What about closures on the initial handler? When converting to a string to instrument, these will likely be lost? 
-                            debugger;
                             var commandState = pageHandlerObject.handler(event);
                             commandStates[pageHandlerObject.id] = commandState; // Enabled or disabled state
                         }
@@ -289,6 +287,10 @@ var $action = $action || {};
      * @param {Object} ast
      */
     $action.computeSideEffectFreeExpressions = function (ast) {
+        // First, search for any function calls that are outside of conditionals. 
+        // Consider these to have side effects    
+    
+        
         var findConditionals = {
             within: "Program",
             lookFor: [

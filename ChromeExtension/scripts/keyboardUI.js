@@ -18,6 +18,8 @@ var $action = $action || {};
         appendCommand(dom, commandCount) {}
 
         removeCommand(dom, commandCount) {}
+        
+        updateCommandState(state) {}
     }
 
     class CommandItem {
@@ -161,6 +163,18 @@ var $action = $action || {};
             if (cmdItem && cmdItem.DOM) {
                 this.list.removeChild(cmdItem.DOM);
                 this.label.textContent = "There were " + commandCount + " actions found ...";
+            }
+        }
+        
+        updateCommandState(command, enabled) {
+            var domElement = command.CommandItem.DOM; 
+            var disabled = $(domElement).hasClass('action-search-disabled'); 
+            if(disabled && enabled){
+                $(domElement).removeClass('action-search-disabled'); 
+            }
+            
+            if(!disabled && !enabled){
+                $(domElement).addClass('action-search-disabled'); 
             }
         }
     };

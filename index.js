@@ -2,7 +2,7 @@ $(document).ready(function () {
     // TODO: Test different types of event handler registrations
 
     // Listeners to update dependencies
-/*    $(".disable-button1").click(function () {
+    $(".disable-button1")[0].addEventListener("click", function () {
         if ($('.button1').attr("disabled")) {
             $('.button1').attr("disabled", false);
         } else {
@@ -10,7 +10,7 @@ $(document).ready(function () {
         }
     });
 
-    $(".disable-button2").click(function () {
+    $(".disable-button2")[0].addEventListener("click", function () {
         if ($('.button2').attr("disabled")) {
             $('.button2').attr("disabled", false);
         } else {
@@ -18,14 +18,14 @@ $(document).ready(function () {
         }
     });
 
-    $(".disable-button3").click(function () {
+   /* $(".disable-button3").click(function () {
         if ($('.button3').attr("disabled")) {
             $('.button3').attr("disabled", false);
         } else {
             $(".button3").attr("disabled", true);
         }
-    });*/
-
+    });
+*/
     // Command Handlers
 
     // jQuery selectors 
@@ -38,8 +38,9 @@ $(document).ready(function () {
     });
 
     $('.button2-dependent')[0].addEventListener('click', function (evt, arg2) {
-        var disabled = $('.button2').attr('disabled');
-        disabled = $('.button3').attr('disabled');
+        var disabled = $('.button3').attr('disabled');
+        disabled = $('.button2').attr('disabled');
+        
         if (!disabled) {
             alert("The button was clicked");
         }
