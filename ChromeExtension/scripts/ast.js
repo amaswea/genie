@@ -50,17 +50,22 @@ var $action = $action || {};
             case "ExpressionStatement":
                 this.searchNode(node.expression, visitor);
                 break;
-            case "IfStatement" || "ConditionalExpression" || "WhileStatement" ||
-            "DoWhileStatement" || "ForStatement":
+            case "IfStatement":
+            case "ConditionalExpression":
+            case "WhileStatement":
+            case "DoWhileStatement":
+            case "ForStatement":
                 this.searchConditional(node, visitor);
                 break;
-            case "ForInStatement" || "ForOfStatement":
+            case "ForInStatement":
+            case "ForOfStatement":
                 this.searchForInStatement(node, visitor);
                 break;
             case "LabeledStatement":
                 this.searchLabeledStatement(node, visitor);
                 break;
-            case "BreakStatement" || "ContinueStatement":
+            case "BreakStatement":
+            case "ContinueStatement":
                 this.searchBreakStatement(node, visitor);
                 break;
             case "WithStatement":
@@ -69,7 +74,8 @@ var $action = $action || {};
             case "SwitchStatement":
                 this.searchSwitchStatement(node, visitor);
                 break;
-            case "ReturnStatement" || "ThrowStatement":
+            case "ReturnStatement":
+            case "ThrowStatement":
                 this.searchReturnStatement(node, visitor);
                 break;
             case "TryStatement":
@@ -99,7 +105,8 @@ var $action = $action || {};
             case "ObjectExpression":
                 this.searchObjectExpression(node, visitor);
                 break;
-            case "FunctionExpression" || "ArrowExpression":
+            case "FunctionExpression":
+            case "ArrowExpression":
                 this.searchFunctionExpression(node, visitor)
                 break;
             case "SequenceExpression":
@@ -126,7 +133,9 @@ var $action = $action || {};
             case "CallExpression":
                 this.searchCallExpression(node, visitor);
                 break;
-            case "MemberExpression" || "StaticMemberExpression" || "ComputedMemberExpression":
+            case "MemberExpression":
+            case "StaticMemberExpression":
+            case "ComputedMemberExpression":
                 this.searchMemberExpression(node, visitor);
                 break;
             case "YieldExpression":
@@ -152,7 +161,8 @@ var $action = $action || {};
                 this.searchSwitchCase(node, visitor);
                 break;
                 // Operators
-            case "BinaryOperator" || "UnaryOperator":
+            case "BinaryOperator":
+            case "UnaryOperator":
                 this.searchOperator(node, visitor);
                 break;
                 // Patterns
@@ -249,10 +259,12 @@ var $action = $action || {};
 
         static searchConditional(statement, visitor) {
             switch (statement.type) {
-            case "WhileStatement" || "DoWhileStatement":
+            case "WhileStatement":
+            case "DoWhileStatement":
                 this.searchWhileStatement(statement, visitor);
                 break;
-            case "IfStatement" || "ConditionalExpression":
+            case "IfStatement":
+            case "ConditionalExpression":
                 this.searchIfStatement(statement, visitor);
                 break;
             case "ForStatement":
@@ -730,7 +742,8 @@ var $action = $action || {};
                 }
             case "ExpressionStatement":
                 return this.convertNodeToString(node.expression);
-            case "IfStatement" || "ConditionalExpression":
+            case "IfStatement":
+            case "ConditionalExpression":
                 {
                     var toStringValue = "if(" + this.convertNodeToString(node.test) + ") { " + this.convertNodeToString(node.consequent) + " } ";
                     if (node.alternate) {
@@ -815,7 +828,8 @@ var $action = $action || {};
                 return "debugger;";
             case "EmptyStatement":
                 return ";";
-            case "FunctionDeclaration" || "FunctionExpression":
+            case "FunctionDeclaration":
+            case "FunctionExpression":
                 {
                     var toStringValue = "function " + (node.id ? this.convertNodeToString(node.id) : "") + "(";
                     for (var i = 0; i < node.params.length; i++) {
@@ -881,9 +895,9 @@ var $action = $action || {};
             case "SequenceExpression":
                 {
                     var toStringValue = "";
-                    for (var i = 0; i < expressions.length; i++) {
-                        toStringValue = toStringValue + this.convertNodeToString(expressions[i]);
-                        if (i < expressions.length - 1) {
+                    for (var i = 0; i < node.expressions.length; i++) {
+                        toStringValue = toStringValue + this.convertNodeToString(node.expressions[i]);
+                        if (i < node.expressions.length - 1) {
                             toStringValue = toStringValue + ",";
                         }
                     }
@@ -904,7 +918,7 @@ var $action = $action || {};
             case "UpdateExpression":
                 {
                     var toStringValue = "";
-                    if (prefix) {
+                    if (node.prefix) {
                         toStringValue = toStringValue + node.operator + "(" + this.convertNodeToString(node.argument) + ")";
                     } else {
                         toStringValue = toStringValue + "(" + this.convertNodeToString(node.argument) + ")" + node.operator;

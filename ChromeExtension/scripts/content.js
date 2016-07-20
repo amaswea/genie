@@ -64,13 +64,18 @@ function receiveMessage(event) {
             if (elementPath && elementPath.length) {
                 var element = $(elementPath);
                 if (element && element.length) {
-                    $action.commandManager.addCommand(event.data);
+                    var added = $action.commandManager.addCommand(event.data);
+
+                    var instrumented = {};
+                    if (added) {
+                       instrumented = instrumentHandler(event.data);
+                    } else {
+                        instrumented.messageType = 'eventNotInstrumented';
+                    }
+
+                    window.postMessage(instrumented, "*");
                 }
             }
-
-            debugger;
-            var instrumented = instrumentHandler(event.data);
-            window.postMessage(instrumented, "*");
         }
 
         if (event.data.messageType == 'eventRemoved') {
@@ -82,29 +87,31 @@ function receiveMessage(event) {
                 }
             }
         }
-        
-        if (event.data.messageType == 'updateCommandStates'){
-            var newStates = event.data.commandStates; 
-            console.log("Updated command states received"); 
-            
-            var keys = Object.keys(newStates); 
-            for(var i=0; i<keys.length; i++){
+
+        if (event.data.messageType == 'updateCommandStates') {
+            var newStates = event.data.commandStates;
+            console.log("Updated command states received");
+
+            var keys = Object.keys(newStates);
+            for (var i = 0; i < keys.length; i++) {
                 var value = newStates[keys[i]];
                 console.log("id: " + keys[i] + " state: " + value);
             }
-            
-           $action.commandManager.updateCommandStates(newStates);
+
+            $action.commandManager.updateCommandStates(newStates);
         }
     }
 };
 
 /**
-* Post a message to the window object to get the updated command states
-* @private
-* @method getCommandStates
-*/
+ * Post a message to the window object to get the updated command states
+ * @private
+ * @method getCommandStates
+ */
 function getCommandStates() {
-    window.postMessage({ messageType: 'getCommandStates' }, "*");
+    window.postMessage({
+        messageType: 'getCommandStates'
+    }, "*");
     setTimeout(getCommandStates, 1000);
 }
 
@@ -164,7 +171,7 @@ $(document).ready(function () {
             $action.scriptManager.addScript("page", innerHTML);
         }
     }
-    
+
     // Begin polling to update command states
     setTimeout(getCommandStates, 1000);
 });

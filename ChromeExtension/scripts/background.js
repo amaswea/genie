@@ -57,6 +57,17 @@ $(document).ready(function () {
             }
         });
     }
+    
+    
+    var isJavaScriptFile = function (url){
+        var lastIndex = url.lastIndexOf('.'); 
+        var extension = url.substring(lastIndex + 1, url.length); 
+        if(extension == "js"){
+            return true; 
+        }
+        
+        return false;
+    }
 
     /**
      * Open a connection to the popup script to listen for update snapshot and analyze requests
@@ -88,7 +99,7 @@ $(document).ready(function () {
     // Potentially cache scripts later if performance becomes an issue
     chrome.webRequest.onCompleted.addListener(function (details) {
         var tabID = details.tabId;
-        if (tabID !== -1 && details.type == "script") {
+        if (tabID !== -1 && details.type == "script" && isJavaScriptFile(details.url)) {
             console.log(details.url);
             $.get(details.url)
                 .done(function (data) {

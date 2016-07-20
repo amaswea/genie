@@ -35,10 +35,11 @@ var $action = $action || {};
                 var isActionable = $action.ActionableElements[tagAdded](element);
                 if (isActionable) {
                     var commandData = {
-                        eventType: 'default'
+                        eventType: 'default', 
+                        path: $action.getElementPath(element)
                     }
 
-                    $action.commandManager.addCommand(element, commandData);
+                    $action.commandManager.addCommand(commandData);
                 }
             }
 
@@ -49,10 +50,11 @@ var $action = $action || {};
                 if (attributeValue && attributeValue.length > 0) {
                     var commandData = {
                         eventType: eventHandler,
-                        handler: attributeValue
+                        handler: attributeValue, 
+                        path: $action.getElementPath(element)
                     }
 
-                    $action.commandManager.addCommand(element, commandData);
+                    $action.commandManager.addCommand(commandData);
                 }
             }
         };

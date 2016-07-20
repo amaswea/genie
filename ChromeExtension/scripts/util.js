@@ -94,36 +94,43 @@ var $action = $action || {};
                             window.geniePageHandlerMap[contentObjectID].instrumented = true;
                         }
                     }
+                } else if (event.data.messageType == 'eventNotInstrumented') {
+                    // If the command could not be added, remove it from the map
+                    var contentObjectID = event.data.id;
+                    delete window.geniePageHandlerMap[contentObjectID];
                 } else if (event.data.messageType == 'getCommandStates') {
                     // Set the polling mode to enabled 
-                    console.log("Polling the command states."); 
-                    window.genieEventPollingMode = true;
                     var keys = Object.keys(window.geniePageHandlerMap);
-                    var commandStates = {};
-                    for (var i = 0; i < keys.length; i++) {
-                        var pageHandlerObject = window.geniePageHandlerMap[keys[i]];
-                        if (pageHandlerObject.instrumented) {
-                            // Only call the handler if it is already instrumented
-                            // TODO: figure out how to set up this event so that it mimics the original dependencies
-                            var event = new Event(pageHandlerObject.eventType, {
-                                "bubbles": true,
-                                "cancelable": false
-                            });
+                    if (keys.length) {
+                        console.log("Polling the command states.");
+                        window.genieEventPollingMode = true;
+                        var commandStates = {};
+                        for (var i = 0; i < keys.length; i++) {
+                            var pageHandlerObject = window.geniePageHandlerMap[keys[i]];
+                            if (pageHandlerObject.instrumented) {
+                                // Only call the handler if it is already instrumented
+                                // TODO: figure out how to set up this event so that it mimics the original dependencies
+                                var event = new Event(pageHandlerObject.eventType, {
+                                    "bubbles": true,
+                                    "cancelable": false
+                                        // "poll" : true
+                                });
 
-                            // Call the handler with this evnet as the argument
-                            // Is this sufficient ? 
-                            // TODO: What about closures on the initial handler? When converting to a string to instrument, these will likely be lost? 
-                            var commandState = pageHandlerObject.handler(event);
-                            commandStates[pageHandlerObject.id] = commandState; // Enabled or disabled state
+                                // Call the handler with this evnet as the argument
+                                // Is this sufficient ? 
+                                // TODO: What about closures on the initial handler? When converting to a string to instrument, these will likely be lost? 
+                                var commandState = pageHandlerObject.handler(event);
+                                commandStates[pageHandlerObject.id] = commandState; // Enabled or disabled state
+                            }
                         }
-                    }
 
-                    // Post a message back to the content script to update the command states
-                    window.postMessage({
-                        messageType: 'updateCommandStates',
-                        commandStates: commandStates
-                    }, "*");
-                    window.genieEventPollingMode = false;
+                        // Post a message back to the content script to update the command states
+                        window.postMessage({
+                            messageType: 'updateCommandStates',
+                            commandStates: commandStates
+                        }, "*");
+                        window.genieEventPollingMode = false;
+                    }
                 }
             }
         }
@@ -229,6 +236,7 @@ var $action = $action || {};
             // Get the content object
             if (!ignore) {
                 var handlerID = getHandlerID(type, listener, this);
+                delete window.geniePageHandlerMap[handlerID];
                 window.postMessage({
                     messageType: 'eventRemoved',
                     id: handlerID
@@ -289,8 +297,11 @@ var $action = $action || {};
     $action.computeSideEffectFreeExpressions = function (ast) {
         // First, search for any function calls that are outside of conditionals. 
         // Consider these to have side effects    
-    
-        
+        /*        var findFunctionCallsOutsideOfConditionals = {
+                    
+                }
+            */
+
         var findConditionals = {
             within: "Program",
             lookFor: [

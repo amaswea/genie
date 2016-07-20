@@ -92,8 +92,8 @@ var $action = $action || {};
         get DataDependent() {
             return this._dataDependent;
         }
-        
-        set DataDependent(state){
+
+        set DataDependent(state) {
             this._dataDependent = state;
         }
 
@@ -342,8 +342,10 @@ var $action = $action || {};
 
                     // Add the command to the command map
                     this.commands[command.id] = newCommand;
+                    return true;
                 }
             }
+            return false; // Returns whether the command was successfully added
         };
 
 
@@ -355,12 +357,12 @@ var $action = $action || {};
             }
         };
 
-        updateCommandStates(commandStates){
-            var keys = Object.keys(commandStates); 
-            for(var i=0; i<keys.length; i++){
+        updateCommandStates(commandStates) {
+            var keys = Object.keys(commandStates);
+            for (var i = 0; i < keys.length; i++) {
                 let commandState = commandStates[keys[i]];
-                let command = this.commands[keys[i]]; 
-                if(command.DataDependent != commandState) {
+                let command = this.commands[keys[i]];
+                if (command.DataDependent != commandState) {
                     command.DataDependent = commandState;
                     this.ui.updateCommandState(command, commandState);
                 }
