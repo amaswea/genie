@@ -39,10 +39,10 @@ function injectMonitorScript() {
  * @method instrumentHandler
  * @param {Object} data
  */
-function instrumentHandler(data) {
-    var instrumented = $action.getInstrumentedHandler(data.handler);
-    data.handler = instrumented;
-    data.messageType = 'eventInstrumented';
+function getDataDependencies(data) {
+    var expressions = $action.computeSideEffectFreeExpressions(data.handler);
+    data.dependencies = expressions;
+    data.messageType = 'eventDependenciesFound';
     return data;
 }
 
@@ -66,11 +66,12 @@ function receiveMessage(event) {
                 if (element && element.length) {
                     var added = $action.commandManager.addCommand(event.data);
 
-                    var instrumented = {};
+                    var dataDependencies = {};
                     if (added) {
-                       instrumented = instrumentHandler(event.data);
+                        // Returns a new object with the computed expression string representing the data dependencies. 
+                        dataDependencies = getDataDependencies(event.data);
                     } else {
-                        instrumented.messageType = 'eventNotInstrumented';
+                        dataDependencies.messageType = 'eventDependenciesNotFound';
                     }
 
                     window.postMessage(instrumented, "*");

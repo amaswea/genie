@@ -10,8 +10,19 @@ var $action = $action || {};
                 if (!visitor.scopes) {
                     visitor.scopes = [];
                 }
+                
+                if(visitor.outside && visitor.within) {
+                    visitor.error = "Cannot use both within and outside options together";
+                    return; 
+                }
+                
+                // More error checking?? 
 
-                if (visitor.within == "Program") {
+                // Cannot use both outside and within options
+                if(visitor.outside){
+                    visitor.collect = true;
+                }
+                else if (visitor.within == "Program") {
                     visitor.collect = true;
                 }
 
@@ -34,6 +45,10 @@ var $action = $action || {};
             var hasProp = visitor.property != undefined;
             if (visitor.within && visitor.within.length && visitor.within.indexOf(node.type) > -1 && !hasProp && !collect) {
                 visitor.collect = true;
+            }
+            
+            if (visitor.outside && visitor.outside.length && visitor.outside.indexOf(node.type) > -1 && collect) {
+                visitor.collect = false;
             }
 
             if (visitor.collect && visitor.lookFor && visitor.lookFor.length && visitor.lookFor.indexOf(node.type) > -1) {
@@ -192,7 +207,10 @@ var $action = $action || {};
                 // ComprehensionIf
             }
 
-            if (!collect) {
+            // Cannot use both outside and within options
+            if (collect && visitor.outside) {
+                visitor.collect = true;
+            }else if(!collect && visitor.within){
                 visitor.collect = false;
             }
         }

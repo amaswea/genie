@@ -37,8 +37,8 @@ var $action = $action || {};
         window.geniePageHandlerIDs = 0;
         window.genieEventPollingMode = false;
 
-        function updateEventHandlerOnElement(element, type, handler, oldHandler, options, useCapture) {
-            // First, construct a new function object from the given handler
+        function updateEventHandlerOnElement(element, type, dependencies, oldHandler, options, useCapture) {
+/*            // First, construct a new function object from the given handler
             // Find the index of the first open and close parentheses and parse out the arguments
             var firstOpenParen = handler.indexOf("(");
             var firstClosedParen = handler.indexOf(")");
@@ -66,7 +66,17 @@ var $action = $action || {};
                 // Add the new instrumented listener
                 element.addEventListener(type, newHandlerFunction, options, useCapture, true); // Need last argument so that the addEventListener override knows to ignore this registration. 
                 return newHandlerFunction;
-            }
+            }*/
+            
+            // Create a wrapper around the old handler with the instrumentation
+            var wrapper = function(evt){
+              if(evt.geniePollingState){
+                  // Call expressions
+                  
+              }else {
+                  oldHandler(evt);
+              }
+            };
         }
 
         /**
@@ -80,21 +90,21 @@ var $action = $action || {};
             }
 
             if (event.data) {
-                if (event.data.messageType == 'eventInstrumented') {
+                if (event.data.messageType == 'eventDependenciesFound') {
                     // Get the page handler object associated with this event handler ID
                     var contentObjectID = event.data.id;
                     var pageHandlerObject = window.geniePageHandlerMap[contentObjectID];
                     if (pageHandlerObject) {
                         var element = $(pageHandlerObject.path);
                         if (element && element.length) {
-                            var newHandler = updateEventHandlerOnElement(element[0], pageHandlerObject.eventType, event.data.handler, pageHandlerObject.handler, pageHandlerObject.options, pageHandlerObject.useCapture);
+                            var newHandler = updateEventHandlerOnElement(element[0], pageHandlerObject.eventType, event.data.dependencies, pageHandlerObject.handler, pageHandlerObject.options, pageHandlerObject.useCapture);
 
                             // Update the page handler map 
                             window.geniePageHandlerMap[contentObjectID].handler = newHandler;
                             window.geniePageHandlerMap[contentObjectID].instrumented = true;
                         }
                     }
-                } else if (event.data.messageType == 'eventNotInstrumented') {
+                } else if (event.data.messageType == 'eventDependenciesNotFound') {
                     // If the command could not be added, remove it from the map
                     var contentObjectID = event.data.id;
                     delete window.geniePageHandlerMap[contentObjectID];
@@ -119,8 +129,11 @@ var $action = $action || {};
                                 // Call the handler with this evnet as the argument
                                 // Is this sufficient ? 
                                 // TODO: What about closures on the initial handler? When converting to a string to instrument, these will likely be lost? 
-                                var commandState = pageHandlerObject.handler(event);
-                                commandStates[pageHandlerObject.id] = commandState; // Enabled or disabled state
+                                var element = $(pageHandlerObject.path);
+                                if (element && element.length) {
+                                    var commandState = pageHandlerObject.handler.apply(element, [event]); // The element should be the 'this' context when the handler gets applied
+                                    commandStates[pageHandlerObject.id] = commandState; // Enabled or disabled state   
+                                }
                             }
                         }
 
@@ -297,10 +310,22 @@ var $action = $action || {};
     $action.computeSideEffectFreeExpressions = function (ast) {
         // First, search for any function calls that are outside of conditionals. 
         // Consider these to have side effects    
-        /*        var findFunctionCallsOutsideOfConditionals = {
-                    
-                }
-            */
+        var findFunctionCallsOutsideOfConditionals = {
+            outside: [
+                    "IfStatement",
+                    "ConditionalExpression",
+                    "WhileStatement",
+                    "DoWhileStatement",
+                    "ForStatement",
+                    "ForInStatement",
+                    "ForOfStatement"],
+            lookFor: [
+                "CallExpression"
+            ],
+            items: []
+        }
+
+        $action.ASTAnalyzer.searchAST(ast, findFunctionCallsOutsideOfConditionals);
 
         var findConditionals = {
             within: "Program",
@@ -343,7 +368,7 @@ var $action = $action || {};
         }
         return testExpressions;
     };
-
+    
     $action.getInstrumentedHandler = function (handlerString) {
         var index = handlerString.indexOf("{") + 1; // Insert after the first bracket in the handler which should be just inside of the function definition. Add 1 to the index so it inserts after that position        
         var ast = esprima.parse(handlerString);
