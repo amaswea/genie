@@ -11,16 +11,16 @@ var $action = $action || {};
         }
 
         addScript(url, data) {
-            if (url == "page" && !this._asts.page) {
+            /*if (url == "page" && !this._asts.page) {
                 this._asts.page= [];
             }
 
-            var scriptAST = esprima.parse(data);
+            var scriptAST = esprima.parse(data, {tolerant: true});
             if (url == "page") {
                 this._asts.page.push(scriptAST);
             } else {
                 this._asts[url] = scriptAST;
-            }
+            }*/
 
         }
 

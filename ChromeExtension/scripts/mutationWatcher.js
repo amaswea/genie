@@ -22,6 +22,14 @@ var $action = $action || {};
             }
         };
 
+        addPageCommands() {
+            var allElements = document.querySelectorAll("*");
+            for (var i = 0; i < allElements.length; i++) {
+                var element = allElements[i];
+                self.addCommandsFromElement(element);
+            }
+        }
+
         /**
          * Description for addCommandsFromElement
          * @private
@@ -35,8 +43,8 @@ var $action = $action || {};
                 var isActionable = $action.ActionableElements[tagAdded](element);
                 if (isActionable) {
                     var commandData = {
-                        eventType: 'default', 
-                        path: $action.getElementPath(element)
+                        eventType: 'default',
+                        path: typeof(jQuery) == "function" ? $action.jQueryGetElementPath(element) : $action.getElementPath(element)
                     }
 
                     $action.commandManager.addCommand(commandData);
@@ -50,11 +58,20 @@ var $action = $action || {};
                 if (attributeValue && attributeValue.length > 0) {
                     var commandData = {
                         eventType: eventHandler,
-                        handler: attributeValue, 
+                        handler: attributeValue,
                         path: $action.getElementPath(element)
                     }
 
-                    $action.commandManager.addCommand(commandData);
+                    var added = $action.commandManager.addCommand(commandData);
+                    var dataDependencies = {};
+                    if (added) {
+                        // Returns a new object with the computed expression string representing the data dependencies. 
+                        dataDependencies = $action.getDataDependencies(commandData);
+                    } else {
+                        dataDependencies.messageType = 'eventDependenciesNotFound';
+                    }
+
+                    window.postMessage(dataDependencies, "*");
                 }
             }
         };
@@ -162,7 +179,7 @@ var $action = $action || {};
                 childList: true,
                 subtree: true,
                 attributes: true,
-                attributeOldValue: true, 
+                attributeOldValue: true,
                 // characterData: true 
             };
 

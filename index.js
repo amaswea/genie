@@ -1,3 +1,4 @@
+var globalVar = false;
 $(document).ready(function () {
     // TODO: Test different types of event handler registrations
 

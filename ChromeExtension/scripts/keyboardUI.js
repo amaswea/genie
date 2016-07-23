@@ -58,8 +58,7 @@ var $action = $action || {};
             var action = this.command.EventType != 'default' ? this.command.EventType : $action.ActionableElementsActionLabel[this.command.Element.tagName];
             listItem.classList.add("action-search-list-item");
 
-            var label = action + " the " + this.label(this.command.Element) + " " + $action.TagEnglishWordMappings[this.command.Element.tagName.toLowerCase()];
-            listItem.textContent = label;
+            listItem.textContent = this.label();
             listItem.addEventListener("click", this.command.execute(), null, false, true); // Must pass in these arguments so that the addEventListener override knows to ignore this registration. 
 
             this._domElement = listItem;
@@ -69,6 +68,11 @@ var $action = $action || {};
          * Return a suitable label for the command
          */
         label() {
+            // If the command has an imperative label, return it. 
+            if(this.command.ImperativeLabel.length){
+                return this.command.ImperativeLabel;
+            }
+            
             var tagname = this.command.Element.tagName;
             if (tagname != "IFRAME") { // Cannot request contents of iframe due to cross origin frame error
                 var label = "";

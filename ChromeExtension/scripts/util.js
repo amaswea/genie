@@ -3,7 +3,63 @@ var $action = $action || {};
 (function ($action) {
     $action.handlerIDs = 0;
 
+    /**
+     * Takes the data object passed in and returns a new object with the instrumented handler
+     * @private
+     * @method instrumentHandler
+     * @param {Object} data
+     */
+    $action.getDataDependencies = function (data) {
+        try {
+            var ast = esprima.parse(data.handler, {
+                tolerant: true
+            });
+            var expressions = $action.computeSideEffectFreeExpressions(ast);
+            data.dependencies = expressions;
+            data.messageType = 'eventDependenciesFound';
+        } catch (e) {
+            // console.log("Could not parse this handler into an AST: " + data.handler);
+            // console.log("Error message from parser: " + e.toString());
+        }
+
+        return data;
+    }
+
     $action.getElementPath = function (elt) {
+        var path = "";
+        var node = elt;
+        while (node) {
+            var realNode = node,
+                name = realNode.localName;
+            if (!name) break;
+            name = name.toLowerCase();
+
+            var parent = node.parentNode;
+
+            if (parent) {
+                var siblings = parent.childNodes;
+                if (siblings.length > 1) {
+                    var index = 0;
+                    for (var i = 0; i < siblings.length; i++) {
+                        var currNode = siblings.item[i];
+                        if (currNode == node) {
+                            index = i;
+                            break;
+                        }
+                    }
+
+                    name += ':nth-child(' + index + ')';
+                }
+
+                path = name + (path ? '>' + path : '');
+                node = parent;
+            }
+        }
+
+        return path;
+    };
+
+    $action.jQueryGetElementPath = function (elt) {
         var path, node = $(elt);
         while (node.length) {
             var realNode = node[0],
@@ -25,58 +81,49 @@ var $action = $action || {};
         }
 
         return path;
-    };
+    }
 
     $action.getScript = function () {
         var directive = `'use strict';`;
         var windowListener = 'window.addEventListener("message", receiveMessage, null, false, true);';
         var windowObjects = `window.geniePageHandlerMap = {};
-                             window.geniePageHandlerIDs = 0;
-                             window.genieEventPollingMode = false;`;
+                             window.geniePageHandlerIDs = 0;`;
         window.geniePageHandlerMap = {};
         window.geniePageHandlerIDs = 0;
-        window.genieEventPollingMode = false;
 
         function updateEventHandlerOnElement(element, type, dependencies, oldHandler, options, useCapture) {
-/*            // First, construct a new function object from the given handler
-            // Find the index of the first open and close parentheses and parse out the arguments
-            var firstOpenParen = handler.indexOf("(");
-            var firstClosedParen = handler.indexOf(")");
-            var argumentString = handler.substring(firstOpenParen + 1, firstClosedParen).trim();
-            var args = [];
-            if (argumentString.length) {
-                args = argumentString.split(",").map(function (elt) {
-                    return elt.trim();
-                });
-            }
-
-            var bodyStart = handler.indexOf("{");
-            var bodyEnd = handler.lastIndexOf("}");
-            var body = handler.substring(bodyStart + 1, bodyEnd);
-            if (body) {
-                var newHandlerFunction = new Function(args, body);
-                if (oldHandler.name) {
-                    // newHandlerFunction.name = oldHandler.name; 
-                    // TODO: is there any way to set the name of the function when created via Function object constructor? Does it matter? 
-                }
-
-                // Remove the previous listener on the element
-                element.removeEventListener(type, oldHandler, options, useCapture, true);
-
-                // Add the new instrumented listener
-                element.addEventListener(type, newHandlerFunction, options, useCapture, true); // Need last argument so that the addEventListener override knows to ignore this registration. 
-                return newHandlerFunction;
-            }*/
-            
             // Create a wrapper around the old handler with the instrumentation
-            var wrapper = function(evt){
-              if(evt.geniePollingState){
-                  // Call expressions
-                  
-              }else {
-                  oldHandler(evt);
-              }
+            var wrapper = function (evt) {
+                if (evt.geniePollingState) {
+                    // Call expressions
+                    let result = true;
+                    for (var i = 0; i < dependencies.length; i++) {
+                        try {
+                            result = eval(dependencies[i]);
+                        } catch (e) {
+                            console.error("Handler dependencies could not be retrieved: " + e.toString());
+                        }
+
+                        if (!result) {
+                            break;
+                        }
+                    }
+
+                    return result;
+                } else {
+                    oldHandler.apply(this, [evt]);
+                }
             };
+
+            // First, construct a new function object from the given handler
+
+            // Remove the previous listener on the element
+            element.removeEventListener(type, oldHandler, options, useCapture, true);
+
+            // Add the new instrumented listener
+            element.addEventListener(type, wrapper, options, useCapture, true); // Need last argument so that the addEventListener override knows to ignore this registration. 
+
+            return wrapper;
         }
 
         /**
@@ -85,6 +132,7 @@ var $action = $action || {};
          * @method receiveMessage
          */
         function receiveMessage(event) {
+
             if (event.source != window) {
                 return;
             }
@@ -95,9 +143,9 @@ var $action = $action || {};
                     var contentObjectID = event.data.id;
                     var pageHandlerObject = window.geniePageHandlerMap[contentObjectID];
                     if (pageHandlerObject) {
-                        var element = $(pageHandlerObject.path);
-                        if (element && element.length) {
-                            var newHandler = updateEventHandlerOnElement(element[0], pageHandlerObject.eventType, event.data.dependencies, pageHandlerObject.handler, pageHandlerObject.options, pageHandlerObject.useCapture);
+                        var element = document.querySelector(pageHandlerObject.path);
+                        if (element) {
+                            var newHandler = updateEventHandlerOnElement(element, pageHandlerObject.eventType, event.data.dependencies, pageHandlerObject.handler, pageHandlerObject.options, pageHandlerObject.useCapture);
 
                             // Update the page handler map 
                             window.geniePageHandlerMap[contentObjectID].handler = newHandler;
@@ -113,7 +161,6 @@ var $action = $action || {};
                     var keys = Object.keys(window.geniePageHandlerMap);
                     if (keys.length) {
                         console.log("Polling the command states.");
-                        window.genieEventPollingMode = true;
                         var commandStates = {};
                         for (var i = 0; i < keys.length; i++) {
                             var pageHandlerObject = window.geniePageHandlerMap[keys[i]];
@@ -123,14 +170,15 @@ var $action = $action || {};
                                 var event = new Event(pageHandlerObject.eventType, {
                                     "bubbles": true,
                                     "cancelable": false
-                                        // "poll" : true
                                 });
+
+                                event.geniePollingState = true;
 
                                 // Call the handler with this evnet as the argument
                                 // Is this sufficient ? 
                                 // TODO: What about closures on the initial handler? When converting to a string to instrument, these will likely be lost? 
-                                var element = $(pageHandlerObject.path);
-                                if (element && element.length) {
+                                var element = document.querySelector(pageHandlerObject.path);
+                                if (element) {
                                     var commandState = pageHandlerObject.handler.apply(element, [event]); // The element should be the 'this' context when the handler gets applied
                                     commandStates[pageHandlerObject.id] = commandState; // Enabled or disabled state   
                                 }
@@ -142,7 +190,6 @@ var $action = $action || {};
                             messageType: 'updateCommandStates',
                             commandStates: commandStates
                         }, "*");
-                        window.genieEventPollingMode = false;
                     }
                 }
             }
@@ -158,13 +205,13 @@ var $action = $action || {};
             return window.geniePageHandlerIDs;
         }
 
-        function getPageHandlerObject(id, eventType, handler, options, useCapture, element) {
+        function getPageHandlerObject(id, eventType, handler, element, options = null, useCapture = false) {
             var pageHandlerObj = {
                 eventType: eventType,
                 handler: handler,
                 options: options,
                 useCapture: useCapture,
-                path: getElementPath(element),
+                path: typeof (jQuery) == 'function' ? jQueryGetElementPath(element) : getElementPath(element),
                 id: id
             };
 
@@ -176,7 +223,7 @@ var $action = $action || {};
                 messageType: messageType,
                 eventType: eventType,
                 handler: handler.toString(),
-                path: getElementPath(element),
+                path: typeof (jQuery) == 'function' ? jQueryGetElementPath(element) : getElementPath(element),
                 id: id
             };
 
@@ -187,7 +234,7 @@ var $action = $action || {};
             var keys = Object.keys(window.geniePageHandlerMap);
             for (var i = 0; i < keys.length; i++) {
                 var value = window.geniePageHandlerMap[keys[i]];
-                var elt = $(value.path);
+                var elt = document.querySelector(value.path);
                 if (value && value.eventType == type && value.handler == handler && element == elt) {
                     return keys[i];
                 }
@@ -195,7 +242,41 @@ var $action = $action || {};
         };
 
         function getElementPath(elt) {
-            var path, node = jQuery(elt);
+            var path = "";
+            var node = elt;
+            while (node) {
+                var realNode = node,
+                    name = realNode.localName;
+                if (!name) break;
+                name = name.toLowerCase();
+
+                var parent = node.parentNode;
+
+                if (parent) {
+                    var siblings = parent.childNodes;
+                    if (siblings.length > 1) {
+                        var index = 0;
+                        for (var i = 0; i < siblings.length; i++) {
+                            var currNode = siblings.item[i];
+                            if (currNode == node) {
+                                index = i;
+                                break;
+                            }
+                        }
+
+                        name += ':nth-child(' + index + ')';
+                    }
+
+                    path = name + (path ? '>' + path : '');
+                    node = parent;
+                }
+            }
+
+            return path;
+        };
+
+        function jQueryGetElementPath(elt) {
+            var path, node = $(elt);
             while (node.length) {
                 var realNode = node[0],
                     name = realNode.localName;
@@ -216,7 +297,7 @@ var $action = $action || {};
             }
 
             return path;
-        };
+        }
 
         var ignoreJQueryFunction = `function ignoreJQueryFunction(e) {
 
@@ -231,13 +312,15 @@ var $action = $action || {};
             // Instrument the handler with a call to retreive the data dependencies
             this._addEventListener(type, listener, options, useCapture);
             var handlerString = listener.toString();
-            if (handlerString != ignoreJQueryFunction && !ignore) {
+            var handlerID = getHandlerID(type, listener, this); // If the handler already exists in the map, ignore it. 
+            if (handlerString != ignoreJQueryFunction && !ignore && !handlerID) {
+                var path = typeof (jQuery) == 'function' ? jQueryGetElementPath(this) : getElementPath(this);
                 var id = getUniqueID(); // This unique ID will represent this handler, event, and element combination
                 var contentObject = getContentObject(id, 'eventAdded', type, listener, this);
                 window.postMessage(contentObject, "*");
 
                 // Get a page handler object to cache so that the handler can be instrumented when polling takes palge
-                var pageHandlerObject = getPageHandlerObject(id, type, listener, options, useCapture, this);
+                var pageHandlerObject = getPageHandlerObject(id, type, listener, this);
                 window.geniePageHandlerMap[id] = pageHandlerObject;
             }
         };
@@ -257,43 +340,47 @@ var $action = $action || {};
             }
         };
 
-        /*        jQuery.fn._on = jQuery.fn.on;
-                jQuery.fn.on = function (events, selector, handler) { // TODO: handle when selector, data options are used
-                    jQuery.fn._on.apply(this, arguments);
-                    var handle = handler;
-                    if (selector != null && !handle) {
-                        handler = selector;
-                    }
-                    var instrumented = $action.getInstrumentedHandler(b);
-                    var eventList = events.split(" ");
-                    for (var i = 0; i < eventList.length; i++) {
-                        var evt = eventList[i];
-                        window.postMessage({
-                            messageType: 'eventAdded',
-                            eventType: evt,
-                            handler: handler.toString(),
-                            path: getElementPath(this)
-                        }, "*");
-                    }
+        if (typeof (jQuery) == 'function') {
+            jQuery.fn._on = jQuery.fn.on;
+            jQuery.fn.on = function (events, selector, handler) { // TODO: handle when selector, data options are used
+                console.log("jQuery on being called");
+                jQuery.fn._on.apply(this, arguments);
+                var handle = handler;
+                if (selector != null && !handle) {
+                    handler = selector;
                 }
 
-                jQuery.fn._off = jQuery.fn.off;
-                jQuery.fn.off = function (events, selector, handler) {
-                    jQuery.fn._off.apply(this, arguments);
-                    var eventList = events.split(" ");
-                    for (var i = 0; i < eventList.length; i++) {
-                        var evt = eventList[i];
-                        window.postMessage({
-                            messageType: 'eventRemoved',
-                            eventType: evt,
-                            handler: handler ? handler.toString() : undefined,
-                            path: getElementPath(this)
-                        }, "*");
-                    }
-                };*/
+                var eventList = typeof(events) == "string" ? events.split(" ") : (typeof(events) == "object" ? [events.type] : []);
+                for (var i = 0; i < eventList.length; i++) {
+                    var evt = eventList[i];
+                    var id = getUniqueID(); // This unique ID will represent this handler, event, and element combination
+                    var contentObject = getContentObject(id, 'eventAdded', evt, handler, this);
+                    window.postMessage(contentObject, "*");
+
+                    // Get a page handler object to cache so that the handler can be instrumented when polling takes palge
+                    var pageHandlerObject = getPageHandlerObject(id, evt, handler, this, null, null);
+                    window.geniePageHandlerMap[id] = pageHandlerObject;
+                }
+            }
+
+            jQuery.fn._off = jQuery.fn.off;
+            jQuery.fn.off = function (events, selector, handler) {
+                jQuery.fn._off.apply(this, arguments);
+                var eventList = typeof(events) == "string" ? events.split(" ") : (typeof(events) == "object" ? [events.type] : []);
+                for (var i = 0; i < eventList.length; i++) {
+                    var evt = eventList[i];
+                    var handlerID = getHandlerID(evt, handler, this);
+                    delete window.geniePageHandlerMap[handlerID];
+                    window.postMessage({
+                        messageType: 'eventRemoved',
+                        id: handlerID
+                    }, "*");
+                }
+            }
+        }
 
         var script = document.createElement("script");
-        script.appendChild(document.createTextNode(directive + "\n" + windowListener + "\n" + windowObjects + "\n" + updateEventHandlerOnElement + "; \n" + receiveMessage + "; \n" + getHandlerID + "; \n" + getPageHandlerObject + "; \n" + getContentObject + "; \n" + getUniqueID + "; \n" + getElementPath + "; \n" + ignoreJQueryFunction + "; \n" + "Element.prototype._addEventListener = Element.prototype.addEventListener;\n" + "Element.prototype.addEventListener = " + Element.prototype.addEventListener + "; \n" + "Element.prototype._removeEventListener = Element.prototype.removeEventListener; \n" + "Element.prototype.removeEventListener = " + Element.prototype.removeEventListener + "; \n")); //+ "jQuery.fn.off = " + jQuery.fn.off + "; \n" + "jQuery.fn.on = " + jQuery.fn.on + ';'));
+        script.appendChild(document.createTextNode(directive + "\n" + windowListener + "\n" + windowObjects + "\n" + updateEventHandlerOnElement + "; \n" + receiveMessage + "; \n" + getHandlerID + "; \n" + getPageHandlerObject + "; \n" + getContentObject + "; \n" + getUniqueID + "; \n" + getElementPath + "; \n" + jQueryGetElementPath + "; \n" + ignoreJQueryFunction + "; \n" + "Element.prototype._addEventListener = Element.prototype.addEventListener;\n" + "Element.prototype.addEventListener = " + Element.prototype.addEventListener + "; \n" + "Element.prototype._removeEventListener = Element.prototype.removeEventListener; \n" + "Element.prototype.removeEventListener = " + Element.prototype.removeEventListener + "; \n" + "if(typeof(jQuery) == 'function') { \n jQuery.fn._off = jQuery.fn.off; \n" + "jQuery.fn.off = " + jQuery.fn.off + "; \n" + "jQuery.fn._on = jQuery.fn.on; \n" + "jQuery.fn.on = " + jQuery.fn.on + ';\n}'));
 
         script.id = "genie_monitor_script";
 
@@ -368,7 +455,7 @@ var $action = $action || {};
         }
         return testExpressions;
     };
-    
+
     $action.getInstrumentedHandler = function (handlerString) {
         var index = handlerString.indexOf("{") + 1; // Insert after the first bracket in the handler which should be just inside of the function definition. Add 1 to the index so it inserts after that position        
         var ast = esprima.parse(handlerString);

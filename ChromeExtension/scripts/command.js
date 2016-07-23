@@ -57,14 +57,17 @@ var $action = $action || {};
             this._handler = handler;
             this._dependencies = [];
             this._dataDependent = false;
+            this._imperativeLabel = "";
 
             if (this._handler) {
-                this._ast = esprima.parse(this._handler);
+                // this._ast = esprima.parse(this._handler);
             }
 
+            this.initMetadata();
             this.postCommands = [];
         }
 
+        // Getters & Setters
         get EventType() {
             return this._eventType;
         };
@@ -96,6 +99,10 @@ var $action = $action || {};
         set DataDependent(state) {
             this._dataDependent = state;
         }
+        
+        get ImperativeLabel() {
+            return this._imperativeLabel;
+        }
 
         /**
          * Returns a string representing the source code of the associated event handler
@@ -105,6 +112,38 @@ var $action = $action || {};
         get Handler() {
             return this._handler;
         }
+
+        /**
+         * Initialize all of the command  metadata
+         * @private
+         * @property undefined
+         */
+        initMetadata() {
+            // Retrieve all of the Text nodes on the element
+            // Tag them with the parts of speech. 
+            // Extract 
+            var walker = document.createTreeWalker(this._domElement, NodeFilter.SHOW_TEXT, null, false);
+            var posTagger = new POSTagger();
+            var node = walker.nextNode();
+            while (node) {
+                // split the string by space separators
+                var trimmed = node.textContent.replace(/\s/g, ' ').trim();
+                if (trimmed && trimmed.length) {
+                    var split = trimmed.split(" ");
+                    var tagged = posTagger.tag(split);
+                    if (tagged.length) {
+                        // First word in the sentence should be a verb
+                        var first = tagged[0];
+                        var firstType = first[1];
+                        if (["VB", "VBP"].indexOf(firstType) > -1) {
+                            this._imperativeLabel = trimmed;
+                        }
+                    }
+                }
+
+                node = walker.nextNode();
+            }
+        };
 
         /**
          * Adds a command to the list of post commands that must be executed directly after this command
@@ -311,23 +350,23 @@ var $action = $action || {};
 
         init() {
             // Gather up all the scripts on the page and find all function expressions in them to be resolved by the handlers later
-            var scriptASTs = this._scripts.ASTs;
-            var findFunctionExpressionsInProgram = {
-                lookFor: ["FunctionExpression", "FunctionDeclaration", "ArrowExpression"],
-                within: ["Program"],
-                items: []
-            }
+            /*            var scriptASTs = this._scripts.ASTs;
+                        var findFunctionExpressionsInProgram = {
+                            lookFor: ["FunctionExpression", "FunctionDeclaration", "ArrowExpression"],
+                            within: ["Program"],
+                            items: []
+                        }
 
-            var scripts = Object.keys(scriptASTs);
-            for (var i = 0; i < scripts.length; i++) {
-                var clone = $.extend(true, {}, scriptASTs[scripts[i]]);
+                        var scripts = Object.keys(scriptASTs);
+                        for (var i = 0; i < scripts.length; i++) {
+                            var clone = $.extend(true, {}, scriptASTs[scripts[i]]);
 
-                if (scripts[i] !== 'http://localhost:3000/ChromeExtension/scripts/ext/jquery-3.0.0.js') {
-                    $action.ASTAnalyzer.searchAST(scriptASTs[scripts[i]], findFunctionExpressionsInProgram);
-                }
-            }
+                            if (scripts[i] !== 'http://localhost:3000/ChromeExtension/scripts/ext/jquery-3.0.0.js') {
+                                $action.ASTAnalyzer.searchAST(scriptASTs[scripts[i]], findFunctionExpressionsInProgram);
+                            }
+                        }
 
-            this._functions = findFunctionExpressionsInProgram.items;
+                        this._functions = findFunctionExpressionsInProgram.items;*/
         }
 
         addCommand(command) {

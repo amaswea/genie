@@ -34,19 +34,6 @@ function injectMonitorScript() {
 };
 
 /**
- * Takes the data object passed in and returns a new object with the instrumented handler
- * @private
- * @method instrumentHandler
- * @param {Object} data
- */
-function getDataDependencies(data) {
-    var expressions = $action.computeSideEffectFreeExpressions(data.handler);
-    data.dependencies = expressions;
-    data.messageType = 'eventDependenciesFound';
-    return data;
-}
-
-/**
  * Receive the message from the getActions script and update the dialog with the new actions
  * @private
  * @property undefined
@@ -64,17 +51,18 @@ function receiveMessage(event) {
             if (elementPath && elementPath.length) {
                 var element = $(elementPath);
                 if (element && element.length) {
+                    console.log("adding command " + event.data.path);
                     var added = $action.commandManager.addCommand(event.data);
 
                     var dataDependencies = {};
                     if (added) {
                         // Returns a new object with the computed expression string representing the data dependencies. 
-                        dataDependencies = getDataDependencies(event.data);
+                        dataDependencies = $action.getDataDependencies(event.data);
                     } else {
                         dataDependencies.messageType = 'eventDependenciesNotFound';
                     }
 
-                    window.postMessage(instrumented, "*");
+                    window.postMessage(dataDependencies, "*");
                 }
             }
         }
@@ -113,7 +101,7 @@ function getCommandStates() {
     window.postMessage({
         messageType: 'getCommandStates'
     }, "*");
-    setTimeout(getCommandStates, 1000);
+    setTimeout(getCommandStates, 10000);
 }
 
 /**
@@ -174,5 +162,5 @@ $(document).ready(function () {
     }
 
     // Begin polling to update command states
-    setTimeout(getCommandStates, 1000);
+ //  setTimeout(getCommandStates, 10000);
 });
