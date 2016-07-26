@@ -37,6 +37,8 @@
                 "scripts/jspos/lexicon.js",
                 "scripts/jspos/lexer.js",
                 "scripts/jspos/POSTagger.js",
+                "scripts/parser.js",
+                "scripts/typo.js",
                 "scripts/content.js" // Content script should load last. 
             ],
             "run_at": "document_start"
@@ -51,6 +53,8 @@
     ],
 
     "web_accessible_resources": [
+        "lib/typo/dictionaries/en_US/en_US.aff",
+        "lib/typo/dictionaries/en_US/en_US.dic",
         "scripts/ext/jquery-3.0.0.js",
         "scripts/performAction.js",
         "scripts/monitor.js"

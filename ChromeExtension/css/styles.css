@@ -29,12 +29,16 @@
     padding-left: 10px;
     cursor: pointer;
     font-size: 10pt;
+    display: flex;
+    flex-direction: column;
 }
 
-.action-search-label {
-    padding-left: 10px;
+.action-search-header {
+    padding-left: 10px; 
     padding-bottom: 10px;
-    border-bottom: 0.5px solid lightgray;
+}
+
+.action-search-header, .action-search-label {
     font-weight: bold;
 }
 
@@ -47,4 +51,9 @@
 .action-search-disabled {
     color: white; 
     background-color: lightgray;
+}
+
+.action-search-tags {
+    font-size: 9pt; 
+    color: grey;
 }

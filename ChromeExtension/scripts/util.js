@@ -219,13 +219,15 @@ var $action = $action || {};
         }
 
         function getContentObject(id, messageType, eventType, handler, element) {
-            var handlerObj = {
-                messageType: messageType,
-                eventType: eventType,
-                handler: handler.toString(),
-                path: typeof (jQuery) == 'function' ? jQueryGetElementPath(element) : getElementPath(element),
-                id: id
-            };
+            if (handler) {                // TODO: Handler arguments for jQuery on override better  s
+                var handlerObj = {
+                    messageType: messageType,
+                    eventType: eventType,
+                    handler: handler.toString(),
+                    path: typeof (jQuery) == 'function' ? jQueryGetElementPath(element) : getElementPath(element),
+                    id: id
+                };
+            }
 
             return handlerObj;
         }
@@ -343,14 +345,14 @@ var $action = $action || {};
         if (typeof (jQuery) == 'function') {
             jQuery.fn._on = jQuery.fn.on;
             jQuery.fn.on = function (events, selector, handler) { // TODO: handle when selector, data options are used
-                console.log("jQuery on being called");
                 jQuery.fn._on.apply(this, arguments);
                 var handle = handler;
+                
                 if (selector != null && !handle) {
                     handler = selector;
                 }
 
-                var eventList = typeof(events) == "string" ? events.split(" ") : (typeof(events) == "object" ? [events.type] : []);
+                var eventList = typeof (events) == "string" ? events.split(" ") : (typeof (events) == "object" ? [events.type] : []);
                 for (var i = 0; i < eventList.length; i++) {
                     var evt = eventList[i];
                     var id = getUniqueID(); // This unique ID will represent this handler, event, and element combination
@@ -366,7 +368,7 @@ var $action = $action || {};
             jQuery.fn._off = jQuery.fn.off;
             jQuery.fn.off = function (events, selector, handler) {
                 jQuery.fn._off.apply(this, arguments);
-                var eventList = typeof(events) == "string" ? events.split(" ") : (typeof(events) == "object" ? [events.type] : []);
+                var eventList = typeof (events) == "string" ? events.split(" ") : (typeof (events) == "object" ? [events.type] : []);
                 for (var i = 0; i < eventList.length; i++) {
                     var evt = eventList[i];
                     var handlerID = getHandlerID(evt, handler, this);

@@ -4,7 +4,8 @@ var $action = $action || {};
 (function ($action) {
 
     $action.ActionableElementsActionLabel = {
-        "A": "Click",
+        "A": "Open",
+        "BUTTON": "Click",
         "INPUT": "Fill out"
     }
 
@@ -19,26 +20,22 @@ var $action = $action || {};
         }
     }
 
-    $action.CommandLabels = {
-        "INPUT": function (element) { // Get the label from the placeholder attribute
-            var placeholder = jQuery(element).attr("placeholder");
-            return placeholder;
-        },
-        "A": function (element) {
-            var title = jQuery(element).attr("title");
-            if (title && title.length) {
-                return title;
-            }
+    // This ste of attributes typically follow a structure of camel cased, or dash separated names that are separate descriptors of the element
+    $action.NonSentenceLabels = {
+        "GLOBAL": ["class", "id"], // Class is not included because it is the only one that should be considered as separate tokens. 
+        "INPUT": ["name"],
+        "BUTTON": ["name"],
+        "FIELDSET": ["name"],
+        "TEXTAREA": ["name"],
+        "SELECT": ["name"],
+        "A": ["href"]
+            // TODO: Later fill in the complete set. 
+    }
 
-            var innerText = jQuery(element).contents().first().text().trim();
-            return innerText;
-        },
-        "TEXTAREA": function (element) {
-            var title = jQuery(element).attr("title");
-            if (title && title.length) {
-                return title;
-            }
-        }
+    // This set of attributes typically follow a sentence structure. 
+    $action.SentenceLabels = {
+        "GLOBAL": ["title"],
+        "INPUT": ["placeholder", "alt", "value"]
     }
 
     $action.GlobalEventHandlerMappings = { // TODO: Add the rest
@@ -57,13 +54,18 @@ var $action = $action || {};
             this._handler = handler;
             this._dependencies = [];
             this._dataDependent = false;
-            this._imperativeLabel = "";
+            this._imperativeLabels = [];
+            this._labels = [];
+            this._nounTags = [];
+            this._tags = [];
 
             if (this._handler) {
                 // this._ast = esprima.parse(this._handler);
+                console.log(domElement);
+                console.log(this._handler);
             }
 
-            this.initMetadata();
+            /*            this.initMetadata();*/
             this.postCommands = [];
         }
 
@@ -99,9 +101,30 @@ var $action = $action || {};
         set DataDependent(state) {
             this._dataDependent = state;
         }
-        
-        get ImperativeLabel() {
-            return this._imperativeLabel;
+
+        get ImperativeLabels() {
+            return this._imperativeLabels;
+        }
+
+        // The first text node found in the hierarcy
+        get Labels() {
+            return this._labels;
+        }
+
+        get NounTags() {
+            return this._nounTags;
+        }
+
+        set NounTags(tags) {
+            this._nounTags = tags;
+        }
+
+        get Tags() {
+            return this._tags;
+        }
+    
+        set Tags(tags) {
+            this._tags = tags;
         }
 
         /**
@@ -112,38 +135,6 @@ var $action = $action || {};
         get Handler() {
             return this._handler;
         }
-
-        /**
-         * Initialize all of the command  metadata
-         * @private
-         * @property undefined
-         */
-        initMetadata() {
-            // Retrieve all of the Text nodes on the element
-            // Tag them with the parts of speech. 
-            // Extract 
-            var walker = document.createTreeWalker(this._domElement, NodeFilter.SHOW_TEXT, null, false);
-            var posTagger = new POSTagger();
-            var node = walker.nextNode();
-            while (node) {
-                // split the string by space separators
-                var trimmed = node.textContent.replace(/\s/g, ' ').trim();
-                if (trimmed && trimmed.length) {
-                    var split = trimmed.split(" ");
-                    var tagged = posTagger.tag(split);
-                    if (tagged.length) {
-                        // First word in the sentence should be a verb
-                        var first = tagged[0];
-                        var firstType = first[1];
-                        if (["VB", "VBP"].indexOf(firstType) > -1) {
-                            this._imperativeLabel = trimmed;
-                        }
-                    }
-                }
-
-                node = walker.nextNode();
-            }
-        };
 
         /**
          * Adds a command to the list of post commands that must be executed directly after this command
@@ -346,6 +337,9 @@ var $action = $action || {};
             this.ui = ui; // The instance of UI that is creating this instance
             this._scripts = scripts;
             this.init();
+
+            this._posTagger = new POSTagger();
+            this._parser = new $action.Parser();
         }
 
         init() {
@@ -375,6 +369,7 @@ var $action = $action || {};
                 if (element && element.length) {
                     var newCommand = new $action.Command(command.eventType, element[0], command.handler)
                         // this.analyzeCommandHandler(newCommand.AST, newCommand);
+                    this.initMetadata(newCommand);
 
                     this.commandCount++;
                     this.ui.appendCommand(newCommand, this.commandCount);
@@ -511,6 +506,164 @@ var $action = $action || {};
             // TODO: more advanced calls later
             return callRef;
         }
+
+        filterTagNodes(text) {
+            // Look for opening and closing brackets. Assume this is a text node that is also a tag
+            var first = text.substring(0, 1);
+            var last = text.substring(text.length - 1, text.length);
+            if (first == "<" && last == ">") {
+                return false;
+            }
+
+            return true;
+        }
+
+        findImperativeSentence(sentence) {
+            var split = sentence.split(" ");
+            var tagged = this._posTagger.tag(split);
+            if (tagged.length) {
+                // First word in the sentence should be a verb
+                var first = tagged[0];
+                var firstType = first[1];
+                if (["VB", "VBP"].indexOf(firstType) > -1 && !this._imperativeLabel) {
+                    return sentence;
+                }
+            }
+        }
+
+        parseSentenceLabel(command, labelString) {
+            var sentences = labelString.split(/\.|\?|!/);
+            var split = [];
+            if (sentences.length > 1) {
+                for (var i = 0; i < sentences.length; i++) {
+                    let impSentence = this.findImperativeSentence(sentences[i].trim());
+                    if (impSentence && impSentence.length) {
+                        command.ImperativeLabels.push(impSentence);
+                    } else {
+                        command.Labels.push(sentences[i]);
+                    }
+                }
+            } else {
+                let impSentence = this.findImperativeSentence(sentences[0]);
+                if (impSentence && impSentence.length) {
+                    command.ImperativeLabels.push(impSentence);
+                } else {
+                    command.Labels.push(labelString);
+                }
+            }
+        }
+
+        parseTags(command, labelString) {
+            // First split by spaces to get individual words
+            var tokens = labelString.split(/\s|\/|:|\./);
+
+            // Then go through each token and split by comming separation conventions
+            for (var i = 0; i < tokens.length; i++) {
+                let parsedToken = this._parser.parse(tokens[i]);
+                if (parsedToken.nouns.length) {
+                    command.NounTags = command.NounTags.concat(parsedToken.nouns);
+                }
+
+                if (parsedToken.words.length) {
+                    command.Tags = command.Tags.concat(parsedToken.words);
+                }
+            }
+        }
+
+        parseElement(command, element) {
+            // Find all of the tags
+            // After searching text nodes, search attributes for imperative labels
+            // First, look in global attributes 
+            // Then look in attributes specific to that tag name
+            // Should we search in any particular order? 
+            var globalAttrs = $action.SentenceLabels.GLOBAL;
+            if (globalAttrs.length) {
+                for (var i = 0; i < globalAttrs.length; i++) {
+                    let globalAttr = globalAttrs[i];
+                    let attr = element.attributes[globalAttr];
+                    if (attr) {
+                        let attrValue = attr.value;
+                        if (attrValue && attrValue.length) {
+                            this.parseSentenceLabel(command, attrValue);
+                        }
+                    }
+                }
+            }
+
+
+            var nonGlobalAttrs = $action.SentenceLabels[element.tagName];
+            if (nonGlobalAttrs) {
+                for (var j = 0; j < nonGlobalAttrs.length; j++) {
+                    let nonGlobalAttr = element.attributes[nonGlobalAttrs[j]];
+                    if (nonGlobalAttr) {
+                        let nonGlobalVal = nonGlobalAttr.value;
+                        if (nonGlobalVal && nonGlobalVal.length) {
+                            this.parseSentenceLabel(command, nonGlobalVal);
+                        }
+                    }
+                }
+            }
+
+            // Now, look for tags in the non-sentence containing attributes. 
+            var nonSentenceGlobals = $action.NonSentenceLabels.GLOBAL;
+            for (var i = 0; i < nonSentenceGlobals.length; i++) {
+                let nonSentence = nonSentenceGlobals[i];
+                let value = element.attributes[nonSentence];
+                if (value) {
+                    let attrValue = value.value;
+                    if (attrValue && attrValue.length) {
+                        this.parseTags(command, attrValue);
+                    }
+                }
+            }
+
+            // Now, do the same for non-sentence globals
+            var nonSentenceAttrs = $action.NonSentenceLabels[command.Element.tagName];
+            if (nonSentenceAttrs) {
+                for (var j = 0; j < nonSentenceAttrs.length; j++) {
+                    let nonSentenceAttr = element.attributes[nonSentenceAttrs[j]];
+                    if (nonSentenceAttr) {
+                        let nonSentenceVal = nonSentenceAttr.value;
+                        if (nonSentenceVal && nonSentenceVal.length) {
+                            this.parseTags(command, nonSentenceVal);
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * Initialize all of the command  metadata
+         * @private
+         * @property undefined
+         */
+        initMetadata(command) {
+            // Retrieve all of the Text nodes on the element
+            // Tag them with the parts of speech. 
+            var walker = document.createTreeWalker(command.Element, NodeFilter.SHOW_TEXT, null, false);
+            var node = walker.nextNode();
+            while (node) {
+                // split the string by space separators
+                var trimmed = node.textContent.replace(/\s/g, ' ').trim();
+                if (trimmed && trimmed.length && this.filterTagNodes(trimmed)) {
+                    this.parseSentenceLabel(command, trimmed);
+                }
+
+                node = walker.nextNode();
+            }
+
+            this.parseElement(command, command.Element);
+
+            // Search descendants for potential tags
+            var desc = $(command.Element).find("*");
+            for (var k = 0; k < desc.length; k++) {
+                this.parseElement(command, desc[k]);
+            }
+
+            // Filter duplicate tags
+            command.NounTags = _.uniq(command.NounTags);
+            command.Tags = _.uniq(command.Tags);
+        };
     };
 
     $action.Command = Command;

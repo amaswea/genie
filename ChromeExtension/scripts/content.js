@@ -51,7 +51,6 @@ function receiveMessage(event) {
             if (elementPath && elementPath.length) {
                 var element = $(elementPath);
                 if (element && element.length) {
-                    console.log("adding command " + event.data.path);
                     var added = $action.commandManager.addCommand(event.data);
 
                     var dataDependencies = {};
