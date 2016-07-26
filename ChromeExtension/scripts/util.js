@@ -60,7 +60,7 @@ var $action = $action || {};
     };
 
     $action.jQueryGetElementPath = function (elt) {
-        var path, node = $(elt);
+        var path, node = jQuery(elt);
         while (node.length) {
             var realNode = node[0],
                 name = realNode.localName;
@@ -278,7 +278,7 @@ var $action = $action || {};
         };
 
         function jQueryGetElementPath(elt) {
-            var path, node = $(elt);
+            var path, node = jQuery(elt);
             while (node.length) {
                 var realNode = node[0],
                     name = realNode.localName;

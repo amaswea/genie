@@ -66,6 +66,7 @@ var $difference = $action || {};
         };
 
         parseString(wordString) {
+            // TODO: See if lodash _.words could be used instead. 
             // Things that don't work
             // Classes with numbers in them
             // no camel casing is used to separate the words

@@ -58,6 +58,7 @@ var $action = $action || {};
             this._labels = [];
             this._nounTags = [];
             this._tags = [];
+            this._computedStyles = {};
 
             if (this._handler) {
                 // this._ast = esprima.parse(this._handler);
@@ -106,9 +107,17 @@ var $action = $action || {};
             return this._imperativeLabels;
         }
 
+        set ImperativeLabels(labels) {
+            this._imperativeLabels = labels;
+        }
+
         // The first text node found in the hierarcy
         get Labels() {
             return this._labels;
+        }
+
+        set Labels(labels) {
+            this._labels = labels;
         }
 
         get NounTags() {
@@ -122,9 +131,17 @@ var $action = $action || {};
         get Tags() {
             return this._tags;
         }
-    
+
         set Tags(tags) {
             this._tags = tags;
+        }
+        
+        set ComputedStyles(styles){
+            this._computedStyles = styles;
+        }
+        
+        get ComputedStyles(){
+            return this._computedStyles;
         }
 
         /**
@@ -343,6 +360,13 @@ var $action = $action || {};
         }
 
         init() {
+            // Initialize a static list of all default computed style values so that command computed styles can be filtered to only non-default values for comparison later
+            var element = document.createElement("div");
+            $('html').append(element);
+            var computed = window.getComputedStyle(element); 
+            this._defaultComputedStyles = JSON.parse(JSON.stringify(computed)); // Clone computed styles list
+            $(element).remove(); 
+
             // Gather up all the scripts on the page and find all function expressions in them to be resolved by the handlers later
             /*            var scriptASTs = this._scripts.ASTs;
                         var findFunctionExpressionsInProgram = {
@@ -553,6 +577,23 @@ var $action = $action || {};
             }
         }
 
+        parseLabelFor(command) {
+            // Check if the element has an ID 
+            var id = command.Element.attributes.id;
+            if (id) {
+                // Look for a label element with for attribute matching this ID
+                var label = $("[for='" + id.value + "']");
+                if (label && label.length && label[0].textContent.length) {
+                    let impSentence = this.findImperativeSentence(label[0].textContent);
+                    if (impSentence && impSentence.length) {
+                        command.ImperativeLabels.push(impSentence);
+                    } else {
+                        command.Labels.push(label[0].textContent);
+                    }
+                }
+            }
+        }
+
         parseTags(command, labelString) {
             // First split by spaces to get individual words
             var tokens = labelString.split(/\s|\/|:|\./);
@@ -632,12 +673,29 @@ var $action = $action || {};
             }
         }
 
+        initComputedStyles(command) {
+            var computedStyles = window.getComputedStyle(command.Element);
+            var keys = Object.keys(computedStyles);
+            var result = {}; 
+            for (var i = 0; i < keys.length; i++) {
+                // If the computed style is not equal to the default value, store it
+                var style = computedStyles[keys[i]];
+                var defaultStyle = this._defaultComputedStyles[keys[i]]; 
+                if(style != defaultStyle){
+                    result[keys[i]] = style;
+                }
+            }
+            
+            command.ComputedStyles = result; 
+        }
+
         /**
          * Initialize all of the command  metadata
          * @private
          * @property undefined
          */
         initMetadata(command) {
+            // Get labels
             // Retrieve all of the Text nodes on the element
             // Tag them with the parts of speech. 
             var walker = document.createTreeWalker(command.Element, NodeFilter.SHOW_TEXT, null, false);
@@ -653,6 +711,7 @@ var $action = $action || {};
             }
 
             this.parseElement(command, command.Element);
+            this.parseLabelFor(command);
 
             // Search descendants for potential tags
             var desc = $(command.Element).find("*");
@@ -663,6 +722,11 @@ var $action = $action || {};
             // Filter duplicate tags
             command.NounTags = _.uniq(command.NounTags);
             command.Tags = _.uniq(command.Tags);
+            command.Labels = _.uniq(command.Labels);
+            command.ImperativeLabels = _.uniq(command.ImperativeLabels);
+
+            // Computed styles
+            this.initComputedStyles(command);
         };
     };
 

@@ -64,7 +64,9 @@ var $action = $action || {};
 
             var tagSpan = document.createElement("span");
             tagSpan.classList.add("action-search-tags");
-            tagSpan.textContent = this.nounTags().toString().replace(/,/g, ", ") + ", " + this.tags().toString().replace(/,/g, ", ");
+            
+            var addComma = this.nounTags().length > 0 && this.tags().length > 0;
+            tagSpan.textContent = this.nounTags().toString().replace(/,/g, ", ") + (addComma ? ", " : "") + this.tags().toString().replace(/,/g, ", ");
 
             listItem.appendChild(labelSpan);
             listItem.appendChild(tagSpan)
@@ -109,7 +111,7 @@ var $action = $action || {};
             if (this.command.Labels.length) {
                 var tagName = this.command.Element.tagName;
                 for(var i=0; i<this.command.Labels.length; i++){
-                    labelString = labelString + $action.ActionableElementsActionLabel[tagName] + " " + this.command.Labels[i] + " " + $action.TagEnglishWordMappings[tagName.toLowerCase()];
+                    labelString = labelString + this.command.Labels[i];
                     if(i < this.command.Labels.length - 1){
                         labelString = labelString + ", ";
                     }
