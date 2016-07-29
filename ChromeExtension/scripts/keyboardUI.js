@@ -47,6 +47,7 @@ var $action = $action || {};
         constructor(command) {
             super(command);
             this.init();
+            this._tagName = "";
         }
 
         get DOM() {
@@ -54,25 +55,29 @@ var $action = $action || {};
         };
 
         init() {
-            var listItem = document.createElement("li");
-            var action = this.command.EventType != 'default' ? this.command.EventType : $action.ActionableElementsActionLabel[this.command.Element.tagName];
-            listItem.classList.add("action-search-list-item");
+            var element = jQuery(this.command.Path)[0];
+            if (element) {
+                this._tagName = element.tagName;
+                var listItem = document.createElement("li");
+                var action = this.command.EventType != 'default' ? this.command.EventType : $action.ActionableElementsActionLabel[this._tagName];
+                listItem.classList.add("action-search-list-item");
 
-            var labelSpan = document.createElement("span");
-            labelSpan.classList.add("action-search-label");
-            labelSpan.textContent = this.label().toString().replace(/,/g, ", ");
+                var labelSpan = document.createElement("span");
+                labelSpan.classList.add("action-search-label");
+                labelSpan.textContent = this.label().toString().replace(/,/g, ", ");
 
-            var tagSpan = document.createElement("span");
-            tagSpan.classList.add("action-search-tags");
-            
-            var addComma = this.nounTags().length > 0 && this.tags().length > 0;
-            tagSpan.textContent = this.nounTags().toString().replace(/,/g, ", ") + (addComma ? ", " : "") + this.tags().toString().replace(/,/g, ", ");
+                var tagSpan = document.createElement("span");
+                tagSpan.classList.add("action-search-tags");
 
-            listItem.appendChild(labelSpan);
-            listItem.appendChild(tagSpan)
-            listItem.addEventListener("click", this.command.execute(), null, false, true); // Must pass in these arguments so that the addEventListener override knows to ignore this registration. 
+                var addComma = this.nounTags().length > 0 && this.tags().length > 0;
+                tagSpan.textContent = this.nounTags().toString().replace(/,/g, ", ") + (addComma ? ", " : "") + this.tags().toString().replace(/,/g, ", ");
 
-            this._domElement = listItem;
+                listItem.appendChild(labelSpan);
+                listItem.appendChild(tagSpan)
+                listItem.addEventListener("click", this.command.execute(), null, false, true); // Must pass in these arguments so that the addEventListener override knows to ignore this registration. 
+
+                this._domElement = listItem;
+            }
         }
 
         nounTags() {
@@ -102,36 +107,23 @@ var $action = $action || {};
             if (this.command.ImperativeLabels.length) {
                 labelString = labelString + this.command.ImperativeLabels.toString();
             }
-            
-            if(this.command.ImperativeLabels.length && this.command.Labels.length){
+
+            if (this.command.ImperativeLabels.length && this.command.Labels.length) {
                 labelString = labelString + ", ";
             }
 
             // Otherwise, return the first text node found
             if (this.command.Labels.length) {
-                var tagName = this.command.Element.tagName;
-                for(var i=0; i<this.command.Labels.length; i++){
+                var tagName = this._tagName;
+                for (var i = 0; i < this.command.Labels.length; i++) {
                     labelString = labelString + this.command.Labels[i];
-                    if(i < this.command.Labels.length - 1){
+                    if (i < this.command.Labels.length - 1) {
                         labelString = labelString + ", ";
                     }
                 }
             }
-
-            // ALT text
-            // /Classes 
-            // Name attribute
-            // For a URL, the last /slash 
-            // Inner HTML, not imperative
-            // Description text in addition to label
-            // label for attribute
-            // Search headers around the element?
-            // Special for input fields, what form does it submit? Buttons as well
-            if(!labelString.length){
-                console.log(this.command.Element);
-            }
-
-            return labelString; 
+            
+            return labelString;
         };
     };
 

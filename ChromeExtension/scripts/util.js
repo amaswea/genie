@@ -2,6 +2,66 @@
 var $action = $action || {};
 (function ($action) {
     $action.handlerIDs = 0;
+    
+     var treeWalkFast = (function () {
+        // create closure for constants
+        var skipTags = {
+            "SCRIPT": true,
+            "IFRAME": true,
+            "OBJECT": true,
+            "EMBED": true
+        };
+        return function (parent, fn, allNodes) {
+            var node = parent.firstChild,
+                nextNode;
+            var level = 1;
+            while (node && node != parent) {
+                if (allNodes || node.nodeType === 1) {
+                    if (fn(node, level) === false) {
+                        return (false);
+                    }
+                }
+                // if it's an element &&
+                //    has children &&
+                //    has a tagname && is not in the skipTags list
+                //  then, we can enumerate children
+                if (node.nodeType === 1 && node.firstChild && !(node.tagName && skipTags[node.tagName])) {
+                    node = node.firstChild;
+                    ++level;
+                } else if (node.nextSibling) {
+                    node = node.nextSibling;
+                } else {
+                    // no child and no nextsibling
+                    // find parent that has a nextSibling
+                    --level;
+                    while ((node = node.parentNode) != parent) {
+                        if (node.nextSibling) {
+                            node = node.nextSibling;
+                            break;
+                        }
+                        --level;
+                    }
+                }
+            }
+        }
+    })();
+    
+    jQuery.fn.findDeepest = function () {
+        var results = [];
+        this.each(function () {
+            var deepLevel = 0;
+            var deepNode = this;
+            treeWalkFast(this, function (node, level) {
+                if (level > deepLevel) {
+                    deepLevel = level;
+                    deepNode = node;
+                }
+            });
+            results.push(deepNode);
+        });
+        return this.pushStack(results);
+    };
+
 
     /**
      * Takes the data object passed in and returns a new object with the instrumented handler
@@ -202,7 +262,8 @@ var $action = $action || {};
          */
         function getUniqueID() {
             window.geniePageHandlerIDs++;
-            return window.geniePageHandlerIDs;
+            // IDs for event handler commands are identified by the prefix 'h' to distinguish them from page handlers
+            return "h" + window.geniePageHandlerIDs;
         }
 
         function getPageHandlerObject(id, eventType, handler, element, options = null, useCapture = false) {
@@ -219,7 +280,7 @@ var $action = $action || {};
         }
 
         function getContentObject(id, messageType, eventType, handler, element) {
-            if (handler) {                // TODO: Handler arguments for jQuery on override better  s
+            if (handler) { // TODO: Handler arguments for jQuery on override better  s
                 var handlerObj = {
                     messageType: messageType,
                     eventType: eventType,
@@ -347,7 +408,7 @@ var $action = $action || {};
             jQuery.fn.on = function (events, selector, handler) { // TODO: handle when selector, data options are used
                 jQuery.fn._on.apply(this, arguments);
                 var handle = handler;
-                
+
                 if (selector != null && !handle) {
                     handler = selector;
                 }

@@ -3,7 +3,8 @@ var $action = $action || {};
 (function ($action) {
     class MutationWatcher {
         constructor() {
-
+            this._pageHandlerIDs = 0;
+            this._pageCommands = {};
         }
 
         /**
@@ -19,6 +20,23 @@ var $action = $action || {};
             for (var i = 0; i < allElements.length; i++) {
                 var element = allElements[i];
                 this.addCommandsFromElement(element);
+            }
+        };
+
+        getUniqueID() {
+            this._pageHandlerIDs++;
+            // Page commands are identified by the prefix 'p' to distinguish them from event handler commands
+            return "p" + this._pageHandlerIDs;
+        }
+
+        getPageCommandID(type, element) {
+            var keys = Object.keys(this._pageCommands);
+            for (var i = 0; i < keys.length; i++) {
+                var value = this._pageCommands[keys[i]];
+                var elt = document.querySelector(value.path);
+                if (value && value.eventType == type && element == elt) {
+                    return keys[i];
+                }
             }
         };
 
@@ -43,10 +61,12 @@ var $action = $action || {};
                 var isActionable = $action.ActionableElements[tagAdded](element);
                 if (isActionable) {
                     var commandData = {
+                        id: this.getUniqueID(),
                         eventType: 'default',
-                        path: typeof(jQuery) == "function" ? $action.jQueryGetElementPath(element) : $action.getElementPath(element)
+                        path: typeof (jQuery) == "function" ? $action.jQueryGetElementPath(element) : $action.getElementPath(element)
                     }
 
+                    this._pageCommands[commandData.id] = commandData;
                     $action.commandManager.addCommand(commandData);
                 }
             }
@@ -57,11 +77,13 @@ var $action = $action || {};
                 var attributeValue = $element.attr(eventHandler);
                 if (attributeValue && attributeValue.length > 0) {
                     var commandData = {
+                        id: this.getUniqueID(),
                         eventType: eventHandler,
                         handler: attributeValue,
                         path: $action.getElementPath(element)
                     }
 
+                    this._pageCommands[commandData.id] = commandData;
                     var added = $action.commandManager.addCommand(commandData);
                     var dataDependencies = {};
                     if (added) {

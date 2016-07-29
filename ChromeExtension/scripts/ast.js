@@ -1,6 +1,6 @@
-"use strict";
 var $action = $action || {};
 (function ($action) {
+    "use strict";
     class ASTAnalyzer {
         // Format of abstract syntax tree follows: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
         constructor() {}
@@ -10,19 +10,18 @@ var $action = $action || {};
                 if (!visitor.scopes) {
                     visitor.scopes = [];
                 }
-                
-                if(visitor.outside && visitor.within) {
+
+                if (visitor.outside && visitor.within) {
                     visitor.error = "Cannot use both within and outside options together";
-                    return; 
+                    return;
                 }
-                
+
                 // More error checking?? 
 
                 // Cannot use both outside and within options
-                if(visitor.outside){
+                if (visitor.outside) {
                     visitor.collect = true;
-                }
-                else if (visitor.within == "Program") {
+                } else if (visitor.within == "Program") {
                     visitor.collect = true;
                 }
 
@@ -42,11 +41,11 @@ var $action = $action || {};
 
         static searchNode(node, visitor) {
             var collect = visitor.collect;
-            var hasProp = visitor.property != undefined;
+            var hasProp = visitor.property !== undefined;
             if (visitor.within && visitor.within.length && visitor.within.indexOf(node.type) > -1 && !hasProp && !collect) {
                 visitor.collect = true;
             }
-            
+
             if (visitor.outside && visitor.outside.length && visitor.outside.indexOf(node.type) > -1 && collect) {
                 visitor.collect = false;
             }
@@ -122,7 +121,7 @@ var $action = $action || {};
                 break;
             case "FunctionExpression":
             case "ArrowExpression":
-                this.searchFunctionExpression(node, visitor)
+                this.searchFunctionExpression(node, visitor);
                 break;
             case "SequenceExpression":
                 this.searchSequenceExpression(node, visitor);
@@ -210,7 +209,7 @@ var $action = $action || {};
             // Cannot use both outside and within options
             if (collect && visitor.outside) {
                 visitor.collect = true;
-            }else if(!collect && visitor.within){
+            } else if (!collect && visitor.within) {
                 visitor.collect = false;
             }
         }
@@ -344,7 +343,7 @@ var $action = $action || {};
             //   Identifier -> AssignmentExpression
             //   Identifier -> VariableDeclaration 
             var props = ["test", "consequent", "alternate"];
-            var hasProp = visitor.property != undefined;
+            var hasProp = visitor.property !== undefined;
             for (var i = 0; i < props.length; i++) {
                 var setCollect = hasProp && visitor.property == props[i];
                 if (setCollect) {
@@ -361,7 +360,7 @@ var $action = $action || {};
             }
         }
 
-        static searchLetStatement(statement) {
+        static searchLetStatement(statement, visitor) {
             for (var i = 0; i < statement.head.length; i++) {
                 this.searchNode(statement.head, visitor);
             }
@@ -556,7 +555,7 @@ var $action = $action || {};
 
         static searchObjectPattern(pattern, visitor) {
             for (var i = 0; i < pattern.properties; i++) {
-                var p = patterns.properties[i];
+                var p = pattern.properties[i];
                 var key = p.key;
                 var value = p.value;
                 this.searchNode(key, visitor);
@@ -625,7 +624,7 @@ var $action = $action || {};
 
         static searchProperty(property, visitor) {
             // Only supported by object expressions
-            this.searchNode(property.key, visitor)
+            this.searchNode(property.key, visitor);
             this.searchNode(property.value, visitor);
 
             //property.kind contains the kind "init" for ordinary property initializers. 
@@ -689,7 +688,7 @@ var $action = $action || {};
             // Just construct expression now. Worry about side-effects later
             // Clone the lastAssigned node first so modifications to it do not alter the original tree
             if (identifier.lastAssigned) {
-                var previous = identifier.lastAssigned;
+                let previous = identifier.lastAssigned;
                 identifier.lastAssigned = $.extend(true, {}, identifier.lastAssigned);
 
                 if (identifier.lastAssigned.type == "Identifier") {
@@ -700,7 +699,7 @@ var $action = $action || {};
                 }
 
             } else if (identifier.lastDeclared) {
-                var previous = identifier.lastDeclared;
+                let previous = identifier.lastDeclared;
                 identifier.lastDeclared = $.extend(true, {}, identifier.lastDeclared);
 
                 if (identifier.lastDeclared.type == "Identifier") {
@@ -752,18 +751,18 @@ var $action = $action || {};
                 return node.name;
             case "BlockStatement":
                 {
-                    var toStringValue = "{ ";
+                    let toStringValue = "{ ";
                     for (var i = 0; i < node.body.length; i++) {
                         toStringValue = toStringValue + this.convertNodeToString(node.body[i]) + "; ";
                     }
-                    return toStringValue + " }"
+                    return toStringValue + " }";
                 }
             case "ExpressionStatement":
                 return this.convertNodeToString(node.expression);
             case "IfStatement":
             case "ConditionalExpression":
                 {
-                    var toStringValue = "if(" + this.convertNodeToString(node.test) + ") { " + this.convertNodeToString(node.consequent) + " } ";
+                    let toStringValue = "if(" + this.convertNodeToString(node.test) + ") { " + this.convertNodeToString(node.consequent) + " } ";
                     if (node.alternate) {
                         if (node.alternate.type == "IfStatement") {
                             toStringValue = toStringValue + "else " + this.convertNodeToString(node.alternate);
@@ -791,7 +790,7 @@ var $action = $action || {};
             case "SwitchStatement":
                 {
                     var toStringValue = "switch(" + this.convertNodeToString(node.discriminant) + ") {";
-                    for (var i = 0; i < node.cases.length; i++) {
+                    for (let i = 0; i < node.cases.length; i++) {
                         toStringValue = " " + this.convertNodeToString(node.cases[i]);
                     }
                     return toStringValue + "}";
@@ -806,13 +805,13 @@ var $action = $action || {};
                 }
             case "TryStatement":
                 {
-                    var toStringValue = "try { " + this.convertNodeToString(node.block) + " } ";
+                    let toStringValue = "try { " + this.convertNodeToString(node.block) + " } ";
                     if (node.handler) {
                         toStringValue = toStringValue + this.convertNodeToString(node.handler);
                     }
                     //  guardedHandlers - what are these? 
                     if (node.finalizer) {
-                        toStringValue + "finally { " + this.convertNodeToString(node.finalizer); + " }";
+                        toStringValue = toStringValue + "finally { " + this.convertNodeToString(node.finalizer); + " }";
                     }
                     return toStringValue;
                 }
@@ -864,7 +863,7 @@ var $action = $action || {};
                     var toStringValue = node.kind;
                     for (var i = 0; i < node.declarations.length; i++) {
                         var declarator = node.declarations[i];
-                        toStringValue + ", " + this.convertNodeToString(declarator);
+                        toStringValue = toStringValue + ", " + this.convertNodeToString(declarator);
                     }
                     toStringValue = ";";
                     return toStringValue;
@@ -1075,7 +1074,7 @@ var $action = $action || {};
     class Scope {
         constructor(statement) {
             this._statement = statement;
-            this._assignments = {} // A map between identifiers & AssignmentExpression/VariableDeclaration nodes
+            this._assignments = {}; // A map between identifiers & AssignmentExpression/VariableDeclaration nodes
             this._declarations = {};
         }
 

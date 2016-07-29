@@ -39,6 +39,7 @@
                 "scripts/jspos/POSTagger.js",
                 "scripts/parser.js",
                 "scripts/typo.js",
+                "scripts/commandOrganizer.js",
                 "scripts/content.js" // Content script should load last. 
             ],
             "run_at": "document_start"

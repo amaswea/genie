@@ -47,6 +47,7 @@ function receiveMessage(event) {
     // Check the type of the message returned, and add or remove the command from the dialog accordingly
     if (event.data) {
         if (event.data.messageType == 'eventAdded') {
+            $action.commandsChanged = true;
             var elementPath = event.data.path;
             if (elementPath && elementPath.length) {
                 var element = $(elementPath);
@@ -67,6 +68,7 @@ function receiveMessage(event) {
         }
 
         if (event.data.messageType == 'eventRemoved') {
+            $action.commandsChanged = true;
             var elementPath = event.data.path;
             if (elementPath && elementPath.length) {
                 var element = $(elementPath);
@@ -96,11 +98,24 @@ function receiveMessage(event) {
  * @private
  * @method getCommandStates
  */
-function getCommandStates() {
-    window.postMessage({
-        messageType: 'getCommandStates'
-    }, "*");
-    setTimeout(getCommandStates, 10000);
+function updateCommands() {
+    /*  window.postMessage({
+          messageType: 'getCommandStates'
+      }, "*");*/
+
+/*    // If any commands have been added or removed since the last update, run the reorganization worker
+    chrome.runtime.sendMessage({
+        groupingStrategy: 'visualContainer',
+        metadata: $action.commandManager.getPathMetadata() // Just a collection of the metadata required for visual organization
+    }, function reorganizeCommands(groups) {
+        console.log("message received");
+    });*/
+    
+    var groups = $action.CommandOrganizer.organizeCommandsByVisualContainer($action.commandManager.Commands);
+    
+
+    $action.commandsChanged = false;
+   // setTimeout(updateCommands, 10000);
 }
 
 /**
@@ -161,5 +176,6 @@ $(document).ready(function () {
     }
 
     // Begin polling to update command states
- //  setTimeout(getCommandStates, 10000);
+    setTimeout(updateCommands, 10000);
+    
 });

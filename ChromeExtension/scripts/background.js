@@ -57,15 +57,15 @@ $(document).ready(function () {
             }
         });
     }
-    
-    
-    var isJavaScriptFile = function (url){
-        var lastIndex = url.lastIndexOf('.'); 
-        var extension = url.substring(lastIndex + 1, url.length); 
-        if(extension == "js"){
-            return true; 
+
+
+    var isJavaScriptFile = function (url) {
+        var lastIndex = url.lastIndexOf('.');
+        var extension = url.substring(lastIndex + 1, url.length);
+        if (extension == "js") {
+            return true;
         }
-        
+
         return false;
     }
 
@@ -88,6 +88,18 @@ $(document).ready(function () {
             var interfaceState = request.interfaceState;
             restoreInterfaceState(interfaceState);
         }
+
+        if (request.groupingStrategy) {
+            if (request.groupingStrategy == 'visual') {
+                let visualClusters = $action.CommandOrganizer.organizeCommandsVisually(request.metadata);
+                sendResponse(visualClusters);
+            }
+            
+            if(request.groupingStrategy == 'visualContainer'){
+                let visualContainers = $action.CommandOrganizer.organizeCommandsByVisualContainer(request.metadata);
+                sendResponse(visualContainers);
+            }
+        }
     });
 
     /**
@@ -105,7 +117,7 @@ $(document).ready(function () {
                 .done(function (data) {
                     chrome.tabs.sendMessage(tabID, {
                         text: 'scriptReceived',
-                        data: data, 
+                        data: data,
                         url: details.url
                     });
                 })

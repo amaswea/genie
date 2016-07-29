@@ -48,9 +48,12 @@ var $action = $action || {};
      };*/
 
     class Command {
-        constructor(eventType, domElement, handler) {
+        constructor(id, eventType, path, handler) {
+            this._id = id;
             this._eventType = eventType;
-            this._domElement = domElement; // The DOM element the command is associated with
+            this._path = path; // The path to locate the DOM element the command is associated with. Only store the path so that commands can be passed to background scripts
+            this._domElement = document.querySelector(path);
+            
             this._handler = handler;
             this._dependencies = [];
             this._dataDependent = false;
@@ -60,24 +63,26 @@ var $action = $action || {};
             this._tags = [];
             this._computedStyles = {};
 
-            if (this._handler) {
-                // this._ast = esprima.parse(this._handler);
-                console.log(domElement);
-                console.log(this._handler);
-            }
-
             /*            this.initMetadata();*/
             this.postCommands = [];
         }
 
         // Getters & Setters
-        get EventType() {
-            return this._eventType;
-        };
+        get ID() {
+            return this._id;
+        }
 
+        get Path() {
+            return this._path;
+        }
+        
         get Element() {
             return this._domElement;
         }
+
+        get EventType() {
+            return this._eventType;
+        };
 
         get CommandItem() {
             return this._commandItem;
@@ -135,12 +140,12 @@ var $action = $action || {};
         set Tags(tags) {
             this._tags = tags;
         }
-        
-        set ComputedStyles(styles){
+
+        set ComputedStyles(styles) {
             this._computedStyles = styles;
         }
-        
-        get ComputedStyles(){
+
+        get ComputedStyles() {
             return this._computedStyles;
         }
 
@@ -221,17 +226,18 @@ var $action = $action || {};
          */
         enabled() {
             // Look for disabled attribute on the element
-            var element = this.Element;
-            var tagName = element.tagName;
-            var hasDisabled = $action.DisabledAttributeElements[tagName.toLowerCase()];
-            if (hasDisabled) {
-                let disabled = element.attributes.disabled;
-                if (disabled && disabled.value == "disabled") {
-                    return false;
+            if (this._domElement) {
+                var tagName = this._domElement.tagName;
+                var hasDisabled = $action.DisabledAttributeElements[tagName.toLowerCase()];
+                if (hasDisabled) {
+                    let disabled = this._domElement.attributes.disabled;
+                    if (disabled && disabled.value == "disabled") {
+                        return false;
+                    }
                 }
-            }
 
-            return true;
+                return true;
+            }
         };
 
 
@@ -241,7 +247,7 @@ var $action = $action || {};
          * @property undefined
          */
         visible() {
-            var element = $(this.Element);
+            var element = $(this._domElement); 
             var displayed = element.css('display') != "none";
             var visibility = element.css('visibility') != "hidden";
             var heightBigEnough = element.height() > 10;
@@ -332,7 +338,7 @@ var $action = $action || {};
                 // Perform the action
                 var action = {
                     event: self.EventType,
-                    selector: $action.getElementPath(self.Element)
+                    selector: $action.getElementPath(this._domElement)
                 }
 
                 window.postMessage(action, "*");
@@ -349,9 +355,9 @@ var $action = $action || {};
 
     class CommandManager {
         constructor(ui, scripts) {
-            this.commands = {};
-            this.commandCount = 0;
-            this.ui = ui; // The instance of UI that is creating this instance
+            this._commands = {};
+            this._commandCount = 0;
+            this._ui = ui; // The instance of UI that is creating this instance
             this._scripts = scripts;
             this.init();
 
@@ -359,13 +365,17 @@ var $action = $action || {};
             this._parser = new $action.Parser();
         }
 
+        get Commands() {
+            return this._commands;
+        }
+
         init() {
             // Initialize a static list of all default computed style values so that command computed styles can be filtered to only non-default values for comparison later
             var element = document.createElement("div");
             $('html').append(element);
-            var computed = window.getComputedStyle(element); 
+            var computed = window.getComputedStyle(element);
             this._defaultComputedStyles = JSON.parse(JSON.stringify(computed)); // Clone computed styles list
-            $(element).remove(); 
+            $(element).remove();
 
             // Gather up all the scripts on the page and find all function expressions in them to be resolved by the handlers later
             /*            var scriptASTs = this._scripts.ASTs;
@@ -391,15 +401,15 @@ var $action = $action || {};
             if (command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1) {
                 var element = $(command.path);
                 if (element && element.length) {
-                    var newCommand = new $action.Command(command.eventType, element[0], command.handler)
+                    var newCommand = new $action.Command(command.id, command.eventType, command.path, command.handler)
                         // this.analyzeCommandHandler(newCommand.AST, newCommand);
                     this.initMetadata(newCommand);
 
-                    this.commandCount++;
-                    this.ui.appendCommand(newCommand, this.commandCount);
+                    this._commandCount++;
+                    this._ui.appendCommand(newCommand, this._commandCount);
 
                     // Add the command to the command map
-                    this.commands[command.id] = newCommand;
+                    this._commands[command.id] = newCommand;
                     return true;
                 }
             }
@@ -408,10 +418,10 @@ var $action = $action || {};
 
 
         removeCommand(command) {
-            var storedCommand = this.commands[command.id];
+            var storedCommand = this._commands[command.id];
             if (storedCommand) {
-                this.commandCount--;
-                this.ui.removeCommand(storedCommand);
+                this._commandCount--;
+                this._ui.removeCommand(storedCommand, this._commandCount);
             }
         };
 
@@ -419,10 +429,10 @@ var $action = $action || {};
             var keys = Object.keys(commandStates);
             for (var i = 0; i < keys.length; i++) {
                 let commandState = commandStates[keys[i]];
-                let command = this.commands[keys[i]];
+                let command = this._commands[keys[i]];
                 if (command.DataDependent != commandState) {
                     command.DataDependent = commandState;
-                    this.ui.updateCommandState(command, commandState);
+                    this._ui.updateCommandState(command, commandState);
                 }
             }
         }
@@ -577,9 +587,9 @@ var $action = $action || {};
             }
         }
 
-        parseLabelFor(command) {
+        parseLabelFor(command, element) {
             // Check if the element has an ID 
-            var id = command.Element.attributes.id;
+            var id = element.attributes.id;
             if (id) {
                 // Look for a label element with for attribute matching this ID
                 var label = $("[for='" + id.value + "']");
@@ -659,7 +669,7 @@ var $action = $action || {};
             }
 
             // Now, do the same for non-sentence globals
-            var nonSentenceAttrs = $action.NonSentenceLabels[command.Element.tagName];
+            var nonSentenceAttrs = $action.NonSentenceLabels[element.tagName];
             if (nonSentenceAttrs) {
                 for (var j = 0; j < nonSentenceAttrs.length; j++) {
                     let nonSentenceAttr = element.attributes[nonSentenceAttrs[j]];
@@ -673,20 +683,20 @@ var $action = $action || {};
             }
         }
 
-        initComputedStyles(command) {
-            var computedStyles = window.getComputedStyle(command.Element);
+        initComputedStyles(command, element) {
+            var computedStyles = window.getComputedStyle(element);
             var keys = Object.keys(computedStyles);
-            var result = {}; 
+            var result = {};
             for (var i = 0; i < keys.length; i++) {
                 // If the computed style is not equal to the default value, store it
                 var style = computedStyles[keys[i]];
-                var defaultStyle = this._defaultComputedStyles[keys[i]]; 
-                if(style != defaultStyle){
+                var defaultStyle = this._defaultComputedStyles[keys[i]];
+                if (style != defaultStyle) {
                     result[keys[i]] = style;
                 }
             }
-            
-            command.ComputedStyles = result; 
+
+            command.ComputedStyles = result;
         }
 
         /**
@@ -698,36 +708,69 @@ var $action = $action || {};
             // Get labels
             // Retrieve all of the Text nodes on the element
             // Tag them with the parts of speech. 
-            var walker = document.createTreeWalker(command.Element, NodeFilter.SHOW_TEXT, null, false);
-            var node = walker.nextNode();
-            while (node) {
-                // split the string by space separators
-                var trimmed = node.textContent.replace(/\s/g, ' ').trim();
-                if (trimmed && trimmed.length && this.filterTagNodes(trimmed)) {
-                    this.parseSentenceLabel(command, trimmed);
+            var element = this._domElement;
+            if (element) {
+                var walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+                var node = walker.nextNode();
+                while (node) {
+                    // split the string by space separators
+                    var trimmed = node.textContent.replace(/\s/g, ' ').trim();
+                    if (trimmed && trimmed.length && this.filterTagNodes(trimmed)) {
+                        this.parseSentenceLabel(command, trimmed);
+                    }
+
+                    node = walker.nextNode();
                 }
 
-                node = walker.nextNode();
+                this.parseElement(command, element);
+                this.parseLabelFor(command, element);
+
+                // Search descendants for potential tags
+                var desc = $(element).find("*");
+                for (var k = 0; k < desc.length; k++) {
+                    this.parseElement(command, desc[k]);
+                }
+
+                // Filter duplicate tags
+                command.NounTags = _.uniq(command.NounTags);
+                command.Tags = _.uniq(command.Tags);
+                command.Labels = _.uniq(command.Labels);
+                command.ImperativeLabels = _.uniq(command.ImperativeLabels);
+
+                // Computed styles
+                this.initComputedStyles(command, element);
             }
-
-            this.parseElement(command, command.Element);
-            this.parseLabelFor(command);
-
-            // Search descendants for potential tags
-            var desc = $(command.Element).find("*");
-            for (var k = 0; k < desc.length; k++) {
-                this.parseElement(command, desc[k]);
-            }
-
-            // Filter duplicate tags
-            command.NounTags = _.uniq(command.NounTags);
-            command.Tags = _.uniq(command.Tags);
-            command.Labels = _.uniq(command.Labels);
-            command.ImperativeLabels = _.uniq(command.ImperativeLabels);
-
-            // Computed styles
-            this.initComputedStyles(command);
         };
+
+        /**
+         * Get all of the commands metadata to use for visual clustering organization
+         * @private
+         * @property undefined
+         */
+        getVisualMetadata() {
+            var visualData = {};
+            var commandKeys = Object.keys(this._commands);
+            for (var i = 0; i < commandKeys.length; i++) {
+                visualData[commandKeys[i]] = this._commands[commandKeys[i]].ComputedStyles;
+            }
+
+            return visualData;
+        }
+
+        /**
+        * Get all of the paths of the commands to use for various organizations
+        * @private
+        * @property undefined
+        */
+        getPathMetadata() {
+            var pathMetadata = {};
+            var commandKeys = Object.keys(this._commands);
+            for (var i = 0; i < commandKeys.length; i++) {
+                pathMetadata[commandKeys[i]] = this._commands[commandKeys[i]].Path;
+            }
+
+            return pathMetadata;
+        }
     };
 
     $action.Command = Command;
