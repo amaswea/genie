@@ -4,17 +4,17 @@ var $action = $action || {};
 (function ($action) {
 
     $action.ActionableElementsActionLabel = {
-        "A": "Open",
-        "BUTTON": "Click",
-        "INPUT": "Fill out"
+        "A": "Open"
+        , "BUTTON": "Click"
+        , "INPUT": "Fill out"
     }
 
     $action.ActionableElements = {
         "A": function (element) {
             var href = jQuery(element).attr("href");
             return href && href.length > 0;
-        },
-        "INPUT": function (element) {
+        }
+        , "INPUT": function (element) {
             var type = jQuery(element).attr("type");
             return type && type != "hidden";
         }
@@ -23,24 +23,24 @@ var $action = $action || {};
     // This ste of attributes typically follow a structure of camel cased, or dash separated names that are separate descriptors of the element
     $action.NonSentenceLabels = {
         "GLOBAL": ["class", "id"], // Class is not included because it is the only one that should be considered as separate tokens. 
-        "INPUT": ["name"],
-        "BUTTON": ["name"],
-        "FIELDSET": ["name"],
-        "TEXTAREA": ["name"],
-        "SELECT": ["name"],
-        "A": ["href"]
+        "INPUT": ["name"]
+        , "BUTTON": ["name"]
+        , "FIELDSET": ["name"]
+        , "TEXTAREA": ["name"]
+        , "SELECT": ["name"]
+        , "A": ["href"]
             // TODO: Later fill in the complete set. 
     }
 
     // This set of attributes typically follow a sentence structure. 
     $action.SentenceLabels = {
-        "GLOBAL": ["title"],
-        "INPUT": ["placeholder", "alt", "value"]
+        "GLOBAL": ["title"]
+        , "INPUT": ["placeholder", "alt", "value"]
     }
 
     $action.GlobalEventHandlerMappings = { // TODO: Add the rest
-        "onclick": "click",
-        "onmouseover": "mouseover"
+        "onclick": "click"
+        , "onmouseover": "mouseover"
     };
 
     /* $action.CommandInputs = {
@@ -53,7 +53,7 @@ var $action = $action || {};
             this._eventType = eventType;
             this._path = path; // The path to locate the DOM element the command is associated with. Only store the path so that commands can be passed to background scripts
             this._domElement = document.querySelector(path);
-            
+
             this._handler = handler;
             this._dependencies = [];
             this._dataDependent = false;
@@ -75,7 +75,7 @@ var $action = $action || {};
         get Path() {
             return this._path;
         }
-        
+
         get Element() {
             return this._domElement;
         }
@@ -247,7 +247,7 @@ var $action = $action || {};
          * @property undefined
          */
         visible() {
-            var element = $(this._domElement); 
+            var element = $(this._domElement);
             var displayed = element.css('display') != "none";
             var visibility = element.css('visibility') != "hidden";
             var heightBigEnough = element.height() > 10;
@@ -337,8 +337,8 @@ var $action = $action || {};
 
                 // Perform the action
                 var action = {
-                    event: self.EventType,
-                    selector: $action.getElementPath(this._domElement)
+                    event: self.EventType
+                    , selector: $action.getElementPath(this._domElement)
                 }
 
                 window.postMessage(action, "*");
@@ -406,7 +406,7 @@ var $action = $action || {};
                     this.initMetadata(newCommand);
 
                     this._commandCount++;
-                    this._ui.appendCommand(newCommand, this._commandCount);
+                    //this._ui.appendCommand(newCommand, this._commandCount);
 
                     // Add the command to the command map
                     this._commands[command.id] = newCommand;
@@ -452,16 +452,40 @@ var $action = $action || {};
             // - Is this statement referring to any global variable (outside the function)
             // Search the AST for any statements are are contained in any conditional statement
             var findConditionals = {
-                within: "Program",
-                lookFor: [
-                    "IfStatement",
-                    "ConditionalExpression",
-                    "WhileStatement",
-                    "DoWhileStatement",
-                    "ForStatement",
-                    "ForInStatement",
-                    "ForOfStatement"],
-                items: [] // Will contain the collection of requested elements you are looking for
+                within: "Program"
+                , lookFor: [
+                    "IfStatement"
+
+
+
+                    
+                    , "ConditionalExpression"
+
+
+
+                    
+                    , "WhileStatement"
+
+
+
+                    
+                    , "DoWhileStatement"
+
+
+
+                    
+                    , "ForStatement"
+
+
+
+                    
+                    , "ForInStatement"
+
+
+
+                    
+                    , "ForOfStatement"]
+                , items: [] // Will contain the collection of requested elements you are looking for
             }
 
             $action.ASTAnalyzer.searchAST(handlerAST, findConditionals);
@@ -476,10 +500,10 @@ var $action = $action || {};
 
             // Look for identifiers that are contained within SwitchStatements (uses the discriminant property instead of 'test')
             var findIdentifiersWithinSwitch = {
-                lookFor: "Identifier",
-                within: ["SwitchStatement"],
-                property: "discriminant",
-                items: []
+                lookFor: "Identifier"
+                , within: ["SwitchStatement"]
+                , property: "discriminant"
+                , items: []
             }
 
             $action.ASTAnalyzer.searchAST(handlerAST, findIdentifiersWithinSwitch);
@@ -497,9 +521,9 @@ var $action = $action || {};
         linkFunctionCalls(callList) {;
             // Look for any function calls (side-effects)
             var callList = {
-                lookFor: "CallExpression",
-                within: "Program",
-                items: []
+                lookFor: "CallExpression"
+                , within: "Program"
+                , items: []
             }
 
             $action.ASTAnalyzer.searchAST(handlerAST, callList);
@@ -708,7 +732,7 @@ var $action = $action || {};
             // Get labels
             // Retrieve all of the Text nodes on the element
             // Tag them with the parts of speech. 
-            var element = this._domElement;
+            var element = command.Element;
             if (element) {
                 var walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
                 var node = walker.nextNode();
@@ -757,19 +781,61 @@ var $action = $action || {};
             return visualData;
         }
 
-        /**
-        * Get all of the paths of the commands to use for various organizations
-        * @private
-        * @property undefined
-        */
-        getPathMetadata() {
-            var pathMetadata = {};
-            var commandKeys = Object.keys(this._commands);
-            for (var i = 0; i < commandKeys.length; i++) {
-                pathMetadata[commandKeys[i]] = this._commands[commandKeys[i]].Path;
+        getCommandsByID(commandIDs) {
+            var cmds = [];
+            for (var i = 0; i < commandIDs.length; i++) {
+                cmds.push(this._commands[commandIDs[i]]);
             }
 
-            return pathMetadata;
+            return cmds;
+        }
+
+        updateVisualCommandGroups(groups) {
+
+            for (var i = 0; i < groups.length; i++) {
+                let container = groups[i].container;
+                let cmds = groups[i].commands;
+                let labels = $(container).siblings('h1,h2,h3,h4,h5,h6').first();
+                let label = "";
+
+                try {
+                    if (labels.length) {
+                        label = labels[0].innerHTML;
+                    } else {
+                        // Search the parent elements for the first header that we can find
+                        labels = $(container).parents().first().siblings('h1,h2,h3,h4,h5,h6').first();
+                        if (labels.length) {
+                            label = labels[0].innerHTML;
+                        } else {
+
+                            // Search for any text nodes above the element
+                            var textNodes = $(container).siblings().contents().filter(function () {
+                                return this.nodeType == 3;
+                            });
+
+                            if (textNodes.length) {
+                                label = textNodes[0].textContent;
+                            } else {
+                                // Search for any text nodes above the element
+                                var parentTextNodes = $(container).parents().first().siblings().contents().filter(function () {
+                                    return this.nodeType == 3;
+                                });
+
+                                if (parentTextNodes.length) {
+                                    label = parentTextNodes[0].textContent;
+                                }
+
+                            }
+                        }
+                    }
+                } catch(e) {
+                    label = "";
+                }
+
+
+                let cmdObjects = this.getCommandsByID(cmds);
+                this._ui.appendCommandGroup(label, cmdObjects);
+            }
         }
     };
 

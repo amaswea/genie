@@ -21,12 +21,12 @@
                 "https://*/*"
             ],
             "css": [
-                "css/styles.css"
+                "css/menu-ui.css"
             ],
             "js": [
                 "scripts/ext/jquery-3.0.0.js",
                 "scripts/ext/lodash.js",
-                "scripts/keyboardUI.js",
+                "scripts/menuUI.js",
                 "scripts/command.js",
                 "scripts/util.js",
                 "scripts/mutationWatcher.js",

@@ -33,24 +33,7 @@ var $action = $action || {};
                     node = walker.nextNode();
                 }
 
-                // Clear out attributes
-                var elementWalker = document.createTreeWalker(clonedElement, NodeFilter.SHOW_ELEMENT, null, false);
-
-                node = elementWalker.nextNode(0);
-                while (node) {
-                    // Clear out attributes
-                    var attrs = jQuery.map(node.attributes, function (item) {
-                        return item.name;
-                    });
-
-                    jQuery.each(attrs, function (i, item) {
-                        jQuery(node).removeAttr(item);
-                    });
-
-                    elementWalker.nextNode();
-                }
-
-                return clonedElement.outerHTML;
+                return clonedElement.outerHTML.replace(/<(\w+)[^>]+>/ig, '<$1>'); // Strips all attributes
             }
 
             // Treat the list of commands as a queue and remove commands once they have been grouped 
@@ -64,8 +47,8 @@ var $action = $action || {};
                 var commandKey = commandQueue.shift();
                 var commandElement = commandElementsMap[commandKey];
                 var commandGroup = {
-                    container: commandElement,
-                    elements: [commandElement]
+                    container: commandElement
+                    , commands: [commandKey]
                 };
                 // Find the parent node. Find structurally similar sets of commands within the parent, otherwise, continue going up a level. 
                 var parentNode = commandElement.parentNode;
@@ -84,13 +67,13 @@ var $action = $action || {};
                                 if (highestParent.length) {
                                     var parentToCheck = getStrippedElement(highestParent[0]);
                                     if (parentToCheck == parentHTML) { // InnerHTML of the two elements is the same 
-                                        // Add the command to the group 
-                                        commandGroup.container = parentNode;
-                                        commandGroup.elements.push(children[i]);
-
                                         // Remove the command key from the queue 
                                         let index = commandElements.indexOf(children[i]);
                                         let currentKey = commandKeys[index];
+
+                                        // Add the command to the group 
+                                        commandGroup.container = parentNode;
+                                        commandGroup.commands.push(currentKey);
 
                                         // Removing item from queue
                                         let currentIndex = commandQueue.indexOf(currentKey);
@@ -99,13 +82,13 @@ var $action = $action || {};
                                 } else {
                                     var selfHTML = getStrippedElement(children[i]);
                                     if (selfHTML == parentHTML) {
-                                        // Add the command to the current gorup
-                                        commandGroup.container = parentNode;
-                                        commandGroup.elements.push(children[i]);
-
                                         // Remove the command key from the queue 
                                         let index = commandElements.indexOf(children[i]);
                                         let currentKey = commandKeys[index];
+
+                                        // Add the command to the current gorup
+                                        commandGroup.container = parentNode;
+                                        commandGroup.commands.push(currentKey);
 
                                         let currentIndex = commandQueue.indexOf(currentKey);
                                         commandQueue.splice(currentIndex, 1);

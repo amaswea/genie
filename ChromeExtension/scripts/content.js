@@ -112,6 +112,7 @@ function updateCommands() {
     });*/
     
     var groups = $action.CommandOrganizer.organizeCommandsByVisualContainer($action.commandManager.Commands);
+    $action.commandManager.updateVisualCommandGroups(groups);
     
 
     $action.commandsChanged = false;
@@ -149,7 +150,7 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 });
 
 $(document).ready(function () {
-    $action.interface = new $action.KeyboardUI(); // Instantiate a new type of interface 
+    $action.interface = new $action.MenuUI(); // Instantiate a new type of interface 
     // For other types of interfaces, they could be instantiated here or through a setting?
     // Initialize the script manager if not already initialized
     if (!$action.scriptManager) {
@@ -176,6 +177,6 @@ $(document).ready(function () {
     }
 
     // Begin polling to update command states
-    setTimeout(updateCommands, 10000);
+    setTimeout(updateCommands, 2000);
     
 });
