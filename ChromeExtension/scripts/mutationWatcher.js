@@ -67,6 +67,7 @@ var $action = $action || {};
                     }
 
                     this._pageCommands[commandData.id] = commandData;
+                    console.log("adding command link");
                     $action.commandManager.addCommand(commandData);
                 }
             }

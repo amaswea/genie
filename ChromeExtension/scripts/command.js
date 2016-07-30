@@ -4,43 +4,55 @@ var $action = $action || {};
 (function ($action) {
 
     $action.ActionableElementsActionLabel = {
-        "A": "Open"
-        , "BUTTON": "Click"
-        , "INPUT": "Fill out"
+        "A": "Open",
+        "BUTTON": "Click",
+        "INPUT": "Fill out"
     }
 
     $action.ActionableElements = {
         "A": function (element) {
             var href = jQuery(element).attr("href");
             return href && href.length > 0;
-        }
-        , "INPUT": function (element) {
+        },
+        "BUTTON": function (element) {
+            return true;
+        },
+        "INPUT": function (element) {
             var type = jQuery(element).attr("type");
             return type && type != "hidden";
+        },
+        "TEXTAREA": function (element) {
+            return true;
+        }, 
+        "SELECT": function(element) {
+            // Has to have at least on option tag
+            if(jQuery(element).find('option').length > 0){
+                return true;
+            }
         }
     }
 
     // This ste of attributes typically follow a structure of camel cased, or dash separated names that are separate descriptors of the element
     $action.NonSentenceLabels = {
         "GLOBAL": ["class", "id"], // Class is not included because it is the only one that should be considered as separate tokens. 
-        "INPUT": ["name"]
-        , "BUTTON": ["name"]
-        , "FIELDSET": ["name"]
-        , "TEXTAREA": ["name"]
-        , "SELECT": ["name"]
-        , "A": ["href"]
+        "INPUT": ["name"],
+        "BUTTON": ["name"],
+        "FIELDSET": ["name"],
+        "TEXTAREA": ["name"],
+        "SELECT": ["name"],
+        "A": ["href"]
             // TODO: Later fill in the complete set. 
     }
 
     // This set of attributes typically follow a sentence structure. 
     $action.SentenceLabels = {
-        "GLOBAL": ["title"]
-        , "INPUT": ["placeholder", "alt", "value"]
+        "GLOBAL": ["title"],
+        "INPUT": ["placeholder", "alt", "value"]
     }
 
     $action.GlobalEventHandlerMappings = { // TODO: Add the rest
-        "onclick": "click"
-        , "onmouseover": "mouseover"
+        "onclick": "click",
+        "onmouseover": "mouseover"
     };
 
     /* $action.CommandInputs = {
@@ -337,8 +349,8 @@ var $action = $action || {};
 
                 // Perform the action
                 var action = {
-                    event: self.EventType
-                    , selector: $action.getElementPath(this._domElement)
+                    event: self.EventType,
+                    selector: $action.jQueryGetElementPath(self.Element)
                 }
 
                 window.postMessage(action, "*");
@@ -406,7 +418,8 @@ var $action = $action || {};
                     this.initMetadata(newCommand);
 
                     this._commandCount++;
-                    //this._ui.appendCommand(newCommand, this._commandCount);
+                    console.log('adding command');
+                    this._ui.appendCommand(newCommand, this._commandCount);
 
                     // Add the command to the command map
                     this._commands[command.id] = newCommand;
@@ -452,40 +465,40 @@ var $action = $action || {};
             // - Is this statement referring to any global variable (outside the function)
             // Search the AST for any statements are are contained in any conditional statement
             var findConditionals = {
-                within: "Program"
-                , lookFor: [
+                within: "Program",
+                lookFor: [
                     "IfStatement"
 
 
 
-                    
+
                     , "ConditionalExpression"
 
 
 
-                    
+
                     , "WhileStatement"
 
 
 
-                    
+
                     , "DoWhileStatement"
 
 
 
-                    
+
                     , "ForStatement"
 
 
 
-                    
+
                     , "ForInStatement"
 
 
 
-                    
-                    , "ForOfStatement"]
-                , items: [] // Will contain the collection of requested elements you are looking for
+
+                    , "ForOfStatement"],
+                items: [] // Will contain the collection of requested elements you are looking for
             }
 
             $action.ASTAnalyzer.searchAST(handlerAST, findConditionals);
@@ -500,10 +513,10 @@ var $action = $action || {};
 
             // Look for identifiers that are contained within SwitchStatements (uses the discriminant property instead of 'test')
             var findIdentifiersWithinSwitch = {
-                lookFor: "Identifier"
-                , within: ["SwitchStatement"]
-                , property: "discriminant"
-                , items: []
+                lookFor: "Identifier",
+                within: ["SwitchStatement"],
+                property: "discriminant",
+                items: []
             }
 
             $action.ASTAnalyzer.searchAST(handlerAST, findIdentifiersWithinSwitch);
@@ -521,9 +534,9 @@ var $action = $action || {};
         linkFunctionCalls(callList) {;
             // Look for any function calls (side-effects)
             var callList = {
-                lookFor: "CallExpression"
-                , within: "Program"
-                , items: []
+                lookFor: "CallExpression",
+                within: "Program",
+                items: []
             }
 
             $action.ASTAnalyzer.searchAST(handlerAST, callList);
@@ -729,6 +742,7 @@ var $action = $action || {};
          * @property undefined
          */
         initMetadata(command) {
+            console.log("initializng command metadata");
             // Get labels
             // Retrieve all of the Text nodes on the element
             // Tag them with the parts of speech. 
@@ -762,7 +776,7 @@ var $action = $action || {};
                 command.ImperativeLabels = _.uniq(command.ImperativeLabels);
 
                 // Computed styles
-                this.initComputedStyles(command, element);
+                //  this.initComputedStyles(command, element);
             }
         };
 
@@ -828,7 +842,7 @@ var $action = $action || {};
                             }
                         }
                     }
-                } catch(e) {
+                } catch (e) {
                     label = "";
                 }
 

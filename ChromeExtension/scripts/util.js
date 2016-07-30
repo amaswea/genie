@@ -374,6 +374,7 @@ var $action = $action || {};
         Element.prototype.addEventListener = function (type, listener, options = null, useCapture = false, ignore = false) {
             // Instrument the handler with a call to retreive the data dependencies
             this._addEventListener(type, listener, options, useCapture);
+            console.log("calling addeventlistener " + type);
             var handlerString = listener.toString();
             var handlerID = getHandlerID(type, listener, this); // If the handler already exists in the map, ignore it. 
             if (handlerString != ignoreJQueryFunction && !ignore && !handlerID) {
@@ -403,6 +404,7 @@ var $action = $action || {};
             }
         };
 
+        console.log("Checking for jQuery: " + (typeof (jQuery) == 'function')); 
         if (typeof (jQuery) == 'function') {
             jQuery.fn._on = jQuery.fn.on;
             jQuery.fn.on = function (events, selector, handler) { // TODO: handle when selector, data options are used

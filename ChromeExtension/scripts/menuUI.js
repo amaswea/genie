@@ -111,6 +111,8 @@ var $action = $action || {};
 
         show() {
             this.menu.style.display = "";
+            
+            $('body').addClass('genie-move-body-left');
         };
 
         hide() {
