@@ -94,6 +94,7 @@ var $action = $action || {};
                         dataDependencies.messageType = 'eventDependenciesNotFound';
                     }
 
+                    console.log("positing message update dependencies");
                     window.postMessage(dataDependencies, "*");
                 }
             }

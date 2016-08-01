@@ -29,6 +29,11 @@ function injectMonitorScript() {
     // Inject the getActions.js script into the page
     var header = document.head || document.documentElement;
     var monitorScript = $action.getScript();
+    var hasScript = document.querySelector("[id='genie_monitor_script]");
+    if(hasScript){
+        hasScript.remove();
+    }
+        
     var script = $(header).children("script").first();
     header.insertBefore(monitorScript, script[0]);
 };
@@ -52,6 +57,7 @@ function receiveMessage(event) {
             if (elementPath && elementPath.length) {
                 var element = $(elementPath);
                 if (element && element.length) {
+                    console.log('adding new command');
                     var added = $action.commandManager.addCommand(event.data);
 
                     var dataDependencies = {};
@@ -103,20 +109,20 @@ function updateCommands() {
           messageType: 'getCommandStates'
       }, "*");*/
 
-/*    // If any commands have been added or removed since the last update, run the reorganization worker
-    chrome.runtime.sendMessage({
-        groupingStrategy: 'visualContainer',
-        metadata: $action.commandManager.getPathMetadata() // Just a collection of the metadata required for visual organization
-    }, function reorganizeCommands(groups) {
-        console.log("message received");
-    });*/
-    
-  //  var groups = $action.CommandOrganizer.organizeCommandsByVisualContainer($action.commandManager.Commands);
-   // $action.commandManager.updateVisualCommandGroups(groups);
-    
+    /*    // If any commands have been added or removed since the last update, run the reorganization worker
+        chrome.runtime.sendMessage({
+            groupingStrategy: 'visualContainer',
+            metadata: $action.commandManager.getPathMetadata() // Just a collection of the metadata required for visual organization
+        }, function reorganizeCommands(groups) {
+            console.log("message received");
+        });*/
+
+    //  var groups = $action.CommandOrganizer.organizeCommandsByVisualContainer($action.commandManager.Commands);
+    // $action.commandManager.updateVisualCommandGroups(groups);
+
 
     $action.commandsChanged = false;
-   // setTimeout(updateCommands, 10000);
+    // setTimeout(updateCommands, 10000);
 }
 
 /**
@@ -150,17 +156,13 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
 });
 
 $(document).ready(function () {
-    $action.interface = new $action.KeyboardUI(); // Instantiate a new type of interface 
     // For other types of interfaces, they could be instantiated here or through a setting?
     // Initialize the script manager if not already initialized
     if (!$action.scriptManager) {
         $action.scriptManager = new $action.ScriptManager();
     }
 
-    // Create a new instance of the command manager with this instance of the UI
-    $action.commandManager = new $action.CommandManager($action.interface, $action.scriptManager);
-
-    injectMonitorScript();
+   // injectMonitorScript();
 
     // Add an observer to watch when new elements are added to the page
     var mutationObserver = new $action.MutationWatcher();
@@ -177,6 +179,14 @@ $(document).ready(function () {
     }
 
     // Begin polling to update command states
-   // setTimeout(updateCommands, 2000);
-    
+    // setTimeout(updateCommands, 2000);
 });
+
+(function initializeCommandManager() {
+    $action.interface = new $action.KeyboardUI(); // Instantiate a new type of interface 
+
+    // Create a new instance of the command manager with this instance of the UI
+    $action.commandManager = new $action.CommandManager($action.interface, $action.scriptManager);
+
+    injectMonitorScript();
+})();

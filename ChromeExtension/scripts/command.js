@@ -23,10 +23,10 @@ var $action = $action || {};
         },
         "TEXTAREA": function (element) {
             return true;
-        }, 
-        "SELECT": function(element) {
+        },
+        "SELECT": function (element) {
             // Has to have at least on option tag
-            if(jQuery(element).find('option').length > 0){
+            if (jQuery(element).find('option').length > 0) {
                 return true;
             }
         }
@@ -353,6 +353,7 @@ var $action = $action || {};
                     selector: $action.jQueryGetElementPath(self.Element)
                 }
 
+                console.log("positing message performAction");
                 window.postMessage(action, "*");
 
                 // Perform any of the post dependency commands that are set for this command; 
@@ -418,7 +419,6 @@ var $action = $action || {};
                     this.initMetadata(newCommand);
 
                     this._commandCount++;
-                    console.log('adding command');
                     this._ui.appendCommand(newCommand, this._commandCount);
 
                     // Add the command to the command map
@@ -742,7 +742,6 @@ var $action = $action || {};
          * @property undefined
          */
         initMetadata(command) {
-            console.log("initializng command metadata");
             // Get labels
             // Retrieve all of the Text nodes on the element
             // Tag them with the parts of speech. 
@@ -751,10 +750,12 @@ var $action = $action || {};
                 var walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
                 var node = walker.nextNode();
                 while (node) {
-                    // split the string by space separators
-                    var trimmed = node.textContent.replace(/\s/g, ' ').trim();
-                    if (trimmed && trimmed.length && this.filterTagNodes(trimmed)) {
-                        this.parseSentenceLabel(command, trimmed);
+                    if (node.parentNode && node.parentNode.tagName != "SCRIPT") {
+                        // split the string by space separators
+                        var trimmed = node.textContent.replace(/\s/g, ' ').trim();
+                        if (trimmed && trimmed.length && this.filterTagNodes(trimmed)) {
+                            this.parseSentenceLabel(command, trimmed);
+                        }
                     }
 
                     node = walker.nextNode();

@@ -22,7 +22,7 @@ window.addEventListener("message", receiveMessage, false);
 
 // REMINDER: Don't add dependencies on JQuery in here because the webpage may not be using it
 function receiveMessage(event) {
-a    var origin = event.origin || event.originalEvent.origin; // For Chrome, the origin property is in the event.originalEvent object.
+    var origin = event.origin || event.originalEvent.origin; // For Chrome, the origin property is in the event.originalEvent object.
     if (event.source != window) {
         return;
     }

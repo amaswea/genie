@@ -2,8 +2,8 @@
 var $action = $action || {};
 (function ($action) {
     $action.handlerIDs = 0;
-    
-     var treeWalkFast = (function () {
+
+    var treeWalkFast = (function () {
         // create closure for constants
         var skipTags = {
             "SCRIPT": true,
@@ -45,7 +45,7 @@ var $action = $action || {};
             }
         }
     })();
-    
+
     jQuery.fn.findDeepest = function () {
         var results = [];
         this.each(function () {
@@ -100,15 +100,22 @@ var $action = $action || {};
                 var siblings = parent.childNodes;
                 if (siblings.length > 1) {
                     var index = 0;
+                    var sameTagSiblings = false;
                     for (var i = 0; i < siblings.length; i++) {
-                        var currNode = siblings.item[i];
+                        var currNode = siblings.item(i);
                         if (currNode == node) {
                             index = i;
                             break;
                         }
+
+                        if (currNode.tagName == node.tagName) {
+                            sameTagSiblings = true;
+                        }
                     }
 
-                    name += ':nth-child(' + index + ')';
+                    if (sameTagSiblings) {
+                        name += ':nth-child(' + index + ')';
+                    }
                 }
 
                 path = name + (path ? '>' + path : '');
@@ -246,6 +253,7 @@ var $action = $action || {};
                         }
 
                         // Post a message back to the content script to update the command states
+                        console.log("posting message updateCommandStates");
                         window.postMessage({
                             messageType: 'updateCommandStates',
                             commandStates: commandStates
@@ -319,15 +327,22 @@ var $action = $action || {};
                     var siblings = parent.childNodes;
                     if (siblings.length > 1) {
                         var index = 0;
+                        var sameTagSiblings = false;
                         for (var i = 0; i < siblings.length; i++) {
-                            var currNode = siblings.item[i];
+                            var currNode = siblings.item(i);
                             if (currNode == node) {
                                 index = i;
                                 break;
                             }
+
+                            if (currNode.tagName == node.tagName) {
+                                sameTagSiblings = true;
+                            }
                         }
 
-                        name += ':nth-child(' + index + ')';
+                        if (sameTagSiblings) {
+                            name += ':nth-child(' + index + ')';
+                        }
                     }
 
                     path = name + (path ? '>' + path : '');
@@ -370,11 +385,11 @@ var $action = $action || {};
                     jQuery.event.dispatch.apply(elem, arguments) : undefined;
             }`;
 
-        Element.prototype._addEventListener = Element.prototype.addEventListener;
-        Element.prototype.addEventListener = function (type, listener, options = null, useCapture = false, ignore = false) {
+
+        var newAddEventListener = function (type, listener, options = null, useCapture = false, ignore = false) {
             // Instrument the handler with a call to retreive the data dependencies
             this._addEventListener(type, listener, options, useCapture);
-            console.log("calling addeventlistener " + type);
+            //   console.log("addEventListener " + type + " " + this.tagName + " " + listener.toString());
             var handlerString = listener.toString();
             var handlerID = getHandlerID(type, listener, this); // If the handler already exists in the map, ignore it. 
             if (handlerString != ignoreJQueryFunction && !ignore && !handlerID) {
@@ -389,8 +404,7 @@ var $action = $action || {};
             }
         };
 
-        Element.prototype._removeEventListener = Element.prototype.removeEventListener;
-        Element.prototype.removeEventListener = function (type, listener, options = null, useCapture = false, ignore) {
+        var newRemoveEventListener = function (type, listener, options = null, useCapture = false, ignore) {
             this._removeEventListener(type, listener, options, useCapture);
 
             // Get the content object
@@ -404,48 +418,101 @@ var $action = $action || {};
             }
         };
 
-        console.log("Checking for jQuery: " + (typeof (jQuery) == 'function')); 
-        if (typeof (jQuery) == 'function') {
-            jQuery.fn._on = jQuery.fn.on;
-            jQuery.fn.on = function (events, selector, handler) { // TODO: handle when selector, data options are used
-                jQuery.fn._on.apply(this, arguments);
-                var handle = handler;
+        var newJQueryOn = function (events, selector, handler) { // TODO: handle when selector, data options are used
+            console.log('Calling jQuery on');
+            jQuery.fn._on.apply(this, arguments);
+            var handle = handler;
 
-                if (selector != null && !handle) {
-                    handler = selector;
-                }
+            if (selector != null && !handle) {
+                handler = selector;
+            }
 
-                var eventList = typeof (events) == "string" ? events.split(" ") : (typeof (events) == "object" ? [events.type] : []);
-                for (var i = 0; i < eventList.length; i++) {
-                    var evt = eventList[i];
+            console.log("addEventListener " + type + " " + this.tagName + " " + listener.toString());
+
+
+            var eventList = typeof (events) == "string" ? events.split(" ") : (typeof (events) == "object" ? [events.type] : []);
+            for (var i = 0; i < eventList.length; i++) {
+                var evt = eventList[i];
+                var id = getUniqueID(); // This unique ID will represent this handler, event, and element combination
+                var contentObject = getContentObject(id, 'eventAdded', evt, handler, this);
+                window.postMessage(contentObject, "*");
+
+                // Get a page handler object to cache so that the handler can be instrumented when polling takes palge
+                var pageHandlerObject = getPageHandlerObject(id, evt, handler, this, null, null);
+                window.geniePageHandlerMap[id] = pageHandlerObject;
+            }
+        }
+
+        var newJQueryOff = function (events, selector, handler) {
+            jQuery.fn._off.apply(this, arguments);
+            var eventList = typeof (events) == "string" ? events.split(" ") : (typeof (events) == "object" ? [events.type] : []);
+            for (var i = 0; i < eventList.length; i++) {
+                var evt = eventList[i];
+                var handlerID = getHandlerID(evt, handler, this);
+                delete window.geniePageHandlerMap[handlerID];
+                window.postMessage({
+                    messageType: 'eventRemoved',
+                    id: handlerID
+                }, "*");
+            }
+        }
+
+        var newD3 = function (type, listener, useCapture) {
+            function sendEventAddedMessage(eventType, element) {
+                var handlerString = listener.toString();
+                var handlerID = getHandlerID(eventType, listener, element); // If the handler already exists in the map, ignore it. 
+                if (!handlerID) {
+                    var path = typeof (jQuery) == 'function' ? jQueryGetElementPath(element) : getElementPath(element);
                     var id = getUniqueID(); // This unique ID will represent this handler, event, and element combination
-                    var contentObject = getContentObject(id, 'eventAdded', evt, handler, this);
+                    var contentObject = getContentObject(id, 'eventAdded', eventType, listener, element);
                     window.postMessage(contentObject, "*");
 
-                    // Get a page handler object to cache so that the handler can be instrumented when polling takes palge
-                    var pageHandlerObject = getPageHandlerObject(id, evt, handler, this, null, null);
+                    // Get a page handler object to cache so that the handler can be instrumented when polling takes place
+                    var pageHandlerObject = getPageHandlerObject(id, eventType, listener, element);
                     window.geniePageHandlerMap[id] = pageHandlerObject;
                 }
             }
 
-            jQuery.fn._off = jQuery.fn.off;
-            jQuery.fn.off = function (events, selector, handler) {
-                jQuery.fn._off.apply(this, arguments);
-                var eventList = typeof (events) == "string" ? events.split(" ") : (typeof (events) == "object" ? [events.type] : []);
-                for (var i = 0; i < eventList.length; i++) {
-                    var evt = eventList[i];
-                    var handlerID = getHandlerID(evt, handler, this);
-                    delete window.geniePageHandlerMap[handlerID];
-                    window.postMessage({
-                        messageType: 'eventRemoved',
-                        id: handlerID
-                    }, "*");
+            function sendEventRemovedMessage(eventType, element) {
+                // Remove the handler from the element
+                var handlerID = getHandlerID(eventType, listener, element);
+                delete window.geniePageHandlerMap[handlerID];
+                window.postMessage({
+                    messageType: 'eventRemoved',
+                    id: handlerID
+                }, "*");
+            }
+
+            var types = type.split(" ");
+            if (listener) {
+                if (types.length) {
+                    for (var i = 0; i < types.length; i++) {
+                        for (var j = 0; j < this.length; j++) {
+                            for (var k = 0; k < this[j].length; k++) {
+                                sendEventAddedMessage(types[i], this[j][k]);
+                            }
+                        }
+                    }
+                }
+            } else {
+                if (types.length) {
+                    for (var i = 0; i < types.length; i++) {
+                        for (var j = 0; j < this.length; j++) {
+                            for (var k = 0; k < this[j].length; k++) {
+                                sendEventRemovedMessage(types[i], this[j][k]);
+                            }
+                        }
+                    }
                 }
             }
+
+            // Call the original on function
+            d3.selection.prototype._on.apply(this, arguments);
         }
 
+
         var script = document.createElement("script");
-        script.appendChild(document.createTextNode(directive + "\n" + windowListener + "\n" + windowObjects + "\n" + updateEventHandlerOnElement + "; \n" + receiveMessage + "; \n" + getHandlerID + "; \n" + getPageHandlerObject + "; \n" + getContentObject + "; \n" + getUniqueID + "; \n" + getElementPath + "; \n" + jQueryGetElementPath + "; \n" + ignoreJQueryFunction + "; \n" + "Element.prototype._addEventListener = Element.prototype.addEventListener;\n" + "Element.prototype.addEventListener = " + Element.prototype.addEventListener + "; \n" + "Element.prototype._removeEventListener = Element.prototype.removeEventListener; \n" + "Element.prototype.removeEventListener = " + Element.prototype.removeEventListener + "; \n" + "if(typeof(jQuery) == 'function') { \n jQuery.fn._off = jQuery.fn.off; \n" + "jQuery.fn.off = " + jQuery.fn.off + "; \n" + "jQuery.fn._on = jQuery.fn.on; \n" + "jQuery.fn.on = " + jQuery.fn.on + ';\n}'));
+        script.appendChild(document.createTextNode(directive + "\n" + windowListener + "\n" + windowObjects + "\n" + updateEventHandlerOnElement + "; \n" + receiveMessage + "; \n" + getHandlerID + "; \n" + getPageHandlerObject + "; \n" + getContentObject + "; \n" + getUniqueID + "; \n" + getElementPath + "; \n" + jQueryGetElementPath + "; \n" + ignoreJQueryFunction + "; \n" + "Element.prototype._addEventListener = Element.prototype.addEventListener;\n" + "Element.prototype.addEventListener = " + newAddEventListener + "; \n" + "Element.prototype._removeEventListener = Element.prototype.removeEventListener; \n" + "Element.prototype.removeEventListener = " + newRemoveEventListener + "; \n" + "if(typeof(jQuery) == 'function') { \n jQuery.fn._off = jQuery.fn.off; \n" + "jQuery.fn.off = " + newJQueryOff + "; \n" + "jQuery.fn._on = jQuery.fn.on; \n" + "jQuery.fn.on = " + newJQueryOn + ';} \n' + " if(typeof(d3) == 'object') { d3.selection.prototype._on = d3.selection.prototype.on; \n" + "d3.selection.prototype.on =" + newD3 + '}; \n'));
 
         script.id = "genie_monitor_script";
 
