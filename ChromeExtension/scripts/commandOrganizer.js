@@ -110,6 +110,39 @@ var $action = $action || {};
 
             return groups;
         }
+        
+        static organizeCommandsByType(commands){
+            var commandsMap = {}; 
+            var commandKeys = Object.keys(commands);
+            for(var i=0; i<commandKeys.length; i++){
+                var cmd = commands[commandKeys[i]];
+                if(cmd.EventType == 'default'){
+                    // Get the command group category (field, link, action)
+                    var tagName = cmd.Element.tagName; 
+                    if(tagName){
+                        let category = $action.CommandGroups[tagName]; 
+                        if(!commandsMap[category]){
+                            commandsMap[category] = []; 
+                        }
+                        commandsMap[category].push(cmd);
+                    }
+                }else  {
+                    if(!commandsMap['commands']){
+                        commandsMap['commands'] = [];
+                    }
+                    commandsMap['commands'].push(cmd);
+                }
+            }
+            
+            var result = []; 
+            var keys = Object.keys(commandsMap);
+            for(var j=0; j<keys.length; j++){
+                let cmds = commandsMap[keys[j]]; 
+                result.push({ "container": keys[j], "commands": cmds});
+            }
+            
+            return result;
+        }
 
         /**
          * Returns a list of command IDs, organized by visual attributes (computed styles)

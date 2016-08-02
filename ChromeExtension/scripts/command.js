@@ -9,6 +9,16 @@ var $action = $action || {};
         "INPUT": "Fill out"
     }
 
+    
+    $action.CommandGroups = {
+        "A": "link", 
+        "LINK": "link", 
+        "INPUT": "field", 
+        "BUTTON": "action",
+        "SELECT": "action", 
+        "TEXTAREA": "field"
+    }
+
     $action.ActionableElements = {
         "A": function (element) {
             var href = jQuery(element).attr("href");
@@ -262,14 +272,14 @@ var $action = $action || {};
             var element = $(this._domElement);
             var displayed = element.css('display') != "none";
             var visibility = element.css('visibility') != "hidden";
-            var heightBigEnough = element.height() > 10;
-            var widthBigEnough = element.width() > 10;
+           // var heightBigEnough = element.height() > 10;
+           // var widthBigEnough = element.width() > 10;
             var notClear = element.css('opacity') != "0" && element.css('opacity') != "0.0";
             var offLeftRight = (element.offset().left >= window.innerWidth) || ((element.offset().left + element.offsetWidth) <= 0);
             var hidden = element.attr('type') == 'hidden';
-            var visible = element.is(':visible');
+          //  var visible = element.is(':visible');
 
-            if (visible && displayed && visibility && heightBigEnough && widthBigEnough && notClear && !offLeftRight && !hidden) {
+            if (displayed && visibility && notClear && !offLeftRight && !hidden) {
                 return true;
             }
 
@@ -337,32 +347,35 @@ var $action = $action || {};
          * Injects a script into the page in question to perform the action.. This is necessary becauuse
          * content scripts to not have access to any events nor can trigger events in the associated page. 
          */
-        execute() {
+        executeCallback() {
             var self = this;
             return function (evt) {
                 evt.preventDefault();
                 evt.stopPropagation();
 
-                var s = document.createElement('script');
-                s.src = chrome.extension.getURL("scripts/performAction.js");
-                (document.head || document.documentElement).appendChild(s);
-
-                // Perform the action
-                var action = {
-                    event: self.EventType,
-                    selector: $action.jQueryGetElementPath(self.Element)
-                }
-
-                console.log("positing message performAction");
-                window.postMessage(action, "*");
-
-                // Perform any of the post dependency commands that are set for this command; 
-
-
-                // Unload the script
-                (document.head || document.documentElement).removeChild(s);
+                self.execute();
             };
         };
+
+        execute() {
+            var s = document.createElement('script');
+            s.src = chrome.extension.getURL("scripts/performAction.js");
+            (document.head || document.documentElement).appendChild(s);
+
+            // Perform the action
+            var action = {
+                event: this.EventType,
+                selector: $action.jQueryGetElementPath(this.Element)
+            }
+
+            window.postMessage(action, "*");
+
+            // Perform any of the post dependency commands that are set for this command; 
+            // TODO
+
+            // Unload the script
+            (document.head || document.documentElement).removeChild(s);
+        }
     };
 
 
@@ -419,7 +432,6 @@ var $action = $action || {};
                     this.initMetadata(newCommand);
 
                     this._commandCount++;
-                    this._ui.appendCommand(newCommand, this._commandCount);
 
                     // Add the command to the command map
                     this._commands[command.id] = newCommand;
@@ -806,7 +818,6 @@ var $action = $action || {};
         }
 
         updateVisualCommandGroups(groups) {
-
             for (var i = 0; i < groups.length; i++) {
                 let container = groups[i].container;
                 let cmds = groups[i].commands;
@@ -850,6 +861,14 @@ var $action = $action || {};
 
                 let cmdObjects = this.getCommandsByID(cmds);
                 this._ui.appendCommandGroup(label, cmdObjects);
+            }
+        }
+
+        updateTypeCommandGroups(groups) {
+            for (var i = 0; i < groups.length; i++) {
+                let containerLabel = groups[i].container;
+                let cmds = groups[i].commands;
+                this._ui.appendCommandGroup(containerLabel, cmds);
             }
         }
     };

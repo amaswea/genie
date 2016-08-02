@@ -30,10 +30,10 @@ function injectMonitorScript() {
     var header = document.head || document.documentElement;
     var monitorScript = $action.getScript();
     var hasScript = document.querySelector("[id='genie_monitor_script]");
-    if(hasScript){
+    if (hasScript) {
         hasScript.remove();
     }
-        
+
     var script = $(header).children("script").first();
     header.insertBefore(monitorScript, script[0]);
 };
@@ -109,16 +109,9 @@ function updateCommands() {
           messageType: 'getCommandStates'
       }, "*");*/
 
-    /*    // If any commands have been added or removed since the last update, run the reorganization worker
-        chrome.runtime.sendMessage({
-            groupingStrategy: 'visualContainer',
-            metadata: $action.commandManager.getPathMetadata() // Just a collection of the metadata required for visual organization
-        }, function reorganizeCommands(groups) {
-            console.log("message received");
-        });*/
 
-    //  var groups = $action.CommandOrganizer.organizeCommandsByVisualContainer($action.commandManager.Commands);
-    // $action.commandManager.updateVisualCommandGroups(groups);
+    var groups = $action.CommandOrganizer.organizeCommandsByType($action.commandManager.Commands);
+    $action.commandManager.updateTypeCommandGroups(groups);
 
 
     $action.commandsChanged = false;
@@ -162,7 +155,7 @@ $(document).ready(function () {
         $action.scriptManager = new $action.ScriptManager();
     }
 
-   // injectMonitorScript();
+    // injectMonitorScript();
 
     // Add an observer to watch when new elements are added to the page
     var mutationObserver = new $action.MutationWatcher();
@@ -179,11 +172,11 @@ $(document).ready(function () {
     }
 
     // Begin polling to update command states
-    // setTimeout(updateCommands, 2000);
+     setTimeout(updateCommands, 2000);
 });
 
 (function initializeCommandManager() {
-    $action.interface = new $action.KeyboardUI(); // Instantiate a new type of interface 
+    $action.interface = new $action.AudioUI(); // Instantiate a new type of interface 
 
     // Create a new instance of the command manager with this instance of the UI
     $action.commandManager = new $action.CommandManager($action.interface, $action.scriptManager);

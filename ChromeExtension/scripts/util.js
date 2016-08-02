@@ -392,6 +392,7 @@ var $action = $action || {};
             //   console.log("addEventListener " + type + " " + this.tagName + " " + listener.toString());
             var handlerString = listener.toString();
             var handlerID = getHandlerID(type, listener, this); // If the handler already exists in the map, ignore it. 
+          //  console.log("addEventListener " + type + " " + listener.toString() + " " + this.tagName);
             if (handlerString != ignoreJQueryFunction && !ignore && !handlerID) {
                 var path = typeof (jQuery) == 'function' ? jQueryGetElementPath(this) : getElementPath(this);
                 var id = getUniqueID(); // This unique ID will represent this handler, event, and element combination

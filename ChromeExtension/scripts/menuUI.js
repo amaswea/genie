@@ -66,7 +66,7 @@ var $action = $action || {};
             labelSpan.textContent = this.label();
 
             listItem.appendChild(labelSpan);
-            listItem.addEventListener("click", this.command.execute(), null, false, true); // Must pass in these arguments so that the addEventListener override knows to ignore this registration. 
+            listItem.addEventListener("click", this.command.executeCallback(), null, false, true); // Must pass in these arguments so that the addEventListener override knows to ignore this registration. 
 
             this._domElement = listItem;
         }

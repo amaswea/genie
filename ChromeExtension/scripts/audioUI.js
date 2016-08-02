@@ -43,7 +43,7 @@ var $action = $action || {};
         label() {}
     };
 
-    class AudioUI extends CommandItem {
+    class AudioUICommandItem extends CommandItem {
         constructor(command) {
             super(command);
             this.init();
@@ -55,16 +55,15 @@ var $action = $action || {};
 
         init() {
             // Initialize the UI for the CommandItem corresponding to each command
-            this._tagName = this.command.Element.tagName;
+            this._tagName = this.Command.Element.tagName;
             var listItem = document.createElement("li");
-            listItem.classList.add("genie-menu-ui-list-item");
+            listItem.classList.add("genie-audio-ui-list-item");
 
             var labelSpan = document.createElement("span");
-            labelSpan.classList.add("genie-menu-ui-list-item-label");
+            labelSpan.classList.add("genie-audio-ui-list-item-label");
             labelSpan.textContent = this.label();
 
             listItem.appendChild(labelSpan);
-            listItem.addEventListener("click", this.command.execute(), null, false, true); // Must pass in these arguments so that the addEventListener override knows to ignore this registration. 
 
             this._domElement = listItem;
         }
@@ -96,23 +95,79 @@ var $action = $action || {};
     class AudioUI {
         constructor() {
             this.init();
+
+            // Keep a map between the command labels and their execute() calls so that we can map audio commands to call commands
+            this._audioCommands = {};
         }
 
         init() {
-            var menu = document.createElement("div");
-            menu.classList.add("genie-audio-ui");
-            $('html').append(menu);
+            var dialog = document.createElement("div");
+            $(dialog).attr("id", "genie-audio-ui-sidebar");
+            var list = document.createElement("ul");
+            list.classList.add("genie-audio-ui-list");
 
-            this.menu = menu;
-            this.hide();
+            var label = document.createElement("div");
+            label.classList.add("genie-audio-ui-header");
+
+
+            dialog.appendChild(label);
+            dialog.appendChild(list);
+            $('html').append(dialog);
+
+            this.dialog = dialog;
+            this.list = list;
+            this.label = label;
+
+            this.label.textContent = "Speak a command... ";
+
+            // Attach the sidebar to the span link
+            $('body').sidr({
+                side: 'right',
+                name: 'genie-audio-ui-sidebar',
+                displace: true,
+                renaming: false
+            });
+
+            // Initialze speech recognition
+            this._recognition = new webkitSpeechRecognition();
+            this._recognition.continuous = true;
+            this._recognition.interimResults = true;
+            this._recognition.lang = "en-US";
+            var self = this;
+            this._recognition.onresult = function (event) {
+                self.mapResultsToCommand(event.results);
+            }
+            this._recognition.start();
         };
 
+        mapResultsToCommand(speechResults) {
+            // Speech results are are in the results property
+            for (var i = 0; i < speechResults.length; i++) {
+                let result = speechResults[i];
+                // Result will have a set of SpeechRecognitionAlternative objects. Find the first one with > .90 confidence rate. 
+                for (var j = 0; j < result.length; j++) {
+                    let alternative = result[j];
+                    // Execute the command
+                    let commandText = alternative.transcript.trim().toLowerCase();
+                    console.log(commandText);
+
+                    // Find the commands corresponding execute() method in the commandsMap
+                    let command = this._audioCommands[commandText];
+                    if (command) {
+                        // Call the execute method to perform the command
+                        console.log("performing command");
+                        command.execute();
+                    }
+                }
+            }
+        }
+
         show() {
-            this.menu.style.display = "";
+            $.sidr('open', 'genie-audio-ui-sidebar');
         };
 
         hide() {
-            this.menu.style.display = "none";
+            $.sidr('close', 'genie-audio-ui-sidebar');
         };
 
         remove() {
@@ -120,32 +175,18 @@ var $action = $action || {};
 
         }
 
-        /**
-         * Append a command to the dialog
-         */
-        appendCommand(command, commandCount) {
-            var newCommand = new $action.MenuUICommandItem(command)
-            command.CommandItem = newCommand;
-
-            if (!command.userInvokeable()) {
-                newCommand.DOM.classList.add('genie-audio-ui-disabled');
-            }
-
-            this.list.appendChild(newCommand.DOM);
-
-            return newCommand;
-        }
-
         appendCommandGroup(label, commands) {
-            var group = document.createElement('div');
+            var group = document.createElement('li');
             group.classList.add('genie-audio-ui-group');
 
             var menulabel = document.createElement('span');
             menulabel.classList.add('genie-audio-ui-group-label');
-            menulabel.textContent = label;
+
+            var label = pluralize.plural(label);
+            menulabel.textContent = label[0].toUpperCase() + label.substring(1, label.length);
             group.appendChild(menulabel);
 
-            var list = document.createElement('ui');
+            var list = document.createElement('ul');
             list.classList.add('genie-audio-ui-list');
 
             // Groups
@@ -154,14 +195,18 @@ var $action = $action || {};
                 commands[i].CommandItem = newCommand;
 
                 if (!commands[i].userInvokeable()) {
-                    newCommand.DOM.classList.add('genie-menu-ui-disabled');
+                    newCommand.DOM.classList.add('genie-audio-ui-disabled');
                 }
+                
+                let commandLabel = newCommand.label().toLowerCase(); 
+                this._audioCommands[commandLabel] = newCommand.Command;
 
                 list.appendChild(newCommand.DOM);
             }
 
             group.appendChild(list);
-            this.menu.appendChild(group);
+
+            this.list.appendChild(group);
         }
 
         /**
@@ -177,16 +222,16 @@ var $action = $action || {};
         updateCommandState(command, enabled) {
             // What should happen when the command state changes 
             var domElement = command.CommandItem.DOM;
-            var disabled = $(domElement).hasClass('genie-menu-ui-disabled');
+            var disabled = $(domElement).hasClass('genie-audio-ui-disabled');
             if (disabled && enabled) {
-                $(domElement).removeClass('genie-menu-ui-disabled');
+                $(domElement).removeClass('genie-audio-ui-disabled');
             }
 
             if (!disabled && !enabled) {
-                $(domElement).addClass('genie-menu-ui-disabled');
+                $(domElement).addClass('genie-audio-ui-disabled');
             }
         }
     };
 
-    $action.MenuUI = MenuUI;
+    $action.AudioUI = AudioUI;
 })($action);

@@ -1,0 +1,108 @@
+#genie-audio-ui-sidebar {
+    background-color: white;
+    overflow: auto;
+    font-family: 'Lucida Grande', sans-serif;
+    font-size: 10pt;
+    z-index: 10000000;
+}
+
+.genie-audio-ui-group-label {
+    padding: 10px 10px 10px 10px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-block;
+    border-bottom: 0.5px solid lightgray;
+    width: 100%;
+}
+
+.genie-audio-ui-list {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.genie-audio-ui-list-item {
+    margin: 0;
+    list-style-type: none;
+    border-bottom: 0.5px solid lightgray;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+    cursor: pointer;
+    font-size: 10pt;
+    display: flex;
+    flex-direction: column;
+    height: 15px;
+}
+
+.genie-audio-ui-list-item-label {
+    white-space: nowrap;
+}
+
+.genie-audio-ui-header {
+    padding-top: 10px;
+    padding-left: 10px;
+    padding-bottom: 10px;
+}
+
+.genie-audio-ui-header,
+.genie-audio-ui-label {
+    font-weight: bold;
+}
+
+.genie-audio-ui-disabled {
+    color: white;
+    background-color: lightgray;
+    border-bottom: 0.5px solid white;
+}
+
+
+
+
+
+/** 
+  Overrides of sidr styles
+*/
+
+
+/*.sidr ul li ul li.genie-audio-ui-list-item {
+    line-height: 10px;
+}
+
+.sidr ul li ul li.genie-audio-ui-list-item:hover {
+    line-height: 10px;
+    border-top: none;
+    border-bottom: none;
+}
+
+.sidr ul li ul li.genie-audio-ui-list-item > span {
+    white-space: nowrap;
+}
+
+.sidr ul li.genie-audio-ui-group {
+    line-height: 20px;
+}*/
+
+.sidr {
+    display: block;
+    position: fixed;
+    top: 0;
+    height: 100%;
+    z-index: 999999;
+    width: 260px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    font-size: 15px;
+    color: #333;
+    box-shadow: 0 0 5px 5px #ebebeb;
+}
+
+.sidr.right {
+    left: auto;
+    right: -260px;
+}
+
+.sidr.left {
+    left: -260px;
+    right: auto;
+}
