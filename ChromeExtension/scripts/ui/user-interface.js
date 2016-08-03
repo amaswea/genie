@@ -5,6 +5,10 @@
      class UI {
          constructor() {}
 
+         get OrganizationTypes() {
+             return { Type: $action.CommandOrganizer.organizeCommandsByType };
+         }
+         
          init() {}
 
          show() {

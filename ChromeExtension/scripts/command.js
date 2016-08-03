@@ -243,6 +243,10 @@ var $action = $action || {};
          */
         enabled() {
             // Look for disabled attribute on the element
+            if (this._domElement instanceof Window || this._domElement instanceof Document) {
+                return true;
+            }
+
             if (this._domElement) {
                 var tagName = this._domElement.tagName;
                 var hasDisabled = $action.DisabledAttributeElements[tagName.toLowerCase()];
@@ -264,6 +268,10 @@ var $action = $action || {};
          * @property undefined
          */
         visible() {
+            if (this._domElement instanceof Window || this._domElement instanceof Document) {
+                return true;
+            }
+
             var element = $(this._domElement);
             var displayed = element.css('display') != "none";
             var visibility = element.css('visibility') != "hidden";
@@ -340,7 +348,7 @@ var $action = $action || {};
         /**
          * Attach this callback to the keystrokes or action that you want to execute the command
          * Injects a script into the page in question to perform the action.. This is necessary becauuse
-         * content scripts to not have access to any events nor can trigger events in the associated page. 
+         * content scripts do not have access to any events nor can trigger events in the associated page. 
          */
         executeCallback() {
             var self = this;
@@ -417,8 +425,8 @@ var $action = $action || {};
 
                         this._functions = findFunctionExpressionsInProgram.items;*/
         }
-        
-        hasCommand(commandID){
+
+        hasCommand(commandID) {
             return this._commands[commandID] != undefined;
         }
 
@@ -444,6 +452,18 @@ var $action = $action || {};
             if (storedCommand) {
                 this._commandCount--;
                 this._ui.removeCommand(storedCommand, this._commandCount);
+            }
+        };
+
+        organizeCommands() {
+            var organizer = this._ui.Organizer;
+            if (organizer) {
+                var commandOrder = organizer(this._commands);
+                for (var i = 0; i < commandOrder.length; i++) {
+                    let containerLabel = commandOrder[i].container;
+                    let cmds = commandOrder[i].commands;
+                    this._ui.appendCommandGroup(containerLabel, cmds);
+                }
             }
         };
 
@@ -635,10 +655,10 @@ var $action = $action || {};
 
         parseLabelFor(command, element) {
             // Check if the element has an ID 
-            if(!element.attrributes){
+            if (!element.attrributes) {
                 return;
             }
-            
+
             var id = element.attributes.id;
             if (id) {
                 // Look for a label element with for attribute matching this ID
@@ -677,10 +697,10 @@ var $action = $action || {};
             // First, look in global attributes 
             // Then look in attributes specific to that tag name
             // Should we search in any particular order? 
-            if(!element.attributes){
+            if (!element.attributes) {
                 return; // Document & Window do not have inline attributes
             }
-            
+
             var globalAttrs = $action.SentenceLabels.GLOBAL;
             if (globalAttrs.length) {
                 for (var i = 0; i < globalAttrs.length; i++) {
@@ -866,14 +886,6 @@ var $action = $action || {};
 
                 let cmdObjects = this.getCommandsByID(cmds);
                 this._ui.appendCommandGroup(label, cmdObjects);
-            }
-        }
-
-        updateTypeCommandGroups(groups) {
-            for (var i = 0; i < groups.length; i++) {
-                let containerLabel = groups[i].container;
-                let cmds = groups[i].commands;
-                this._ui.appendCommandGroup(containerLabel, cmds);
             }
         }
     };

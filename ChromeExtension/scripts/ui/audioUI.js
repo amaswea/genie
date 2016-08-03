@@ -36,6 +36,11 @@ var $action = $action || {};
 
             // Keep a map between the command labels and their execute() calls so that we can map audio commands to call commands
             this._audioCommands = {};
+            this._organizer = this.OrganizationTypes.Type;
+        }
+        
+        get Organizer() {
+            return this._organizer;
         }
 
         init() {
@@ -109,7 +114,6 @@ var $action = $action || {};
         };
 
         appendCommandGroup(label, commands) {
-            console.log("appending command groups");
             var group = document.createElement('li');
             group.classList.add('genie-audio-ui-group');
 
@@ -141,7 +145,6 @@ var $action = $action || {};
             group.appendChild(list);
 
             this.list.appendChild(group);
-            console.log("appending command groups done.");
         }
 
         /**

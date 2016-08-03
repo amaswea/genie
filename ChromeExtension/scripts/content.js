@@ -108,7 +108,7 @@ function updateCommands() {
       }, "*");*/
     
     // TODO:think of better way to implement organization
-    
+    $action.commandManager.organizeCommands(); 
 
     $action.commandsChanged = false;
     // setTimeout(updateCommands, 10000);
