@@ -1,50 +1,6 @@
 "use strict";
 var $action = $action || {};
 (function ($action) {
-    // Interface for UIs
-    class UI {
-        constructor() {
-
-        }
-
-        init() {}
-
-        show() {}
-
-        hide() {}
-
-        remove() {}
-
-        /*
-            These should be generic and not need to be implemented by each UI type
-                appendCommand(dom, commandCount) {}
-
-                removeCommand(dom, commandCount) {}*/
-
-        updateCommandState(state) {}
-    }
-
-    class CommandItem {
-        constructor(command) {
-            this.command = command;
-        }
-
-        get Command() {
-            return this.command;
-        }
-
-        get DOM() {}
-
-        init() {};
-
-        /**
-         * A label string to use for the command item
-         * @private
-         * @property undefined
-         */
-        label() {}
-    };
-
     class MenuUICommandItem extends CommandItem {
         constructor(command) {
             super(command);
@@ -70,27 +26,6 @@ var $action = $action || {};
 
             this._domElement = listItem;
         }
-
-        /**
-         * Return a suitable label for the command
-         */
-        label() {
-            // Constructs a desired label for the command based on the command metadata available
-            var labelString = "";
-            // If the command has an imperative label, return it. 
-            if (this.command.ImperativeLabels.length) {
-                labelString = labelString + this.command.ImperativeLabels[0];
-            }
-
-            // Otherwise, return the first text node found
-            else if (this.command.Labels.length) {
-                var tagName = this._tagName;
-                // Return the first text node lable
-                labelString = labelString + this.command.Labels[0];
-            }
-
-            return labelString;
-        };
     };
 
     $action.MenuUICommandItem = MenuUICommandItem;
@@ -98,6 +33,7 @@ var $action = $action || {};
     class MenuUI {
         constructor() {
             this.init();
+            super(this.menu);
         }
 
         init() {
@@ -111,34 +47,8 @@ var $action = $action || {};
 
         show() {
             this.menu.style.display = "";
-            
             $('body').addClass('genie-move-body-left');
         };
-
-        hide() {
-            this.menu.style.display = "none";
-        };
-
-        remove() {
-            // Removes the UI container from the DOM
-
-        }
-
-        /**
-         * Append a command to the dialog
-         */
-        appendCommand(command, commandCount) {
-            var newCommand = new $action.MenuUICommandItem(command)
-            command.CommandItem = newCommand;
-
-            if (!command.userInvokeable()) {
-                newCommand.DOM.classList.add('genie-menu-ui-disabled');
-            }
-
-            this.list.appendChild(newCommand.DOM);
-
-            return newCommand;
-        }
 
         appendCommandGroup(label, commands) {
             var group = document.createElement('div');

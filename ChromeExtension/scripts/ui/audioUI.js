@@ -1,49 +1,7 @@
 "use strict";
 var $action = $action || {};
 (function ($action) {
-    // Interface for UIs
-    class UI {
-        constructor() {
-
-        }
-
-        init() {}
-
-        show() {}
-
-        hide() {}
-
-        remove() {}
-
-        appendCommand(dom, commandCount) {}
-
-        removeCommand(dom, commandCount) {}
-
-        updateCommandState(state) {}
-    }
-
-    class CommandItem {
-        constructor(command) {
-            this.command = command;
-        }
-
-        get Command() {
-            return this.command;
-        }
-
-        get DOM() {}
-
-        init() {};
-
-        /**
-         * A label string to use for the command item
-         * @private
-         * @property undefined
-         */
-        label() {}
-    };
-
-    class AudioUICommandItem extends CommandItem {
+    class AudioUICommandItem extends $action.CommandItem {
         constructor(command) {
             super(command);
             this.init();
@@ -57,43 +15,23 @@ var $action = $action || {};
             // Initialize the UI for the CommandItem corresponding to each command
             this._tagName = this.Command.Element.tagName;
             var listItem = document.createElement("li");
-            listItem.classList.add("genie-keyboard-ui-list-item");
+            listItem.classList.add("genie-audio-ui-list-item");
 
             var labelSpan = document.createElement("span");
-            labelSpan.classList.add("genie-keyboard-ui-list-item-label");
+            labelSpan.classList.add("genie-audio-ui-list-item-label");
             labelSpan.textContent = this.label();
 
             listItem.appendChild(labelSpan);
 
             this._domElement = listItem;
         }
-
-        /**
-         * Return a suitable label for the command
-         */
-        label() {
-            // Constructs a desired label for the command based on the command metadata available
-            var labelString = "";
-            // If the command has an imperative label, return it. 
-            if (this.command.ImperativeLabels.length) {
-                labelString = labelString + this.command.ImperativeLabels[0];
-            }
-
-            // Otherwise, return the first text node found
-            else if (this.command.Labels.length) {
-                var tagName = this._tagName;
-                // Return the first text node lable
-                labelString = labelString + this.command.Labels[0];
-            }
-
-            return labelString;
-        };
     };
 
-    $action.KeyboardUICommandItem = KeyboardUICommandItem;
+    $action.AudioUICommandItem = AudioUICommandItem;
 
-    class KeyboardUI {
+    class AudioUI extends $action.UI {
         constructor() {
+            super();
             this.init();
 
             // Keep a map between the command labels and their execute() calls so that we can map audio commands to call commands
@@ -102,12 +40,12 @@ var $action = $action || {};
 
         init() {
             var dialog = document.createElement("div");
-            $(dialog).attr("id", "genie-keyboard-ui-sidebar");
+            $(dialog).attr("id", "genie-audio-ui-sidebar");
             var list = document.createElement("ul");
-            list.classList.add("genie-keyboard-ui-list");
+            list.classList.add("genie-audio-ui-list");
 
             var label = document.createElement("div");
-            label.classList.add("genie-keyboard-ui-header");
+            label.classList.add("genie-audio-ui-header");
 
 
             dialog.appendChild(label);
@@ -123,7 +61,7 @@ var $action = $action || {};
             // Attach the sidebar to the span link
             $('body').sidr({
                 side: 'right',
-                name: 'genie-keyboard-ui-sidebar',
+                name: 'genie-audio-ui-sidebar',
                 displace: true,
                 renaming: false
             });
@@ -163,31 +101,26 @@ var $action = $action || {};
         }
 
         show() {
-            $.sidr('open', 'genie-keyboard-ui-sidebar');
+            $.sidr('open', 'genie-audio-ui-sidebar');
         };
 
         hide() {
-            $.sidr('close', 'genie-keyboard-ui-sidebar');
+            $.sidr('close', 'genie-audio-ui-sidebar');
         };
-
-        remove() {
-            // Removes the UI container from the DOM
-
-        }
 
         appendCommandGroup(label, commands) {
             var group = document.createElement('li');
-            group.classList.add('genie-keyboard-ui-group');
+            group.classList.add('genie-audio-ui-group');
 
             var menulabel = document.createElement('span');
-            menulabel.classList.add('genie-keyboard-ui-group-label');
+            menulabel.classList.add('genie-audio-ui-group-label');
 
             var label = pluralize.plural(label);
             menulabel.textContent = label[0].toUpperCase() + label.substring(1, label.length);
             group.appendChild(menulabel);
 
             var list = document.createElement('ul');
-            list.classList.add('genie-keyboard-ui-list');
+            list.classList.add('genie-audio-ui-list');
 
             // Groups
             for (var i = 0; i < commands.length; i++) {
@@ -195,7 +128,7 @@ var $action = $action || {};
                 commands[i].CommandItem = newCommand;
 
                 if (!commands[i].userInvokeable()) {
-                    newCommand.DOM.classList.add('genie-keyboard-ui-disabled');
+                    newCommand.DOM.classList.add('genie-audio-ui-disabled');
                 }
                 
                 let commandLabel = newCommand.label().toLowerCase(); 
@@ -222,13 +155,13 @@ var $action = $action || {};
         updateCommandState(command, enabled) {
             // What should happen when the command state changes 
             var domElement = command.CommandItem.DOM;
-            var disabled = $(domElement).hasClass('genie-keyboard-ui-disabled');
+            var disabled = $(domElement).hasClass('genie-audio-ui-disabled');
             if (disabled && enabled) {
-                $(domElement).removeClass('genie-keyboard-ui-disabled');
+                $(domElement).removeClass('genie-audio-ui-disabled');
             }
 
             if (!disabled && !enabled) {
-                $(domElement).addClass('genie-keyboard-ui-disabled');
+                $(domElement).addClass('genie-audio-ui-disabled');
             }
         }
     };

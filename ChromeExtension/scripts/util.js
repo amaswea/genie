@@ -389,7 +389,7 @@ var $action = $action || {};
         var newAddEventListener = function (type, listener, options = null, useCapture = false, ignore = false) {
             // Instrument the handler with a call to retreive the data dependencies
             this._addEventListener(type, listener, options, useCapture);
-            //   console.log("addEventListener " + type + " " + this.tagName + " " + listener.toString());
+           console.log("addEventListener " + type + " " + this.tagName + " " + listener.toString());
             var handlerString = listener.toString();
             var handlerID = getHandlerID(type, listener, this); // If the handler already exists in the map, ignore it. 
           //  console.log("addEventListener " + type + " " + listener.toString() + " " + this.tagName);

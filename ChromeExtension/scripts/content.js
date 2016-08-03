@@ -109,11 +109,6 @@ function updateCommands() {
           messageType: 'getCommandStates'
       }, "*");*/
 
-
-    var groups = $action.CommandOrganizer.organizeCommandsByType($action.commandManager.Commands);
-    $action.commandManager.updateTypeCommandGroups(groups);
-
-
     $action.commandsChanged = false;
     // setTimeout(updateCommands, 10000);
 }
