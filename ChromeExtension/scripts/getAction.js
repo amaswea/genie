@@ -30,8 +30,8 @@ function getElementPath(elt) {
 					jQuery.event.dispatch.apply( elem, arguments ) : undefined;
 			};
 
-            Element.prototype._addEventListener = Element.prototype.addEventListener;
-            Element.prototype.addEventListener = function (a, b, c) {
+            EventTarget.prototype._addEventListener = EventTarget.prototype.addEventListener;
+            EventTarget.prototype.addEventListener = function (a, b, c) {
                 // Instrument the handler with a call to retreive the data dependencies
                 var instrumented = $action.getInstrumentedHandler(b);
                 this._addEventListener(a, instrumented, c);
@@ -46,8 +46,8 @@ function getElementPath(elt) {
                 }
             };
 
-            Element.prototype._removeEventListener = Element.prototype.removeEventListener;
-            Element.prototype.removeEventListener = function (a, b, c) {
+            EventTarget.prototype._removeEventListener = EventTarget.prototype.removeEventListener;
+            EventTarget.prototype.removeEventListener = function (a, b, c) {
                 this._removeEventListener(a, b, c);
                 window.postMessage({
                     messageType: 'eventRemoved',

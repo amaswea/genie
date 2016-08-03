@@ -53,11 +53,10 @@ function receiveMessage(event) {
     if (event.data) {
         if (event.data.messageType == 'eventAdded') {
             $action.commandsChanged = true;
-            var elementPath = event.data.path;
-            if (elementPath && elementPath.length) {
-                var element = $(elementPath);
-                if (element && element.length) {
-                    console.log('adding new command');
+            var element = $action.getElementFromID(event.data.elementID);
+            if (element) {
+                if (!$action.commandManager.hasCommand(event.data.id)) {
+                    console.log("adding new command " + event.data.id + " " + event.data.eventType + " " + event.data.elementID);
                     var added = $action.commandManager.addCommand(event.data);
 
                     var dataDependencies = {};
@@ -68,20 +67,19 @@ function receiveMessage(event) {
                         dataDependencies.messageType = 'eventDependenciesNotFound';
                     }
 
-                    window.postMessage(dataDependencies, "*");
-                }
+                    window.postMessage(dataDependencies, "*")
+                };
             }
+
         }
 
         if (event.data.messageType == 'eventRemoved') {
             $action.commandsChanged = true;
-            var elementPath = event.data.path;
-            if (elementPath && elementPath.length) {
-                var element = $(elementPath);
-                if (element && element.length) {
-                    $action.commandManager.removeCommand(element[0], event.data);
-                }
+            var element = $action.getElementFromID(event.data.elementID);
+            if (element) {
+                $action.commandManager.removeCommand(element, event.data);
             }
+
         }
 
         if (event.data.messageType == 'updateCommandStates') {
@@ -108,6 +106,9 @@ function updateCommands() {
     /*  window.postMessage({
           messageType: 'getCommandStates'
       }, "*");*/
+    
+    // TODO:think of better way to implement organization
+    
 
     $action.commandsChanged = false;
     // setTimeout(updateCommands, 10000);
@@ -167,7 +168,7 @@ $(document).ready(function () {
     }
 
     // Begin polling to update command states
-     setTimeout(updateCommands, 2000);
+    setTimeout(updateCommands, 2000);
 });
 
 (function initializeCommandManager() {

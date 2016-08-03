@@ -23,17 +23,37 @@ var $action = $action || {};
             }
         };
 
-        getUniqueID() {
+        getHandlerID() {
             this._pageHandlerIDs++;
             // Page commands are identified by the prefix 'p' to distinguish them from event handler commands
             return "p" + this._pageHandlerIDs;
+        }
+
+        detectOrAssignElementID(element) {
+            var id = "";
+            if (element instanceof Window) {
+                id = "window";
+            } else if (element instanceof Document) {
+                id = "document";
+            } else {
+                id = element.getAttribute("data-genie-element-id");
+                if (id && id.length) {
+                    return id;
+                } else {
+                    this._elementIDs++;
+                    id = "p" + this._elementIDs;
+                    element.setAttribute("data-genie-element-id", id);
+                }
+            }
+
+            return id;
         }
 
         getPageCommandID(type, element) {
             var keys = Object.keys(this._pageCommands);
             for (var i = 0; i < keys.length; i++) {
                 var value = this._pageCommands[keys[i]];
-                var elt = document.querySelector(value.path);
+                var elt = $action.getElementFromID(value.elementID);
                 if (value && value.eventType == type && element == elt) {
                     return keys[i];
                 }
@@ -61,13 +81,12 @@ var $action = $action || {};
                 var isActionable = $action.ActionableElements[tagAdded](element);
                 if (isActionable) {
                     var commandData = {
-                        id: this.getUniqueID(),
+                        id: this.getHandlerID(),
                         eventType: 'default',
-                        path: typeof (jQuery) == "function" ? $action.jQueryGetElementPath(element) : $action.getElementPath(element)
+                        elementID: this.detectOrAssignElementID(element)
                     }
 
                     this._pageCommands[commandData.id] = commandData;
-                    console.log("adding command link");
                     $action.commandManager.addCommand(commandData);
                 }
             }
@@ -78,10 +97,10 @@ var $action = $action || {};
                 var attributeValue = $element.attr(eventHandler);
                 if (attributeValue && attributeValue.length > 0) {
                     var commandData = {
-                        id: this.getUniqueID(),
+                        id: this.getHandlerID(),
                         eventType: eventHandler,
                         handler: attributeValue,
-                        path: $action.getElementPath(element)
+                        elementID: this.detectOrAssignElementID(element)
                     }
 
                     this._pageCommands[commandData.id] = commandData;
@@ -94,7 +113,6 @@ var $action = $action || {};
                         dataDependencies.messageType = 'eventDependenciesNotFound';
                     }
 
-                    console.log("positing message update dependencies");
                     window.postMessage(dataDependencies, "*");
                 }
             }

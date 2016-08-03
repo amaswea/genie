@@ -9,13 +9,13 @@ var $action = $action || {};
         "INPUT": "Fill out"
     }
 
-    
+
     $action.CommandGroups = {
-        "A": "link", 
-        "LINK": "link", 
-        "INPUT": "field", 
+        "A": "link",
+        "LINK": "link",
+        "INPUT": "field",
         "BUTTON": "action",
-        "SELECT": "action", 
+        "SELECT": "action",
         "TEXTAREA": "field"
     }
 
@@ -70,11 +70,10 @@ var $action = $action || {};
      };*/
 
     class Command {
-        constructor(id, eventType, path, handler) {
+        constructor(id, elementID, eventType, handler) {
             this._id = id;
             this._eventType = eventType;
-            this._path = path; // The path to locate the DOM element the command is associated with. Only store the path so that commands can be passed to background scripts
-            this._domElement = document.querySelector(path);
+            this._domElement = $action.getElementFromID(elementID);
 
             this._handler = handler;
             this._dependencies = [];
@@ -92,10 +91,6 @@ var $action = $action || {};
         // Getters & Setters
         get ID() {
             return this._id;
-        }
-
-        get Path() {
-            return this._path;
         }
 
         get Element() {
@@ -272,12 +267,12 @@ var $action = $action || {};
             var element = $(this._domElement);
             var displayed = element.css('display') != "none";
             var visibility = element.css('visibility') != "hidden";
-           // var heightBigEnough = element.height() > 10;
-           // var widthBigEnough = element.width() > 10;
+            // var heightBigEnough = element.height() > 10;
+            // var widthBigEnough = element.width() > 10;
             var notClear = element.css('opacity') != "0" && element.css('opacity') != "0.0";
             var offLeftRight = (element.offset().left >= window.innerWidth) || ((element.offset().left + element.offsetWidth) <= 0);
             var hidden = element.attr('type') == 'hidden';
-          //  var visible = element.is(':visible');
+            //  var visible = element.is(':visible');
 
             if (displayed && visibility && notClear && !offLeftRight && !hidden) {
                 return true;
@@ -365,7 +360,7 @@ var $action = $action || {};
             // Perform the action
             var action = {
                 event: this.EventType,
-                selector: $action.jQueryGetElementPath(this.Element)
+                elementID: this.Element.getAttribute("data-genie-element-id")
             }
 
             window.postMessage(action, "*");
@@ -422,21 +417,23 @@ var $action = $action || {};
 
                         this._functions = findFunctionExpressionsInProgram.items;*/
         }
+        
+        hasCommand(commandID){
+            return this._commands[commandID] != undefined;
+        }
 
         addCommand(command) {
             if (command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1) {
-                var element = $(command.path);
-                if (element && element.length) {
-                    var newCommand = new $action.Command(command.id, command.eventType, command.path, command.handler)
-                        // this.analyzeCommandHandler(newCommand.AST, newCommand);
-                    this.initMetadata(newCommand);
+                var element = $action.getElementFromID(command.elementID);
+                var newCommand = new $action.Command(command.id, command.elementID, command.eventType, command.handler)
+                    // this.analyzeCommandHandler(newCommand.AST, newCommand);
+                this.initMetadata(newCommand);
 
-                    this._commandCount++;
+                this._commandCount++;
 
-                    // Add the command to the command map
-                    this._commands[command.id] = newCommand;
-                    return true;
-                }
+                // Add the command to the command map
+                this._commands[command.id] = newCommand;
+                return true;
             }
             return false; // Returns whether the command was successfully added
         };
@@ -638,6 +635,10 @@ var $action = $action || {};
 
         parseLabelFor(command, element) {
             // Check if the element has an ID 
+            if(!element.attrributes){
+                return;
+            }
+            
             var id = element.attributes.id;
             if (id) {
                 // Look for a label element with for attribute matching this ID
@@ -676,6 +677,10 @@ var $action = $action || {};
             // First, look in global attributes 
             // Then look in attributes specific to that tag name
             // Should we search in any particular order? 
+            if(!element.attributes){
+                return; // Document & Window do not have inline attributes
+            }
+            
             var globalAttrs = $action.SentenceLabels.GLOBAL;
             if (globalAttrs.length) {
                 for (var i = 0; i < globalAttrs.length; i++) {

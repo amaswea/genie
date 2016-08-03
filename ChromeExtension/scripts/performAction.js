@@ -29,8 +29,8 @@ function receiveMessage(event) {
 
     // Handle triggering the evnet
     var data = event.data;
-    if (data && data.selector) {
-        var element = document.querySelector(data.selector);
+    if (data && data.elementID) {
+        var element = document.querySelector("[data-genie-element-id='" + data.elementID + "']");
         if (element) {
             // Execute the action using the trigger or the associated action function
             if (data.event != 'default') {

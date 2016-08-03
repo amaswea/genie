@@ -97,7 +97,10 @@ var $action = $action || {};
         "change",
         "contextmenu",
         "show",
-        "submit"
+        "submit", 
+        "touchmove", 
+        "touchstart", 
+        "touchend"
         // TOOD: rest of HTML DOM events, Drag & Drop events, Touch events
     ];
 
