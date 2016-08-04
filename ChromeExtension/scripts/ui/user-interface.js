@@ -3,20 +3,32 @@
  (function ($action) {
      // Interface for UIs
      class UI {
-         constructor() {}
+         constructor() {
+             this._organizer = this.OrganizationTypes.Type;
+         }
 
          get OrganizationTypes() {
-             return { Type: $action.CommandOrganizer.organizeCommandsByType };
+             return {
+                 Type: $action.CommandOrganizer.organizeCommandsByType
+             };
          }
-         
+
+         get Organizer() {
+             return this._organizer;
+         }
+
+         set Root(rootUI) {
+             this._rootUI = rootUI;
+         }
+
          init() {}
 
          show() {
-             this.rootUI.style.display = "";
+             this._rootUI.style.display = "";
          }
 
          hide() {
-             this.rootUI.style.display = "none";
+             this._rootUI.style.display = "none";
          }
 
          remove() {}

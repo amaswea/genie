@@ -11,7 +11,7 @@ $action.ActionableElementsActionFunction = {
 }
 
 // Sending and receiving messages from the window object
-window.addEventListener("message", receiveMessage, false);
+window.addEventListener("message", receiveMessage, false, false, true);
 
 /**
  * Receive a message from the content script to perform the given action
@@ -54,5 +54,5 @@ function receiveMessage(event) {
         }
     }
 
-    window.removeEventListener("message", receiveMessage);
+    window.removeEventListener("message", receiveMessage, null, false, true);
 };

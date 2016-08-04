@@ -21,14 +21,14 @@
                 "https://*/*"
             ],
             "css": [
-                "css/audio-ui.css" 
+                "css/command-line-ui.css" 
             ],
             "js": [
                 "scripts/ext/jquery-3.0.0.js",
                 "scripts/jquery.sidr.min.js",
                 "scripts/ext/lodash.js",
                 "scripts/ui/user-interface.js",
-                "scripts/ui/audioUI.js",
+                "scripts/ui/commandLineUI.js",
                 "scripts/command.js",
                 "scripts/util.js",
                 "scripts/mutationWatcher.js",

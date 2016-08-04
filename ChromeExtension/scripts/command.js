@@ -783,7 +783,7 @@ var $action = $action || {};
             // Retrieve all of the Text nodes on the element
             // Tag them with the parts of speech. 
             var element = command.Element;
-            if (element) {
+            if (element && !(element instanceof Window)) {
                 var walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
                 var node = walker.nextNode();
                 while (node) {

@@ -16,7 +16,7 @@ var $action = $action || {};
             this.observeMutations();
 
             // Extract all of the non-event commands from the page
-            var allElements = document.querySelectorAll("*");
+            var allElements = document.querySelectorAll("*:not(.genie-ui-component)");
             for (var i = 0; i < allElements.length; i++) {
                 var element = allElements[i];
                 this.addCommandsFromElement(element);

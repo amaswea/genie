@@ -36,11 +36,6 @@ var $action = $action || {};
 
             // Keep a map between the command labels and their execute() calls so that we can map audio commands to call commands
             this._audioCommands = {};
-            this._organizer = this.OrganizationTypes.Type;
-        }
-        
-        get Organizer() {
-            return this._organizer;
         }
 
         init() {
