@@ -47,8 +47,8 @@ var $action = $action || {};
                 var commandKey = commandQueue.shift();
                 var commandElement = commandElementsMap[commandKey];
                 var commandGroup = {
-                    container: commandElement
-                    , commands: [commandKey]
+                    container: commandElement,
+                    commands: [commandKey]
                 };
                 // Find the parent node. Find structurally similar sets of commands within the parent, otherwise, continue going up a level. 
                 var parentNode = commandElement.parentNode;
@@ -110,37 +110,40 @@ var $action = $action || {};
 
             return groups;
         }
-        
-        static organizeCommandsByType(commands){
-            var commandsMap = {}; 
+
+        static organizeCommandsByType(commands) {
+            var commandsMap = {};
             var commandKeys = Object.keys(commands);
-            for(var i=0; i<commandKeys.length; i++){
+            for (var i = 0; i < commandKeys.length; i++) {
                 var cmd = commands[commandKeys[i]];
-                if(cmd.EventType == 'default'){
+                if (cmd.EventType == 'default') {
                     // Get the command group category (field, link, action)
-                    var tagName = cmd.Element.tagName; 
-                    if(tagName){
-                        let category = $action.CommandGroups[tagName]; 
-                        if(!commandsMap[category]){
-                            commandsMap[category] = []; 
+                    var tagName = cmd.Element.tagName;
+                    if (tagName) {
+                        let category = $action.CommandGroups[tagName];
+                        if (!commandsMap[category]) {
+                            commandsMap[category] = [];
                         }
                         commandsMap[category].push(cmd);
                     }
-                }else  {
-                    if(!commandsMap['commands']){
+                } else {
+                    if (!commandsMap['commands']) {
                         commandsMap['commands'] = [];
                     }
                     commandsMap['commands'].push(cmd);
                 }
             }
-            
-            var result = []; 
+
+            var result = [];
             var keys = Object.keys(commandsMap);
-            for(var j=0; j<keys.length; j++){
-                let cmds = commandsMap[keys[j]]; 
-                result.push({ "container": keys[j], "commands": cmds});
+            for (var j = 0; j < keys.length; j++) {
+                let cmds = commandsMap[keys[j]];
+                result.push({
+                    "container": keys[j],
+                    "commands": cmds
+                });
             }
-            
+
             return result;
         }
 
@@ -233,6 +236,13 @@ var $action = $action || {};
             }
 
             return groups;
+        }
+        
+        static organizeAllCommands(commands) {
+            return {
+                container: "all",
+                commands: commands
+            };
         }
     }
 

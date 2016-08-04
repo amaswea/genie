@@ -9,7 +9,8 @@
 
          get OrganizationTypes() {
              return {
-                 Type: $action.CommandOrganizer.organizeCommandsByType
+                 Type: $action.CommandOrganizer.organizeCommandsByType,
+                 All: $action.CommandOrganizer.organizeAllCommands, 
              };
          }
 

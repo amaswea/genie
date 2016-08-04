@@ -4,6 +4,7 @@ var $action = $action || {};
     class MutationWatcher {
         constructor() {
             this._pageHandlerIDs = 0;
+            this._elementIDs = 0; 
             this._pageCommands = {};
         }
 

@@ -24,7 +24,7 @@ var $action = $action || {};
             this.Root = commandLine;
             this._textarea = textarea;
             this.attachListeners(textarea);
-            this._textarea.value = this._textarea.value + "Type commands to see the list of available commands...";
+            this._textarea.value = this._textarea.value + "Type commands to see the list of available commands...\n";
 
             $('html').append(commandLine);
 
@@ -50,7 +50,7 @@ var $action = $action || {};
 
         attachListeners(element) {
             var self = this;
-            element.addEventListener("keypress", function handlerInput(evt) {
+            element.addEventListener("keydown", function handlerInput(evt) {
                 var keyCode = evt.keyCode || evt.which;
                 if (keyCode == '13') {
                     // Get the text entered on the previous line of the text area to use as the command
@@ -62,6 +62,7 @@ var $action = $action || {};
                         }
                     }
                 }
+                evt.stopPropagation();
             }, null, false, true);
         }
 
