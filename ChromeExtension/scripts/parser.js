@@ -115,7 +115,7 @@ var $difference = $action || {};
         normalizeAndTagPOS(words) {
             var partsOfSpeech = {};
             partsOfSpeech.nouns = [];
-            partsOfSpeech.words = [];
+            partsOfSpeech.verbs = [];
             
             for (var i = 0; i < words.length; i++) {
                 var word = words[i].toLowerCase();
@@ -126,8 +126,8 @@ var $difference = $action || {};
                         var posValue = pos[0][1];
                         if(["NN", "NNP", "NNPS", "NNS"].indexOf(posValue) > -1){
                             partsOfSpeech.nouns.push(word);
-                        }else {
-                            partsOfSpeech.words.push(word);
+                        }else if(["VB", "VBP"].indexOf(posValue) > -1) {
+                            partsOfSpeech.verbs.push(word);
                         }
                     }
                 }

@@ -1,9 +1,27 @@
+/*
 #genie-audio-ui-sidebar {
     background-color: white;
     overflow: auto;
     font-family: 'Lucida Grande', sans-serif;
     font-size: 10pt;
     z-index: 10000000;
+}
+*/
+
+#genie-audio-ui {
+    width: 300px;
+    height: 90%;
+    margin-left: 10px;
+    background-color: white;
+    box-shadow: rgb(126, 126, 126) 1px 1px 1px 1px;
+    border-radius: 3px;
+    overflow: auto;
+    font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+    font-size: 10pt;
+    z-index: 10000000;
+    position: absolute;
+    right: 10px; 
+    top: 10px;
 }
 
 .genie-audio-ui-group-label {
@@ -19,6 +37,7 @@
     list-style-type: none;
     margin: 0;
     padding: 0;
+    width: 280px;
 }
 
 .genie-audio-ui-list-item {
@@ -55,9 +74,6 @@
     background-color: lightgray;
     border-bottom: 0.5px solid white;
 }
-
-
-
 
 
 /** 

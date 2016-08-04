@@ -172,7 +172,7 @@ $(document).ready(function () {
 });
 
 (function initializeCommandManager() {
-    $action.interface = new $action.HelpUI(); // Instantiate a new type of interface 
+    $action.interface = new $action.CommandLineUI(); // Instantiate a new type of interface 
 
     // Create a new instance of the command manager with this instance of the UI
     $action.commandManager = new $action.CommandManager($action.interface, $action.scriptManager);

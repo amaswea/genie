@@ -74,8 +74,14 @@
              // Otherwise, return the first text node found
              else if (this.command.Labels.length) {
                  var tagName = this._tagName;
-                 // Return the first text node lable
+                 // Return the first text node label
                  labelString = labelString + this.command.Labels[0];
+             }
+             else if(this.command.VerbTags.length){
+                 labelString = labelString + this.command.VerbTags[0];
+             }
+             else if(this.command.NounTags.length){
+                 labelString = labelString + this.command.NounTags[0];
              }
 
              return labelString;

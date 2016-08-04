@@ -36,11 +36,12 @@ var $action = $action || {};
 
             // Keep a map between the command labels and their execute() calls so that we can map audio commands to call commands
             this._audioCommands = {};
+            this.Root = this.dialog;
         }
 
         init() {
             var dialog = document.createElement("div");
-            $(dialog).attr("id", "genie-audio-ui-sidebar");
+            $(dialog).attr("id", "genie-audio-ui");
             var list = document.createElement("ul");
             list.classList.add("genie-audio-ui-list");
 
@@ -59,13 +60,13 @@ var $action = $action || {};
             this.label.textContent = "Speak a command... ";
 
             // Attach the sidebar to the span link
-            $('body').sidr({
+            /* $('body').sidr({
                 side: 'right',
                 name: 'genie-audio-ui-sidebar',
                 displace: true,
                 renaming: false
             });
-
+*/
             // Initialze speech recognition
             this._recognition = new webkitSpeechRecognition();
             this._recognition.continuous = true;
@@ -93,20 +94,11 @@ var $action = $action || {};
                     let command = this._audioCommands[commandText];
                     if (command) {
                         // Call the execute method to perform the command
-                        console.log("performing command");
                         command.execute();
                     }
                 }
             }
         }
-
-        show() {
-            $.sidr('open', 'genie-audio-ui-sidebar');
-        };
-
-        hide() {
-            $.sidr('close', 'genie-audio-ui-sidebar');
-        };
 
         appendCommandGroup(label, commands) {
             var group = document.createElement('li');
@@ -130,8 +122,8 @@ var $action = $action || {};
                 if (!commands[i].userInvokeable()) {
                     newCommand.DOM.classList.add('genie-audio-ui-disabled');
                 }
-                
-                let commandLabel = newCommand.label().toLowerCase(); 
+
+                let commandLabel = newCommand.label().toLowerCase();
                 this._audioCommands[commandLabel] = newCommand.Command;
 
                 list.appendChild(newCommand.DOM);

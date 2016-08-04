@@ -81,7 +81,7 @@ var $action = $action || {};
             this._imperativeLabels = [];
             this._labels = [];
             this._nounTags = [];
-            this._tags = [];
+            this._verbTags = [];
             this._computedStyles = {};
 
             /*            this.initMetadata();*/
@@ -150,12 +150,12 @@ var $action = $action || {};
             this._nounTags = tags;
         }
 
-        get Tags() {
-            return this._tags;
+        get VerbTags() {
+            return this._verbTags;
         }
 
-        set Tags(tags) {
-            this._tags = tags;
+        set VerbTags(tags) {
+            this._verbTags = tags;
         }
 
         set ComputedStyles(styles) {
@@ -436,6 +436,7 @@ var $action = $action || {};
                 var newCommand = new $action.Command(command.id, command.elementID, command.eventType, command.handler)
                     // this.analyzeCommandHandler(newCommand.AST, newCommand);
                 this.initMetadata(newCommand);
+                console.log("adding new command " + command.eventType + " " + command.handler + " " + command.elementID);
 
                 this._commandCount++;
 
@@ -685,8 +686,8 @@ var $action = $action || {};
                     command.NounTags = command.NounTags.concat(parsedToken.nouns);
                 }
 
-                if (parsedToken.words.length) {
-                    command.Tags = command.Tags.concat(parsedToken.words);
+                if (parsedToken.verbs.length) {
+                    command.VerbTags = command.VerbTags.concat(parsedToken.verbs);
                 }
             }
         }
@@ -809,7 +810,7 @@ var $action = $action || {};
 
                 // Filter duplicate tags
                 command.NounTags = _.uniq(command.NounTags);
-                command.Tags = _.uniq(command.Tags);
+                command.VerbTags = _.uniq(command.VerbTags);
                 command.Labels = _.uniq(command.Labels);
                 command.ImperativeLabels = _.uniq(command.ImperativeLabels);
 

@@ -30,7 +30,6 @@ var $action = $action || {};
 
             this.hide();
             $(window).scroll(_.throttle(this.repositionCommandLineArea, 1));
-            this.repositionCommandLineArea();
         };
 
         appendCommandGroup(label, commands) {
