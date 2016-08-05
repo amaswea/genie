@@ -6,3 +6,7 @@
 .genie-help-ui-highlighter {
     z-index: 2147483646 !important;
 }
+
+.genie-help-ui-tooltip {
+    display: none;
+}

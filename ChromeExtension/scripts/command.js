@@ -72,6 +72,7 @@ var $action = $action || {};
     class Command {
         constructor(id, elementID, eventType, handler) {
             this._id = id;
+            this._elementID = elementID;
             this._eventType = eventType;
             this._domElement = $action.getElementFromID(elementID);
 
@@ -91,6 +92,10 @@ var $action = $action || {};
         // Getters & Setters
         get ID() {
             return this._id;
+        }
+        
+        get ElementID() {
+            return this._elementID;
         }
 
         get Element() {

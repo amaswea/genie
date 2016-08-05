@@ -10,7 +10,7 @@
     "background": {
         "scripts": [
             "scripts/ext/jquery-3.0.0.js",
-            "scripts/esprima/esprima.js",
+            "scripts/ext/esprima.js",
             "scripts/background.js"
         ]
     },
@@ -21,27 +21,29 @@
                 "https://*/*"
             ],
             "css": [
-                "css/command-line-ui.css" 
+                "css/help-ui.css", 
+                "css/jquery.qtip.min.css"
             ],
             "js": [
                 "scripts/ext/jquery-3.0.0.js",
-                "scripts/jquery.sidr.min.js",
+                "scripts/ext/jquery.sidr.min.js",
+                "scripts/ext/jquery.qtip.min.js",
                 "scripts/ext/lodash.js",
+                "scripts/ext/lexicon.js",
+                "scripts/ext/lexer.js",
+                "scripts/ext/POSTagger.js",
+                "scripts/ext/pluralize.js",
+                "scripts/ext/esprima.js",
+                "scripts/ext/typo.js",
                 "scripts/ui/user-interface.js",
-                "scripts/ui/commandLineUI.js",
+                "scripts/ui/helpUI.js",
                 "scripts/command.js",
                 "scripts/util.js",
                 "scripts/mutationWatcher.js",
                 "scripts/constants.js",
-                "scripts/esprima/esprima.js",
                 "scripts/script.js",
                 "scripts/ast.js",
-                "scripts/jspos/lexicon.js",
-                "scripts/jspos/lexer.js",
-                "scripts/jspos/POSTagger.js",
-                "scripts/pluralize/pluralize.js",
                 "scripts/parser.js",
-                "scripts/typo.js",
                 "scripts/commandOrganizer.js",
                 "scripts/content.js" // Content script should load last. 
             ],
