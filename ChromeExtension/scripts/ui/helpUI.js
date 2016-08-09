@@ -35,7 +35,7 @@ var $action = $action || {};
                     if (tooltip.length) {
                         // Update the text
                     } else {
-                        this.createTooltip(commandElement, commands[i].ElementID);
+                        this.createTooltip(commands[i], newCommand.label());
                     }
 
                     // How to handle when element has multiple commands? 
@@ -44,25 +44,48 @@ var $action = $action || {};
             }
         }
 
-        createTooltip(element, id) {
+        createTooltip(command, label) {
             // Initialize the tooltip
             // Look for a tooltip already attached
-            var tooltip = document.createElement("div");
-            tooltip.setAttribute("id", "genie-help-ui-tooltip-" + id);
-            tooltip.textContent = "This is what this command does";
-            $('html').append(tooltip);
-            
-            $("body").qtip({
-                overwrite: false, 
-                content: {
-                    text: $("#genie-help-ui-tooltip-" + id)
-                }, 
-                position: {
-                    my: 'top left', 
-                    at: 'center', 
-                    target: $("#genie-help-ui-tooltip-" + id)
-                }
-            });
+            if (command.visible()) {
+                var tooltip = document.createElement("div");
+                tooltip.setAttribute("id", "genie-help-ui-tooltip-" + command.ElementID);
+                tooltip.classList.add("genie-help-ui-tooltip");
+
+                var header = document.createElement("span");
+                header.textContent = label;
+                tooltip.appendChild(header);
+                header.classList.add("genie-help-ui-tooltip-header");
+
+                var purpose = document.createElement("span");
+                purpose.textContent = "This command does ... ";
+                tooltip.appendChild(purpose);
+
+                $('html').append(tooltip);
+
+                console.log(command.Element);
+                $(command.Element).qtip({
+                    content: {
+                        text: $("#genie-help-ui-tooltip-" + command.ElementID)
+                    },
+                    position: {
+                        my: 'top left',
+                        at: 'top left',
+                        target: $(command.ElementSelector)
+                    },
+                    show: {
+                        target: $("body")
+                    },
+                    hide: {
+                        target: $("body")
+                    },
+                    style: {
+                        tip: {
+                            corner: true
+                        }
+                    }
+                });
+            }
         }
     };
 

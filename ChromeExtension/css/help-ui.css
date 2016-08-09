@@ -10,3 +10,17 @@
 .genie-help-ui-tooltip {
     display: none;
 }
+
+.genie-help-ui-tooltip {
+    display: flex !important; 
+    flex-direction: column; 
+}
+
+.genie-help-ui-tooltip-header {
+    font-size: 12pt; 
+    font-weight: bold;
+}
+
+.genie-help-ui-tooltip > span:last-child {
+    padding-top: 10px;
+}

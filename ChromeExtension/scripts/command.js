@@ -93,7 +93,7 @@ var $action = $action || {};
         get ID() {
             return this._id;
         }
-        
+
         get ElementID() {
             return this._elementID;
         }
@@ -178,6 +178,16 @@ var $action = $action || {};
          */
         get Handler() {
             return this._handler;
+        }
+
+        get ElementSelector() {
+            if (this._domElement instanceof Window) {
+                return "body";
+            } else if (this._domElement instanceof Document) {
+                return "body";
+            } else {
+                return "[data-genie-element-id='" + this._domElement.getAttribute("data-genie-element-id") + "']";
+            }
         }
 
         /**
