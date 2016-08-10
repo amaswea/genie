@@ -63,13 +63,12 @@ var $action = $action || {};
     };
 
     $action.getElementFromID = function (id) {
-        if(id == "window"){
-            return window; 
-        }
-        else if(id == "document"){
+        if (id == "window") {
+            return window;
+        } else if (id == "document") {
             return document;
-        }else {
-           return document.querySelector("[data-genie-element-id='" + id + "']");
+        } else {
+            return document.querySelector("[data-genie-element-id='" + id + "']");
         }
     };
 
@@ -295,24 +294,24 @@ var $action = $action || {};
                     id = getElementID();
                     element.setAttribute("data-genie-element-id", id);
                 }
-            }else if(window){
+            } else if (window) {
                 id = "window";
-            }else if(document){
+            } else if (document) {
                 id = "document";
             }
             return id;
         }
-        
-        function detectElementID(element){
-            if(element instanceof Window){
+
+        function detectElementID(element) {
+            if (element instanceof Window) {
                 return "window";
-            }else if(element instanceof Document){
+            } else if (element instanceof Document) {
                 return "document";
-            }else {
+            } else {
                 return element.getAttribute("data-genie-element-id");
             }
         }
-        
+
         var ignoreJQueryFunction = `function ignoreJQueryFunction(e) {
 
                 // Discard the second event of a jQuery.event.trigger() and
@@ -328,7 +327,8 @@ var $action = $action || {};
             var handlerString = listener.toString();
             var elementID = detectOrAssignElementID(this);
             var handlerID = getPageHandlerID(type, listener, elementID); // If the handler already exists in the map, ignore it. 
-           // console.log("addEventListener " + type + " " + listener.toString() + " " + this.tagName);
+            console.log("addEventListener " + type + " " + listener.toString() + " " + this.tagName);
+           // debugger;
             if (handlerString != ignoreJQueryFunction && !ignore && !handlerID) {
                 var id = getHandlerID(); // This unique ID will represent this handler, event, and element combination
                 var contentObject = getContentObject(id, elementID, 'eventAdded', type, listener, this);

@@ -290,14 +290,14 @@ var $action = $action || {};
             var element = $(this._domElement);
             var displayed = element.css('display') != "none";
             var visibility = element.css('visibility') != "hidden";
-            // var heightBigEnough = element.height() > 10;
-            // var widthBigEnough = element.width() > 10;
+            var heightBigEnough = element.height() > 10;
+            var widthBigEnough = element.width() > 10;
             var notClear = element.css('opacity') != "0" && element.css('opacity') != "0.0";
             var offLeftRight = (element.offset().left >= window.innerWidth) || ((element.offset().left + element.offsetWidth) <= 0);
             var hidden = element.attr('type') == 'hidden';
-            //  var visible = element.is(':visible');
+            var visible = element.is(':visible');
 
-            if (displayed && visibility && notClear && !offLeftRight && !hidden) {
+            if (heightBigEnough && widthBigEnough && visible && displayed && visibility && notClear && !offLeftRight && !hidden) {
                 return true;
             }
 

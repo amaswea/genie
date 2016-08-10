@@ -44,47 +44,67 @@ var $action = $action || {};
             }
         }
 
+        getTooltip(command) {
+            var tooltipSelector = "[id='genie-help-ui-tooltip-" + command.ElementID + "']";
+            var tooltip = $(tooltipSelector);
+            if (tooltip.length) {
+                return tooltip[0];
+            }
+        }
+
         createTooltip(command, label) {
             // Initialize the tooltip
             // Look for a tooltip already attached
+            var existingTooltip = this.getTooltip(command);
             if (command.visible()) {
-                var tooltip = document.createElement("div");
-                tooltip.setAttribute("id", "genie-help-ui-tooltip-" + command.ElementID);
-                tooltip.classList.add("genie-help-ui-tooltip");
+                if (!existingTooltip) {
+                    var tooltip = document.createElement("div");
+                    tooltip.setAttribute("id", "genie-help-ui-tooltip-" + command.ElementID);
+                    tooltip.classList.add("genie-help-ui-tooltip");
 
-                var header = document.createElement("span");
-                header.textContent = label;
-                tooltip.appendChild(header);
-                header.classList.add("genie-help-ui-tooltip-header");
+                    var header = document.createElement("span");
+                    header.textContent = label;
+                    tooltip.appendChild(header);
+                    header.classList.add("genie-help-ui-tooltip-header");
 
-                var purpose = document.createElement("span");
-                purpose.textContent = "This command does ... ";
-                tooltip.appendChild(purpose);
+                    var purpose = document.createElement("span");
+                    purpose.textContent = "This command does ... ";
+                    tooltip.appendChild(purpose);
 
-                $('html').append(tooltip);
+                    $('html').append(tooltip);
 
-                console.log(command.Element);
-                $(command.Element).qtip({
-                    content: {
-                        text: $("#genie-help-ui-tooltip-" + command.ElementID)
-                    },
-                    position: {
-                        my: 'top left',
-                        at: 'top left',
-                        target: $(command.ElementSelector)
-                    },
-                    show: {
-                        target: $("body")
-                    },
-                    hide: {
-                        target: $("body")
-                    },
-                    style: {
-                        tip: {
-                            corner: true
+                    $(command.Element).qtip({
+                        content: {
+                            text: $("#genie-help-ui-tooltip-" + command.ElementID)
+                        },
+                        position: {
+                            my: 'top left',
+                            at: 'top left',
+                            target: $(command.ElementSelector), 
+                            adjust: {
+                                method: 'shift shift'
+                            }
+                        },
+                        show: {
+                            target: $("body"),
+                            ready: true
+                        },
+                        style: {
+                            tip: {
+                                corner: true
+                            }
                         }
-                    }
-                });
+                    });
+                } else {
+                    var header = document.createElement("span");
+                    header.textContent = label;
+                    existingTooltip.appendChild(header);
+                    header.classList.add("genie-help-ui-tooltip-header");
+
+                    var purpose = document.createElement("span");
+                    purpose.textContent = "This command does ... ";
+                    existingTooltip.appendChild(purpose);
+                }
             }
         }
     };
