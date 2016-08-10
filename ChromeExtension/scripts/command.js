@@ -25,7 +25,7 @@ var $action = $action || {};
             return href && href.length > 0;
         },
         "BUTTON": function (element) {
-            return true;
+            return $(element).attr("type") == "submit"; 
         },
         "INPUT": function (element) {
             var type = jQuery(element).attr("type");
@@ -382,6 +382,7 @@ var $action = $action || {};
 
             // Perform the action
             var action = {
+                messageType: 'performAction',
                 event: this.EventType,
                 elementID: this.Element.getAttribute("data-genie-element-id")
             }

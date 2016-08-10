@@ -1,49 +1,7 @@
 "use strict";
 var $action = $action || {};
 (function ($action) {
-    // Interface for UIs
-    class UI {
-        constructor() {
-
-        }
-
-        init() {}
-
-        show() {}
-
-        hide() {}
-
-        remove() {}
-
-        appendCommand(dom, commandCount) {}
-
-        removeCommand(dom, commandCount) {}
-
-        updateCommandState(state) {}
-    }
-
-    class CommandItem {
-        constructor(command) {
-            this.command = command;
-        }
-
-        get Command() {
-            return this.command;
-        }
-
-        get DOM() {}
-
-        init() {};
-
-        /**
-         * A label string to use for the command item
-         * @private
-         * @property undefined
-         */
-        label() {}
-    };
-
-    class KeyboardUICommandItem extends CommandItem {
+    class KeyboardListCommandItem extends $action.CommandItem {
         constructor(command) {
             super(command);
             this.init();
@@ -55,7 +13,7 @@ var $action = $action || {};
         };
 
         init() {
-            var element = jQuery(this.command.Path)[0];
+            var element = this.command.Element;
             if (element) {
                 this._tagName = element.tagName;
                 var listItem = document.createElement("li");
@@ -69,8 +27,8 @@ var $action = $action || {};
                 var tagSpan = document.createElement("span");
                 tagSpan.classList.add("action-search-tags");
 
-                var addComma = this.nounTags().length > 0 && this.tags().length > 0;
-                tagSpan.textContent = this.nounTags().toString().replace(/,/g, ", ") + (addComma ? ", " : "") + this.tags().toString().replace(/,/g, ", ");
+                var addComma = this.command.NounTags.length > 0 && this.command.VerbTags.length > 0;
+                tagSpan.textContent = this.command.NounTags.toString().replace(/,/g, ", ") + (addComma ? ", " : "") + this.command.VerbTags.toString().replace(/,/g, ", ");
 
                 listItem.appendChild(labelSpan);
                 listItem.appendChild(tagSpan)
@@ -79,58 +37,13 @@ var $action = $action || {};
                 this._domElement = listItem;
             }
         }
-
-        nounTags() {
-            var nounTags = this.command.NounTags;
-            if (nounTags.length) {
-                return nounTags;
-            }
-
-            return "";
-        }
-
-        tags() {
-            var tags = this.command.Tags;
-            if (tags.length) {
-                return tags;
-            }
-
-            return "";
-        }
-
-        /**
-         * Return a suitable label for the command
-         */
-        label() {
-            var labelString = "";
-            // If the command has an imperative label, return it. 
-            if (this.command.ImperativeLabels.length) {
-                labelString = labelString + this.command.ImperativeLabels.toString();
-            }
-
-            if (this.command.ImperativeLabels.length && this.command.Labels.length) {
-                labelString = labelString + ", ";
-            }
-
-            // Otherwise, return the first text node found
-            if (this.command.Labels.length) {
-                var tagName = this._tagName;
-                for (var i = 0; i < this.command.Labels.length; i++) {
-                    labelString = labelString + this.command.Labels[i];
-                    if (i < this.command.Labels.length - 1) {
-                        labelString = labelString + ", ";
-                    }
-                }
-            }
-            
-            return labelString;
-        };
     };
 
-    $action.KeyboardUICommandItem = KeyboardUICommandItem;
+    $action.KeyboardListCommandItem = KeyboardListCommandItem;
 
-    class KeyboardUI {
+    class KeyboardList extends $action.UI {
         constructor() {
+            super();
             this.dialog = undefined;
             this.init();
         }
@@ -143,6 +56,7 @@ var $action = $action || {};
 
             var label = document.createElement("div");
             label.classList.add("action-search-header");
+            label.textContent = "Commands";
 
             dialog.appendChild(label);
             dialog.appendChild(list);
@@ -181,19 +95,18 @@ var $action = $action || {};
         /**
          * Append a command to the dialog
          */
-        appendCommand(command, commandCount) {
-            var newCommand = new $action.KeyboardUICommandItem(command)
-            command.CommandItem = newCommand;
+        appendCommandGroup(label, commands) {
+            // Groups
+            for (var i = 0; i < commands.length; i++) {
+                var newCommand = new $action.KeyboardListCommandItem(commands[i]);
+                commands[i].CommandItem = newCommand;
 
-            if (!command.userInvokeable()) {
-                newCommand.DOM.classList.add('action-search-disabled');
+                if (!commands[i].userInvokeable()) {
+                    newCommand.DOM.classList.add('genie-keyboard-list-disabled');
+                }
+
+                this.list.appendChild(newCommand.DOM);
             }
-
-            this.list.appendChild(newCommand.DOM);
-
-
-            this.label.textContent = "There were " + commandCount + " actions found ...";
-            return newCommand;
         }
 
         /**
@@ -203,7 +116,6 @@ var $action = $action || {};
             var cmdItem = command.CommandItem;
             if (cmdItem && cmdItem.DOM) {
                 this.list.removeChild(cmdItem.DOM);
-                this.label.textContent = "There were " + commandCount + " actions found ...";
             }
         }
 
@@ -220,5 +132,5 @@ var $action = $action || {};
         }
     };
 
-    $action.KeyboardUI = KeyboardUI;
+    $action.KeyboardList = KeyboardList;
 })($action);

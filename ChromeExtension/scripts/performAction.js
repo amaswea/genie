@@ -29,7 +29,8 @@ function receiveMessage(event) {
 
     // Handle triggering the evnet
     var data = event.data;
-    if (data && data.elementID) {
+    if (data && data.elementID && data.messageType == "performAction") {
+        debugger;
         var element = document.querySelector("[data-genie-element-id='" + data.elementID + "']");
         if (element) {
             // Execute the action using the trigger or the associated action function
@@ -52,7 +53,7 @@ function receiveMessage(event) {
                 }
             }
         }
+        
+        window.removeEventListener("message", receiveMessage, null, false, true);
     }
-
-    window.removeEventListener("message", receiveMessage, null, false, true);
 };

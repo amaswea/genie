@@ -171,7 +171,6 @@ var $action = $action || {};
                     // Set the polling mode to enabled 
                     var keys = Object.keys(window.geniePageHandlerMap);
                     if (keys.length) {
-                        console.log("Polling the command states.");
                         var commandStates = {};
                         for (var i = 0; i < keys.length; i++) {
                             var pageHandlerObject = window.geniePageHandlerMap[keys[i]];
@@ -197,7 +196,6 @@ var $action = $action || {};
                         }
 
                         // Post a message back to the content script to update the command states
-                        console.log("posting message updateCommandStates");
                         window.postMessage({
                             messageType: 'updateCommandStates',
                             commandStates: commandStates

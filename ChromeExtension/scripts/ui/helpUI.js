@@ -68,7 +68,7 @@ var $action = $action || {};
                     header.classList.add("genie-help-ui-tooltip-header");
 
                     var purpose = document.createElement("span");
-                    purpose.textContent = "This command does ... ";
+                    purpose.textContent = "Here is a description of what this command does ... ";
                     tooltip.appendChild(purpose);
 
                     $('html').append(tooltip);
