@@ -94,8 +94,8 @@ $(document).ready(function () {
                 let visualClusters = $action.CommandOrganizer.organizeCommandsVisually(request.metadata);
                 sendResponse(visualClusters);
             }
-            
-            if(request.groupingStrategy == 'visualContainer'){
+
+            if (request.groupingStrategy == 'visualContainer') {
                 let visualContainers = $action.CommandOrganizer.organizeCommandsByVisualContainer(request.metadata);
                 sendResponse(visualContainers);
             }

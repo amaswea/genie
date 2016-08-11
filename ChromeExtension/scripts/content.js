@@ -88,7 +88,7 @@ function receiveMessage(event) {
             var keys = Object.keys(newStates);
             for (var i = 0; i < keys.length; i++) {
                 var value = newStates[keys[i]];
-              //  console.log("id: " + keys[i] + " state: " + value);
+                //  console.log("id: " + keys[i] + " state: " + value);
             }
 
             $action.commandManager.updateCommandStates(newStates);
@@ -102,12 +102,12 @@ function receiveMessage(event) {
  * @method getCommandStates
  */
 function updateCommands() {
-      window.postMessage({
-          messageType: 'getCommandStates'
-      }, "*");
+    window.postMessage({
+        messageType: 'getCommandStates'
+    }, "*");
 
     $action.commandsChanged = false;
-    setTimeout(updateCommands, 2000);
+ //   setTimeout(updateCommands, 2000);
 }
 
 function organizeCommands() {
@@ -170,12 +170,12 @@ $(document).ready(function () {
     }
 
     // Begin polling to update command states
-    setTimeout(updateCommands, 2000);
+ //   setTimeout(updateCommands, 2000);
     setTimeout(organizeCommands, 2000);
 });
 
 (function initializeCommandManager() {
-    $action.interface = new $action.AudioUI(); 
+    $action.interface = new $action.ShortcutsUI();
 
     // Create a new instance of the command manager with this instance of the UI
     $action.commandManager = new $action.CommandManager($action.interface, $action.scriptManager);

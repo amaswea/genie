@@ -1,0 +1,65 @@
+.genie-shortcut-ui {
+    background: #000 none repeat scroll 0 50%;
+    color: #fff;
+    font-family: arial,sans-serif;
+    font-size: medium;
+    font-weight: bold;
+    left: 4%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: absolute;
+    text-align: center;
+    top: 6em;
+    width: 92%;
+    z-index: 1011;
+    opacity: .85;
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    padding: 10px;
+}
+
+.genie-shortcut-ui-content {
+    display: flex;
+    padding-left: 20px; 
+    padding-top: 10px; 
+}
+
+.genie-shortcut-ui-header {
+    display: flex; 
+    padding: 10px; 
+    margin-left: 10px; 
+    margin-right: 10p; 
+    border-bottom: 1px solid white; 
+}
+
+.genie-shortcut-ui-header-label {
+    display: flex;
+    flex: 1;
+}
+
+.genie-shortcut-ui-header-close {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.genie-shortcut-ui-group {
+    display: flex; 
+    flex-direction: column;
+    align-items: flex-start; 
+    margin-right: 30px;
+}
+
+.genie-shortcut-ui-group-label {
+    color: #dd0; 
+}
+
+.genie-shortcut-ui-group-content {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.genie-shortcut-ui-disabled {
+    color: lightgray;
+}

@@ -2,10 +2,20 @@
     "manifest_version": 2,
     "name": "Action Detector",
     "description": "This extension shows you what actions are possible on this page",
-    "version": "1.0",
+    "version": "2.0",
     "browser_action": {
         "default_icon": "resources/icon.png",
         "default_title": "See what all you can do on this page!"
+    },
+    "commands": {
+        "_execute_browser_action": {
+            "suggested_key": {
+                "windows": "Ctrl+Shift+Comma",
+                "mac": "Command+Shift+Comma",
+                "chromeos": "Ctrl+Shift+U",
+                "linux": "Ctrl+Shift+J"
+            }
+        }
     },
     "background": {
         "scripts": [
@@ -27,7 +37,8 @@
                 "css/menu-ui.css", 
                 "css/keyboard-ui.css",
                 "css/jquery.qtip.min.css", 
-                "css/command-line-ui.css"
+                "css/command-line-ui.css", 
+                "css/shortcut-ui.css"
             ],
             "js": [
                 "scripts/ext/jquery-3.0.0.js",
@@ -45,6 +56,7 @@
                 "scripts/ui/commandLineUI.js",
                 "scripts/ui/audioUI.js",
                 "scripts/ui/helpUI.js",
+                "scripts/ui/shortcutsUI.js",
                 "scripts/command.js",
                 "scripts/util.js",
                 "scripts/mutationWatcher.js",
@@ -63,7 +75,8 @@
         "<all_urls>",
         "storage",
         "webRequest",
-        "webRequestBlocking"
+        "webRequestBlocking", 
+        "commands"
     ],
 
     "web_accessible_resources": [
@@ -71,15 +84,5 @@
         "lib/typo/dictionaries/en_US/en_US.dic",
         "scripts/ext/jquery-3.0.0.js",
         "scripts/performAction.js"
-    ],
-    "commands": {
-        "_execute_browser_action": {
-            "suggested_key": {
-                "windows": "Ctrl+Shift+Y",
-                "mac": "Command+Shift+Y",
-                "chromeos": "Ctrl+Shift+U",
-                "linux": "Ctrl+Shift+J"
-            }
-        }
-    }
+    ]
 }
