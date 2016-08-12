@@ -116,7 +116,7 @@ var $difference = $action || {};
             var partsOfSpeech = {};
             partsOfSpeech.nouns = [];
             partsOfSpeech.verbs = [];
-            
+
             for (var i = 0; i < words.length; i++) {
                 var word = words[i].toLowerCase();
                 // convert the word to lowercase before further processing
@@ -124,9 +124,9 @@ var $difference = $action || {};
                     if (this.isEnglish(word)) {
                         var pos = this.partOfSpeech(word);
                         var posValue = pos[0][1];
-                        if(["NN", "NNP", "NNPS", "NNS"].indexOf(posValue) > -1){
+                        if (["NN", "NNP", "NNPS", "NNS"].indexOf(posValue) > -1) {
                             partsOfSpeech.nouns.push(word);
-                        }else if(["VB", "VBP"].indexOf(posValue) > -1) {
+                        } else if (["VB", "VBP"].indexOf(posValue) > -1) {
                             partsOfSpeech.verbs.push(word);
                         }
                     }
@@ -159,10 +159,17 @@ var $difference = $action || {};
                     words = words.concat(parsedWords);
                 }
             }
-            
+
             // Return a collection of english and non-english words
             return this.normalizeAndTagPOS(words);
         };
+
+        split(tokenString) {
+            // Return the string split by teoksn
+            if (tokenString) {
+                return this.parseString(tokenString);
+            }
+        }
     };
 
     $difference.Parser = Parser;

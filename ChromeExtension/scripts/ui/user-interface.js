@@ -65,7 +65,7 @@
           */
          label() {
              // Constructs a desired label for the command based on the command metadata available
-             var labelString = "";
+/*             var labelString = "";
              // If the command has an imperative label, return it. 
              if (this.command.ImperativeLabels.length) {
                  labelString = labelString + this.command.ImperativeLabels[0];
@@ -83,8 +83,10 @@
              else if(this.command.NounTags.length){
                  labelString = labelString + this.command.NounTags[0];
              }
+             */
+             
 
-             return labelString;
+             return "my label";
          }
      };
 

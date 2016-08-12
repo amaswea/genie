@@ -25,7 +25,7 @@ var $action = $action || {};
             return href && href.length > 0;
         },
         "BUTTON": function (element) {
-            return $(element).attr("type") == "submit"; 
+            return $(element).attr("type") == "submit";
         },
         "INPUT": function (element) {
             var type = jQuery(element).attr("type");
@@ -42,22 +42,15 @@ var $action = $action || {};
         }
     }
 
-    // This ste of attributes typically follow a structure of camel cased, or dash separated names that are separate descriptors of the element
-    $action.NonSentenceLabels = {
-        "GLOBAL": ["class", "id"], // Class is not included because it is the only one that should be considered as separate tokens. 
-        "INPUT": ["name"],
+    $action.LabelAttributes = {
+        "GLOBAL": ["class", "id", "title"],
+        "INPUT": ["name", "placeholder", "alt", "value"],
         "BUTTON": ["name"],
         "FIELDSET": ["name"],
         "TEXTAREA": ["name"],
         "SELECT": ["name"],
         "A": ["href"]
             // TODO: Later fill in the complete set. 
-    }
-
-    // This set of attributes typically follow a sentence structure. 
-    $action.SentenceLabels = {
-        "GLOBAL": ["title"],
-        "INPUT": ["placeholder", "alt", "value"]
     }
 
     $action.GlobalEventHandlerMappings = { // TODO: Add the rest
@@ -79,13 +72,37 @@ var $action = $action || {};
             this._handler = handler;
             this._dependencies = [];
             this._dataDependent = false;
-            this._imperativeLabels = [];
-            this._labels = [];
-            this._nounTags = [];
-            this._verbTags = [];
             this._computedStyles = {};
 
-            /*            this.initMetadata();*/
+            // Label metadata collection structure
+            this._labelMetadata = {
+                elementLabels: {
+                    phrases: [],
+                    imperativePhrases: [],
+                    nouns: [],
+                    verbs: []
+                },
+                handlerName: "",
+                handlerComments: {
+                    phrases: [],
+                    imperativePhrases: [],
+                    nouns: [],
+                    verbs: []
+                },
+                expressionComments: {
+                    phrases: [],
+                    imperativePhrases: [],
+                    nouns: [],
+                    verbs: []
+                },
+                expressionCalls: {
+                    phrases: [],
+                    imperativePhrases: [],
+                    nouns: [],
+                    verbs: []
+                }
+            }
+
             this.postCommands = [];
         }
 
@@ -118,49 +135,12 @@ var $action = $action || {};
             return this._postCommands;
         };
 
-        get AST() {
-            return this._ast;
-        }
-
         get DataDependent() {
             return this._dataDependent;
         }
 
         set DataDependent(state) {
             this._dataDependent = state;
-        }
-
-        get ImperativeLabels() {
-            return this._imperativeLabels;
-        }
-
-        set ImperativeLabels(labels) {
-            this._imperativeLabels = labels;
-        }
-
-        // The first text node found in the hierarcy
-        get Labels() {
-            return this._labels;
-        }
-
-        set Labels(labels) {
-            this._labels = labels;
-        }
-
-        get NounTags() {
-            return this._nounTags;
-        }
-
-        set NounTags(tags) {
-            this._nounTags = tags;
-        }
-
-        get VerbTags() {
-            return this._verbTags;
-        }
-
-        set VerbTags(tags) {
-            this._verbTags = tags;
         }
 
         set ComputedStyles(styles) {
@@ -171,11 +151,14 @@ var $action = $action || {};
             return this._computedStyles;
         }
 
-        /**
-         * Returns a string representing the source code of the associated event handler
-         * @private
-         * @property Handler
-         */
+        get LabelMetadata() {
+                return this._labelMetadata;
+            }
+            /**
+             * Returns a string representing the source code of the associated event handler
+             * @private
+             * @property Handler
+             */
         get Handler() {
             return this._handler;
         }
@@ -450,7 +433,6 @@ var $action = $action || {};
             if (command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1) {
                 var element = $action.getElementFromID(command.elementID);
                 var newCommand = new $action.Command(command.id, command.elementID, command.eventType, command.handler)
-                    // this.analyzeCommandHandler(newCommand.AST, newCommand);
                 this.initMetadata(newCommand);
                 console.log("adding new command " + command.eventType + " " + command.handler + " " + command.elementID);
 
@@ -495,87 +477,6 @@ var $action = $action || {};
                 }
             }
         }
-
-        analyzeCommandHandler(handlerAST, command) {
-            /*// Find call expressions within if statements and search for those we can resolve to jQuery expressions
-            var findJQueryCallExpressionsWithinIfs = {
-                lookFor: "CallExpression", 
-                within: ["IfStatement", "ConditionalExpression"], 
-                property: "test", 
-            }*/
-
-            // Global variables will be those Identifiers that do not have the LastDeclared property set
-
-            // Finding value of Expression statement referenced by the assignment or delcarator
-            // - Is this statement referring to any element on the page? (selector or document.getElementById)
-            // - Is this statement referring to any global variable (outside the function)
-            // Search the AST for any statements are are contained in any conditional statement
-            var findConditionals = {
-                within: "Program",
-                lookFor: [
-                    "IfStatement"
-
-
-
-
-                    , "ConditionalExpression"
-
-
-
-
-                    , "WhileStatement"
-
-
-
-
-                    , "DoWhileStatement"
-
-
-
-
-                    , "ForStatement"
-
-
-
-
-                    , "ForInStatement"
-
-
-
-
-                    , "ForOfStatement"],
-                items: [] // Will contain the collection of requested elements you are looking for
-            }
-
-            $action.ASTAnalyzer.searchAST(handlerAST, findConditionals);
-
-            var sideEffectFreeExpressions = [];
-            for (var i = 0; i < findConditionals.items.length; i++) {
-                let expr = findConditionals.items[i].sideEffectFreeExpression;
-                if (expr) {
-                    sideEffectFreeExpressions.push(expr);
-                }
-            }
-
-            // Look for identifiers that are contained within SwitchStatements (uses the discriminant property instead of 'test')
-            var findIdentifiersWithinSwitch = {
-                lookFor: "Identifier",
-                within: ["SwitchStatement"],
-                property: "discriminant",
-                items: []
-            }
-
-            $action.ASTAnalyzer.searchAST(handlerAST, findIdentifiersWithinSwitch);
-
-            for (var j = 0; j < findIdentifiersWithinSwitch.items.length; j++) {
-                let expr = findIdentifiersWithinSwitch.items[j].sideEffectFreeExpression;
-                if (expr) {
-                    sideEffectFreeExpressions.push(expr);
-                }
-            }
-
-            return sideEffectFreeExpressions;
-        };
 
         linkFunctionCalls(callList) {;
             // Look for any function calls (side-effects)
@@ -635,38 +536,35 @@ var $action = $action || {};
             return true;
         }
 
-        findImperativeSentence(sentence) {
-            var split = sentence.split(" ");
-            var tagged = this._posTagger.tag(split);
-            if (tagged.length) {
-                // First word in the sentence should be a verb
-                var first = tagged[0];
-                var firstType = first[1];
-                if (["VB", "VBP"].indexOf(firstType) > -1 && !this._imperativeLabel) {
-                    return sentence;
+        parsePhrase(labelMetadata, phrase) {
+            var tagged = this._parser.parse(phrase);
+            var split = this._parser.split(phrase);
+            if (split && split.length > 1) {
+                let first = split[0];
+                if (tagged.verbs.indexOf(first) > -1) {
+                    labelMetadata.imperativePhrases.push(phrase);
+                } else {
+                    labelMetadata.phrases.push(phrase);
                 }
+            } else {
+                // Not a phrase
+                // Find verbs and nouns
+                labelMetadata.verbs = labelMetadata.verbs.concat(tagged.verbs);
+                labelMetadata.nouns = labelMetadata.nouns.concat(tagged.nouns);
             }
         }
 
-        parseSentenceLabel(command, labelString) {
+        parseLabel(labelMetadata, labelString) {
             var sentences = labelString.split(/\.|\?|!/);
             var split = [];
+
             if (sentences.length > 1) {
                 for (var i = 0; i < sentences.length; i++) {
-                    let impSentence = this.findImperativeSentence(sentences[i].trim());
-                    if (impSentence && impSentence.length) {
-                        command.ImperativeLabels.push(impSentence);
-                    } else {
-                        command.Labels.push(sentences[i]);
-                    }
+                    this.parsePhrase(labelMetadata, sentences[i]);
                 }
             } else {
-                let impSentence = this.findImperativeSentence(sentences[0]);
-                if (impSentence && impSentence.length) {
-                    command.ImperativeLabels.push(impSentence);
-                } else {
-                    command.Labels.push(labelString);
-                }
+                let sentence = sentences[0].trim();
+                this.parsePhrase(labelMetadata, sentence);
             }
         }
 
@@ -681,29 +579,7 @@ var $action = $action || {};
                 // Look for a label element with for attribute matching this ID
                 var label = $("[for='" + id.value + "']");
                 if (label && label.length && label[0].textContent.length) {
-                    let impSentence = this.findImperativeSentence(label[0].textContent);
-                    if (impSentence && impSentence.length) {
-                        command.ImperativeLabels.push(impSentence);
-                    } else {
-                        command.Labels.push(label[0].textContent);
-                    }
-                }
-            }
-        }
-
-        parseTags(command, labelString) {
-            // First split by spaces to get individual words
-            var tokens = labelString.split(/\s|\/|:|\./);
-
-            // Then go through each token and split by comming separation conventions
-            for (var i = 0; i < tokens.length; i++) {
-                let parsedToken = this._parser.parse(tokens[i]);
-                if (parsedToken.nouns.length) {
-                    command.NounTags = command.NounTags.concat(parsedToken.nouns);
-                }
-
-                if (parsedToken.verbs.length) {
-                    command.VerbTags = command.VerbTags.concat(parsedToken.verbs);
+                    this.parseLabel(command.LabelMetadata.elementLabels, label[0].textContent);
                 }
             }
         }
@@ -718,7 +594,7 @@ var $action = $action || {};
                 return; // Document & Window do not have inline attributes
             }
 
-            var globalAttrs = $action.SentenceLabels.GLOBAL;
+            var globalAttrs = $action.LabelAttributes.GLOBAL;
             if (globalAttrs.length) {
                 for (var i = 0; i < globalAttrs.length; i++) {
                     let globalAttr = globalAttrs[i];
@@ -726,48 +602,21 @@ var $action = $action || {};
                     if (attr) {
                         let attrValue = attr.value;
                         if (attrValue && attrValue.length) {
-                            this.parseSentenceLabel(command, attrValue);
+                            this.parseLabel(command.LabelMetadata.elementLabels, attrValue);
                         }
                     }
                 }
             }
 
 
-            var nonGlobalAttrs = $action.SentenceLabels[element.tagName];
+            var nonGlobalAttrs = $action.LabelAttributes[element.tagName];
             if (nonGlobalAttrs) {
                 for (var j = 0; j < nonGlobalAttrs.length; j++) {
                     let nonGlobalAttr = element.attributes[nonGlobalAttrs[j]];
                     if (nonGlobalAttr) {
                         let nonGlobalVal = nonGlobalAttr.value;
                         if (nonGlobalVal && nonGlobalVal.length) {
-                            this.parseSentenceLabel(command, nonGlobalVal);
-                        }
-                    }
-                }
-            }
-
-            // Now, look for tags in the non-sentence containing attributes. 
-            var nonSentenceGlobals = $action.NonSentenceLabels.GLOBAL;
-            for (var i = 0; i < nonSentenceGlobals.length; i++) {
-                let nonSentence = nonSentenceGlobals[i];
-                let value = element.attributes[nonSentence];
-                if (value) {
-                    let attrValue = value.value;
-                    if (attrValue && attrValue.length) {
-                        this.parseTags(command, attrValue);
-                    }
-                }
-            }
-
-            // Now, do the same for non-sentence globals
-            var nonSentenceAttrs = $action.NonSentenceLabels[element.tagName];
-            if (nonSentenceAttrs) {
-                for (var j = 0; j < nonSentenceAttrs.length; j++) {
-                    let nonSentenceAttr = element.attributes[nonSentenceAttrs[j]];
-                    if (nonSentenceAttr) {
-                        let nonSentenceVal = nonSentenceAttr.value;
-                        if (nonSentenceVal && nonSentenceVal.length) {
-                            this.parseTags(command, nonSentenceVal);
+                            this.parseLabel(command.LabelMetadata.elementLabels, nonGlobalVal);
                         }
                     }
                 }
@@ -808,7 +657,7 @@ var $action = $action || {};
                         // split the string by space separators
                         var trimmed = node.textContent.replace(/\s/g, ' ').trim();
                         if (trimmed && trimmed.length && this.filterTagNodes(trimmed)) {
-                            this.parseSentenceLabel(command, trimmed);
+                            this.parseLabel(command.LabelMetadata.elementLabels, trimmed);
                         }
                     }
 
@@ -824,16 +673,108 @@ var $action = $action || {};
                     this.parseElement(command, desc[k]);
                 }
 
-                // Filter duplicate tags
-                command.NounTags = _.uniq(command.NounTags);
-                command.VerbTags = _.uniq(command.VerbTags);
-                command.Labels = _.uniq(command.Labels);
-                command.ImperativeLabels = _.uniq(command.ImperativeLabels);
-
                 // Computed styles
                 //  this.initComputedStyles(command, element);
+                this.parseHandler(command);
             }
         };
+
+
+        parseHandler(command) {
+            // Parse the handler and get function names
+            var ast = esprima.parse(command.Handler, {
+                tolerant: true,
+                comment: true,
+                attachComment: true
+            });
+
+            // Function name
+            if (ast.body.length == 1) {
+                // Comments before handler function
+                // Need to link with function call in script first
+
+                // Function name
+                let identifier = ast.body[0].id;
+                if (identifier) {
+                    command.HandlerName = identifier.name;
+                }
+
+                // Find function/state change identifiers. 
+
+                // First look for all identifiers within expressions but outside conditionals
+                var findIdentifersWithinExpressionStatementsOutsideConditionals = {
+                    lookFor: ["Identifier"],
+                    outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
+                    items: []
+                }
+
+                $action.ASTAnalyzer.searchAST(ast, findIdentifersWithinExpressionStatementsOutsideConditionals);
+                this.parseIdentifiers(command.LabelMetadata.expressionCalls, findIdentifersWithinExpressionStatementsOutsideConditionals.items);
+
+                // Find all identifiers within expressions inside of conditionals
+                var findIdentifiersInsideConditionals = {
+                    within: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
+                    lookFor: ["Identifier"],
+                    property: ["consequent", "alternate"],
+                    items: []
+                }
+
+                $action.ASTAnalyzer.searchAST(ast, findIdentifiersInsideConditionals);
+                this.parseIdentifiers(command.LabelMetadata.expressionCalls, findIdentifiersInsideConditionals.items);
+
+                // Find all expression statements for their leading comments
+                var findExpressionStatementsOutsideConditionals = {
+                    lookFor: ["ExpressionStatement"],
+                    outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
+                    items: []
+                }
+
+                $action.ASTAnalyzer.searchAST(ast, findExpressionStatementsOutsideConditionals);
+                this.parseComments(command.LabelMetadata.expressionComments, findExpressionStatementsOutsideConditionals.items);
+
+                var findExpressionStatementsInsideConditionals = {
+                    lookFor: ["ExpressionStatement"],
+                    within: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
+                    property: ["consequent", "alternate"],
+                    items: []
+                }
+
+                $action.ASTAnalyzer.searchAST(ast, findExpressionStatementsInsideConditionals);
+                this.parseComments(command.LabelMetadata.expressionComments, findExpressionStatementsInsideConditionals.items);
+
+                // State changes (statements)
+
+
+                // DOM APIs
+                // Later
+                // Differentiate between statements & function calls?
+            }
+
+            // 
+            /*            var find = {
+                            within: "Program",
+                            lookFor: [
+                                "IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement"],
+                            items: [] // Will contain the collection of requested elements you are looking for
+                        }*/
+        };
+
+        parseComments(labelMetadata, expressionStatements) {
+            for (let i = 0; i < expressionStatements.length; i++) {
+                let comments = expressionStatements[i].leadingComments;
+                if (comments) {
+                    for (let j = 0; j < comments.length; j++) {
+                        this.parseLabel(labelMetadata, comments[j].value);
+                    }
+                }
+            }
+        }
+
+        parseIdentifiers(labelMetadata, identifiers) {
+            for (let i = 0; i < identifiers.length; i++) {
+                this.parseLabel(labelMetadata, identifiers[i].name);
+            }
+        }
 
         /**
          * Get all of the commands metadata to use for visual clustering organization

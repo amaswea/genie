@@ -11,17 +11,11 @@ var $action = $action || {};
                     visitor.scopes = [];
                 }
 
-                if (visitor.outside && visitor.within) {
-                    visitor.error = "Cannot use both within and outside options together";
-                    return;
+                if (visitor.outside && !visitor.within) {
+                    visitor.collect = true;
                 }
 
-                // More error checking?? 
-
-                // Cannot use both outside and within options
-                if (visitor.outside) {
-                    visitor.collect = true;
-                } else if (visitor.within == "Program") {
+                if (visitor.within == "Program") {
                     visitor.collect = true;
                 }
 
@@ -42,15 +36,16 @@ var $action = $action || {};
         static searchNode(node, visitor) {
             var collect = visitor.collect;
             var hasProp = visitor.property !== undefined;
-            if (visitor.within && visitor.within.length && visitor.within.indexOf(node.type) > -1 && !hasProp && !collect) {
+            if (visitor.within && visitor.within.length && visitor.within.indexOf(node.type) > -1 && !hasProp && !visitor.inside) {
                 visitor.collect = true;
             }
 
-            if (visitor.outside && visitor.outside.length && visitor.outside.indexOf(node.type) > -1 && collect) {
+            if (visitor.outside && visitor.outside.length && visitor.outside.indexOf(node.type) > -1) {
+                visitor.inside = true;
                 visitor.collect = false;
             }
 
-            if (visitor.collect && visitor.lookFor && visitor.lookFor.length && visitor.lookFor.indexOf(node.type) > -1) {
+            if (visitor.collect && !visitor.inside && visitor.lookFor && visitor.lookFor.length && visitor.lookFor.indexOf(node.type) > -1) {
                 visitor.items.push(node);
             }
 
@@ -62,7 +57,7 @@ var $action = $action || {};
                 this.searchBlockStatement(node, visitor);
                 break;
             case "ExpressionStatement":
-                this.searchNode(node.expression, visitor);
+                this.searchExpressionStatement(node, visitor);
                 break;
             case "IfStatement":
             case "ConditionalExpression":
@@ -206,7 +201,11 @@ var $action = $action || {};
                 // ComprehensionIf
             }
 
-            // Cannot use both outside and within options
+
+            if (visitor.inside && visitor.outside.length && visitor.outside.indexOf(node.type) > -1) {
+                visitor.inside = false;
+            }
+
             if (collect && visitor.outside) {
                 visitor.collect = true;
             } else if (!collect && visitor.within) {
@@ -338,23 +337,31 @@ var $action = $action || {};
             visitor.scopes.pop();
         }
 
+        static searchExpressionStatement(statement, visitor) {
+            if (!statement.expressionString) {
+                statement.expressionString = this.convertNodeToString(statement);
+            }
+
+            if (statement.expression) {
+                this.searchNode(statement.expression, visitor);
+            }
+        }
+
         static searchIfStatement(statement, visitor) {
             // scope
             //   Identifier -> AssignmentExpression
             //   Identifier -> VariableDeclaration 
             var props = ["test", "consequent", "alternate"];
             var hasProp = visitor.property !== undefined;
+            var collect = visitor.collect;
             for (var i = 0; i < props.length; i++) {
-                var setCollect = hasProp && visitor.property == props[i];
-                if (setCollect) {
-                    visitor.collect = true;
-                }
+                visitor.collect = hasProp && (visitor.property.indexOf(props[i]) > -1);;
 
                 if (statement[props[i]]) {
                     this.searchNode(statement[props[i]], visitor);
                 }
 
-                if (setCollect) {
+                if (!collect) {
                     visitor.collect = false;
                 }
             }
@@ -930,7 +937,7 @@ var $action = $action || {};
                 }
             case "AssignmentExpression":
                 {
-                    return "(" + this.convertNodeToString(node.left) + " " + node.operator + this.convertNodeToString(node.right) + ")";
+                    return "(" + this.convertNodeToString(node.left) + " " + node.operator + " " + this.convertNodeToString(node.right) + ")";
                 }
             case "UpdateExpression":
                 {

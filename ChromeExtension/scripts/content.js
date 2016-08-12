@@ -56,7 +56,7 @@ function receiveMessage(event) {
             var element = $action.getElementFromID(event.data.elementID);
             if (element) {
                 if (!$action.commandManager.hasCommand(event.data.id)) {
-                    console.log("adding new command " + event.data.id + " " + event.data.eventType + " " + event.data.elementID);
+                    //console.log("adding new command " + event.data.id + " " + event.data.eventType + " " + //event.data.elementID);
                     var added = $action.commandManager.addCommand(event.data);
 
                     var dataDependencies = {};
@@ -175,7 +175,7 @@ $(document).ready(function () {
 });
 
 (function initializeCommandManager() {
-    $action.interface = new $action.ShortcutsUI();
+    $action.interface = new $action.HelpUI();
 
     // Create a new instance of the command manager with this instance of the UI
     $action.commandManager = new $action.CommandManager($action.interface, $action.scriptManager);
