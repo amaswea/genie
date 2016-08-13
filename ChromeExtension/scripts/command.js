@@ -541,10 +541,11 @@ var $action = $action || {};
             var split = this._parser.split(phrase);
             if (split && split.length > 1) {
                 let first = split[0];
+                var sentence = split.toString().replace(/\,/g, " ");
                 if (tagged.verbs.indexOf(first) > -1) {
-                    labelMetadata.imperativePhrases.push(phrase);
+                    labelMetadata.imperativePhrases.push(sentence);
                 } else {
-                    labelMetadata.phrases.push(phrase);
+                    labelMetadata.phrases.push(sentence);
                 }
             } else {
                 // Not a phrase
@@ -675,7 +676,9 @@ var $action = $action || {};
 
                 // Computed styles
                 //  this.initComputedStyles(command, element);
-                this.parseHandler(command);
+                if (command.EventType != 'default') {
+                    this.parseHandler(command);
+                }
             }
         };
 
@@ -696,8 +699,10 @@ var $action = $action || {};
                 // Function name
                 let identifier = ast.body[0].id;
                 if (identifier) {
-                    command.HandlerName = identifier.name;
+                    command.LabelMetadata.handlerName = identifier.name;
                 }
+
+                // Find comments on the handler function
 
                 // Find function/state change identifiers. 
 

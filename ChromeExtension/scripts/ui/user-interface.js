@@ -64,29 +64,47 @@
           * @property undefined
           */
          label() {
+             // Labeling metadata available
+               /*this._labelMetadata = {
+                elementLabels: {
+                    phrases: [],
+                    imperativePhrases: [],
+                    nouns: [],
+                    verbs: []
+                },
+                handlerName: "",
+                handlerComments: {
+                    phrases: [],
+                    imperativePhrases: [],
+                    nouns: [],
+                    verbs: []
+                },
+                expressionComments: {
+                    phrases: [],
+                    imperativePhrases: [],
+                    nouns: [],
+                    verbs: []
+                },
+                expressionCalls: {
+                    phrases: [],
+                    imperativePhrases: [],
+                    nouns: [],
+                    verbs: []
+                }
+            }*/
+               var completeLabel = "";
              // Constructs a desired label for the command based on the command metadata available
-/*             var labelString = "";
-             // If the command has an imperative label, return it. 
-             if (this.command.ImperativeLabels.length) {
-                 labelString = labelString + this.command.ImperativeLabels[0];
+             var nodeTypes = ["elementLabels", "handlerComments", "expressionComments", "expressionCalls"]; 
+             var phraseTypes = ["phrases", "imperativePhrases", "nouns", "verbs"];
+             for(var i=0; i<nodeTypes.length; i++){
+                 for(var j=0; j<phraseTypes.length; j++){
+                     var labelSet = this.command.LabelMetadata[nodeTypes[i]][phraseTypes[j]]; 
+                     for(var k=0; k<labelSet.length; k++){
+                         completeLabel = completeLabel + ", " + labelSet[k];
+                     }
+                 }
              }
-
-             // Otherwise, return the first text node found
-             else if (this.command.Labels.length) {
-                 var tagName = this._tagName;
-                 // Return the first text node label
-                 labelString = labelString + this.command.Labels[0];
-             }
-             else if(this.command.VerbTags.length){
-                 labelString = labelString + this.command.VerbTags[0];
-             }
-             else if(this.command.NounTags.length){
-                 labelString = labelString + this.command.NounTags[0];
-             }
-             */
-             
-
-             return "my label";
+             return completeLabel;
          }
      };
 

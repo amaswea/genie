@@ -322,21 +322,23 @@ var $action = $action || {};
         var newAddEventListener = function (type, listener, options = null, useCapture = false, ignore = false) {
             // Instrument the handler with a call to retreive the data dependencies
             this._addEventListener(type, listener, options, useCapture);
-            var handlerString = listener.toString();
-            var elementID = detectOrAssignElementID(this);
-            var handlerID = getPageHandlerID(type, listener, elementID); // If the handler already exists in the map, ignore it. 
-            //debugger;
-           // debugger;
-            if (handlerString != ignoreJQueryFunction && !ignore && !handlerID) {
-                var id = getHandlerID(); // This unique ID will represent this handler, event, and element combination
-                var contentObject = getContentObject(id, elementID, 'eventAdded', type, listener, this);
+            if (this instanceof Element || this instanceof Window || this instanceof Document) {
+                var handlerString = listener.toString();
+                var elementID = detectOrAssignElementID(this);
+                var handlerID = getPageHandlerID(type, listener, elementID); // If the handler already exists in the map, ignore it. 
+                //debugger;
+                // debugger;
+                if (handlerString != ignoreJQueryFunction && !ignore && !handlerID) {
+                    var id = getHandlerID(); // This unique ID will represent this handler, event, and element combination
+                    var contentObject = getContentObject(id, elementID, 'eventAdded', type, listener, this);
 
-                // Tag the element with a data attribute so it can be located later
-                window.postMessage(contentObject, "*");
+                    // Tag the element with a data attribute so it can be located later
+                    window.postMessage(contentObject, "*");
 
-                // Get a page handler object to cache so that the handler can be instrumented when polling takes palge
-                var pageHandlerObject = getPageHandlerObject(id, elementID, type, listener, this);
-                window.geniePageHandlerMap[id] = pageHandlerObject;
+                    // Get a page handler object to cache so that the handler can be instrumented when polling takes palge
+                    var pageHandlerObject = getPageHandlerObject(id, elementID, type, listener, this);
+                    window.geniePageHandlerMap[id] = pageHandlerObject;
+                }
             }
         };
 
