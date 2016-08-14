@@ -125,9 +125,9 @@ var $difference = $action || {};
                         var pos = this.partOfSpeech(word);
                         var posValue = pos[0][1];
                         if (["NN", "NNP", "NNPS", "NNS"].indexOf(posValue) > -1) {
-                            partsOfSpeech.nouns.push(word);
+                            partsOfSpeech.nouns.push(word.toLowerCase());
                         } else if (["VB", "VBP"].indexOf(posValue) > -1) {
-                            partsOfSpeech.verbs.push(word);
+                            partsOfSpeech.verbs.push(word.toLowerCase());
                         }
                     }
                 }

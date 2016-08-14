@@ -10,7 +10,7 @@
          get OrganizationTypes() {
              return {
                  Type: $action.CommandOrganizer.organizeCommandsByType,
-                 All: $action.CommandOrganizer.organizeAllCommands, 
+                 All: $action.CommandOrganizer.organizeAllCommands,
              };
          }
 
@@ -65,7 +65,7 @@
           */
          label() {
              // Labeling metadata available
-               /*this._labelMetadata = {
+             /*this._labelMetadata = {
                 elementLabels: {
                     phrases: [],
                     imperativePhrases: [],
@@ -92,19 +92,20 @@
                     verbs: []
                 }
             }*/
-               var completeLabel = "";
+             var completeLabel = "";
              // Constructs a desired label for the command based on the command metadata available
-             var nodeTypes = ["elementLabels", "handlerComments", "expressionComments", "expressionCalls"]; 
+             var nodeTypes = ["elementLabels", "handlerComments", "expressionComments", "expressionCalls"];
              var phraseTypes = ["phrases", "imperativePhrases", "nouns", "verbs"];
-             for(var i=0; i<nodeTypes.length; i++){
-                 for(var j=0; j<phraseTypes.length; j++){
-                     var labelSet = this.command.LabelMetadata[nodeTypes[i]][phraseTypes[j]]; 
-                     for(var k=0; k<labelSet.length; k++){
-                         completeLabel = completeLabel + ", " + labelSet[k];
+             for (var i = 0; i < nodeTypes.length; i++) {
+                 for (var j = 0; j < phraseTypes.length; j++) {
+                     var labelSet = this.command.LabelMetadata[nodeTypes[i]][phraseTypes[j]];
+                     for (var k = 0; k < labelSet.length; k++) {
+                         completeLabel = completeLabel + labelSet[k] + ", ";
                      }
                  }
              }
-             return completeLabel;
+
+             return completeLabel.substring(0, completeLabel.length - 2);
          }
      };
 

@@ -29,7 +29,11 @@ var $action = $action || {};
         },
         "INPUT": function (element) {
             var type = jQuery(element).attr("type");
-            return type && type != "hidden";
+            if (type && type == "button") {
+                return false;
+            } else {
+                return type && type != "hidden";
+            }
         },
         "TEXTAREA": function (element) {
             return true;
@@ -535,13 +539,15 @@ var $action = $action || {};
 
             return true;
         }
-
+        
         parsePhrase(labelMetadata, phrase) {
+            var toLower = phrase.toLowerCase();
             var tagged = this._parser.parse(phrase);
             var split = this._parser.split(phrase);
             if (split && split.length > 1) {
-                let first = split[0];
-                var sentence = split.toString().replace(/\,/g, " ");
+                let first = split[0].toLowerCase();
+                var sentence = split.toString().replace(/\,/g, " ").toLowerCase();
+                sentence = _.upperFirst(sentence);
                 if (tagged.verbs.indexOf(first) > -1) {
                     labelMetadata.imperativePhrases.push(sentence);
                 } else {
@@ -550,6 +556,7 @@ var $action = $action || {};
             } else {
                 // Not a phrase
                 // Find verbs and nouns
+                // Convert 
                 labelMetadata.verbs = labelMetadata.verbs.concat(tagged.verbs);
                 labelMetadata.nouns = labelMetadata.nouns.concat(tagged.nouns);
             }
