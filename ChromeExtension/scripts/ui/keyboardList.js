@@ -118,18 +118,6 @@ var $action = $action || {};
                 this.list.removeChild(cmdItem.DOM);
             }
         }
-
-        updateCommandState(command, enabled) {
-            var domElement = command.CommandItem.DOM;
-            var disabled = $(domElement).hasClass('action-search-disabled');
-            if (disabled && enabled) {
-                $(domElement).removeClass('action-search-disabled');
-            }
-
-            if (!disabled && !enabled) {
-                $(domElement).addClass('action-search-disabled');
-            }
-        }
     };
 
     $action.KeyboardList = KeyboardList;

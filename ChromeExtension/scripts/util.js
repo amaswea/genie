@@ -83,16 +83,12 @@ var $action = $action || {};
             var ast = esprima.parse(data.handler, {
                 tolerant: true
             });
-            var expressions = $action.computeSideEffectFreeExpressions(ast);
-            data.dependencies = expressions;
-            data.messageType = 'eventDependenciesFound';
+            return $action.computeSideEffectFreeExpressions(ast);
         } catch (e) {
             // console.log("Could not parse this handler into an AST: " + data.handler);
             // console.log("Error message from parser: " + e.toString());
-            data.messageType = 'eventDependenciesNotFound';
+            return undefined;
         }
-
-        return data;
     }
 
     $action.getScript = function () {
@@ -149,7 +145,14 @@ var $action = $action || {};
             }
 
             if (event.data) {
-                if (event.data.messageType == 'eventDependenciesFound') {
+                if (event.data.messageType == 'pageCommandFound') {
+                    var contentObjectID = event.data.commandData.elementID;
+                    window.geniePageHandlerMap[contentObjectID] = event.data.commandData;
+                } else if (event.data.messageType == 'pageDependenciesNotFound') {
+                    // If the command handler could not be parsed, remove it from the map
+                    var contentObjectID = event.data.id;
+                    delete window.geniePageHandlerMap[contentObjectID];
+                } else if (event.data.messageType == 'eventDependenciesFound') {
                     // Get the page handler object associated with this event handler ID
                     var contentObjectID = event.data.id;
                     var pageHandlerObject = window.geniePageHandlerMap[contentObjectID];
@@ -164,7 +167,7 @@ var $action = $action || {};
                         }
                     }
                 } else if (event.data.messageType == 'eventDependenciesNotFound') {
-                    // If the command could not be added, remove it from the map
+                    // If the command handler could not be parsed, remove it from the map
                     var contentObjectID = event.data.id;
                     delete window.geniePageHandlerMap[contentObjectID];
                 } else if (event.data.messageType == 'getCommandStates') {
@@ -193,11 +196,32 @@ var $action = $action || {};
                                     commandStates[pageHandlerObject.id] = commandState; // Enabled or disabled state   
                                 }
                             }
+
+                            // Page handlers (added through inline handler attributes do not have a wrapper, so we evaluate the dependencies directly. 
+                            if (pageHandlerObject.dependencies && pageHandlerObject.dependencies.length) {
+                                var element = getElementFromID(pageHandlerObject.elementID);
+                                if (element) {
+                                    let result = true;
+                                    for (var j = 0; j < pageHandlerObject.dependencies.length; j++) {
+                                        try {
+                                            result = eval(pageHandlerObject.dependencies[i]);
+                                        } catch (e) {
+                                            console.error("Attribute handler dependencies could not be retrieved: " + e.toString());
+                                        }
+
+                                        if (!result) {
+                                            break;
+                                        }
+                                    }
+
+                                    commandStates[pageHandlerObject.id] = result; // Enabled or disabled state   
+                                }
+                            }
                         }
 
                         // Post a message back to the content script to update the command states
                         window.postMessage({
-                            messageType: 'updateCommandStates',
+                            messageType: 'updateCommandEnabledStates',
                             commandStates: commandStates
                         }, "*");
                     }
@@ -317,7 +341,7 @@ var $action = $action || {};
                 return typeof jQuery !== "undefined" && jQuery.event.triggered !== e.type ?
                     jQuery.event.dispatch.apply(elem, arguments) : undefined;
             }`;
-        
+
         var ignoreMinifiedJQuery = "`function (e){return typeof b===i||e&&b.event.triggered===e.type?t:b.event.dispatch.apply(f.elem,arguments)}`";
 
 

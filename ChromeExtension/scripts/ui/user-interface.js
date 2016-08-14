@@ -38,7 +38,33 @@
 
          removeCommand(dom, commandCount) {}
 
-         updateCommandState(state) {}
+         updateCommandEnabledState(command, enabled) {
+             // What should happen when the command state changes
+             if (command.CommandItem) {
+                 var domElement = command.CommandItem.DOM;
+                 var disabled = $(domElement).hasClass('genie-ui-disabled');
+                 if (disabled && enabled) {
+                     $(domElement).removeClass('genie-ui-disabled');
+                 }
+
+                 if (!disabled && !enabled) {
+                     $(domElement).addClass('genie-ui-disabled');
+                 }
+             }
+         }
+
+         updateCommandVisibleState(command, visible) {
+             if (command.CommandItem && command.CommandItem.DOM) {
+                 var displayed = command.CommandItem.DOM.style.display;
+                 if (displayed == "none" && visible) {
+                     command.CommandItem.DOM.style.display = "";
+                 }
+
+                 if (displayed != "none" && !visible) {
+                     command.CommandItem.DOM.style.display = "none";
+                 }
+             }
+         }
      }
 
      $action.UI = UI;

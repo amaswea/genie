@@ -56,55 +56,53 @@ var $action = $action || {};
             // Initialize the tooltip
             // Look for a tooltip already attached
             var existingTooltip = this.getTooltip(command);
-            if (command.visible()) {
-                if (!existingTooltip) {
-                    var tooltip = document.createElement("div");
-                    tooltip.setAttribute("id", "genie-help-ui-tooltip-" + command.ElementID);
-                    tooltip.classList.add("genie-help-ui-tooltip");
+            if (!existingTooltip) {
+                var tooltip = document.createElement("div");
+                tooltip.setAttribute("id", "genie-help-ui-tooltip-" + command.ElementID);
+                tooltip.classList.add("genie-help-ui-tooltip");
 
-                    var header = document.createElement("span");
-                    header.textContent = label;
-                    tooltip.appendChild(header);
-                    header.classList.add("genie-help-ui-tooltip-header");
+                var header = document.createElement("span");
+                header.textContent = label;
+                tooltip.appendChild(header);
+                header.classList.add("genie-help-ui-tooltip-header");
 
-                    var purpose = document.createElement("span");
-                    purpose.textContent = "Here is a description of what this command does ... ";
-                    tooltip.appendChild(purpose);
+                var purpose = document.createElement("span");
+                purpose.textContent = "Here is a description of what this command does ... ";
+                tooltip.appendChild(purpose);
 
-                    $('html').append(tooltip);
+                $('html').append(tooltip);
 
-                    $(command.Element).qtip({
-                        content: {
-                            text: $("#genie-help-ui-tooltip-" + command.ElementID)
-                        },
-                        position: {
-                            my: 'top left',
-                            at: 'top left',
-                            target: $(command.ElementSelector), 
-                            adjust: {
-                                method: 'shift shift'
-                            }
-                        },
-                        show: {
-                            target: $("body"),
-                            ready: true
-                        },
-                        style: {
-                            tip: {
-                                corner: true
-                            }
+                $(command.Element).qtip({
+                    content: {
+                        text: $("#genie-help-ui-tooltip-" + command.ElementID)
+                    },
+                    position: {
+                        my: 'top left',
+                        at: 'top left',
+                        target: $(command.ElementSelector),
+                        adjust: {
+                            method: 'shift shift'
                         }
-                    });
-                } else {
-                    var header = document.createElement("span");
-                    header.textContent = label;
-                    existingTooltip.appendChild(header);
-                    header.classList.add("genie-help-ui-tooltip-header");
+                    },
+                    show: {
+                        target: $("body"),
+                        ready: true
+                    },
+                    style: {
+                        tip: {
+                            corner: true
+                        }
+                    }
+                });
+            } else {
+                var header = document.createElement("span");
+                header.textContent = label;
+                existingTooltip.appendChild(header);
+                header.classList.add("genie-help-ui-tooltip-header");
 
-                    var purpose = document.createElement("span");
-                    purpose.textContent = "This command does ... ";
-                    existingTooltip.appendChild(purpose);
-                }
+                var purpose = document.createElement("span");
+                purpose.textContent = "This command does ... ";
+                existingTooltip.appendChild(purpose);
             }
         }
     };

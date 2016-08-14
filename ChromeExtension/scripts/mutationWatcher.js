@@ -4,7 +4,7 @@ var $action = $action || {};
     class MutationWatcher {
         constructor() {
             this._pageHandlerIDs = 0;
-            this._elementIDs = 0; 
+            this._elementIDs = 0;
             this._pageCommands = {};
         }
 
@@ -104,17 +104,21 @@ var $action = $action || {};
                         elementID: this.detectOrAssignElementID(element)
                     }
 
+
                     this._pageCommands[commandData.id] = commandData;
                     var added = $action.commandManager.addCommand(commandData);
                     var dataDependencies = {};
                     if (added) {
                         // Returns a new object with the computed expression string representing the data dependencies. 
                         dataDependencies = $action.getDataDependencies(commandData);
-                    } else {
-                        dataDependencies.messageType = 'eventDependenciesNotFound';
-                    }
-
-                    window.postMessage(dataDependencies, "*");
+                        if (dataDependencies) {
+                            commandData.dependencies = dataDependencies;
+                            window.postMessage({
+                                messageType: 'pageCommandFound',
+                                commandData: commandData
+                            }, "*");
+                        }
+                    } 
                 }
             }
         };

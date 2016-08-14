@@ -91,19 +91,6 @@ var $action = $action || {};
             }
             this.commandContainer.appendChild(commandGroup);
         }
-
-        updateCommandState(command, enabled) {
-            // What should happen when the command state changes 
-            var domElement = command.CommandItem.DOM;
-            var disabled = $(domElement).hasClass('genie-shortcut-ui-disabled');
-            if (disabled && enabled) {
-                $(domElement).removeClass('genie-shortcut-ui-disabled');
-            }
-
-            if (!disabled && !enabled) {
-                $(domElement).addClass('genie-shortcut-ui-disabled');
-            }
-        }
     };
 
     $action.ShortcutsUI = ShortcutsUI;

@@ -270,6 +270,7 @@ var $action = $action || {};
          * @property undefined
          */
         visible() {
+
             if (this._domElement instanceof Window || this._domElement instanceof Document) {
                 return true;
             }
@@ -470,15 +471,23 @@ var $action = $action || {};
             }
         };
 
-        updateCommandStates(commandStates) {
+        updateCommandEnabledStates(commandStates) {
             var keys = Object.keys(commandStates);
             for (var i = 0; i < keys.length; i++) {
                 let commandState = commandStates[keys[i]];
                 let command = this._commands[keys[i]];
                 if (command.DataDependent != commandState) {
                     command.DataDependent = commandState;
-                    this._ui.updateCommandState(command, commandState);
+                    this._ui.updateCommandEnabledState(command, commandState);
                 }
+            }
+        }
+
+        updateVisibleCommands() {
+            var keys = Object.keys(this._commands);
+            for (var i = 0; i < keys.length; i++) {
+                let command = this._commands[keys[i]];
+                this._ui.updateCommandVisibleState(command, command.visible());
             }
         }
 
@@ -539,7 +548,7 @@ var $action = $action || {};
 
             return true;
         }
-        
+
         parsePhrase(labelMetadata, phrase) {
             var toLower = phrase.toLowerCase();
             var tagged = this._parser.parse(phrase);

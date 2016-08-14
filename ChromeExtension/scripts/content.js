@@ -82,7 +82,7 @@ function receiveMessage(event) {
 
         }
 
-        if (event.data.messageType == 'updateCommandStates') {
+        if (event.data.messageType == 'updateCommandEnabledStates') {
             var newStates = event.data.commandStates;
 
             var keys = Object.keys(newStates);
@@ -91,7 +91,7 @@ function receiveMessage(event) {
                 //  console.log("id: " + keys[i] + " state: " + value);
             }
 
-            $action.commandManager.updateCommandStates(newStates);
+            $action.commandManager.updateCommandEnabledStates(newStates);
         }
     }
 };
@@ -101,13 +101,14 @@ function receiveMessage(event) {
  * @private
  * @method getCommandStates
  */
-function updateCommands() {
+function updateCommandEnabledStates() {
     window.postMessage({
         messageType: 'getCommandStates'
     }, "*");
-
+    
+    $action.commandManager.updateVisibleCommands();
     $action.commandsChanged = false;
- //   setTimeout(updateCommands, 2000);
+    setTimeout(updateCommandEnabledStates, 2000);
 }
 
 function organizeCommands() {
@@ -156,8 +157,8 @@ $(document).ready(function () {
     // injectMonitorScript();
 
     // Add an observer to watch when new elements are added to the page
-    var mutationObserver = new $action.MutationWatcher();
-    mutationObserver.init();
+    $action.mutationObserver = new $action.MutationWatcher();
+    $action.mutationObserver.init();
 
     // Parse all script tags in the page and add them as scripts
     var scripts = $('script').not('#genie_monitor_script');
@@ -170,7 +171,7 @@ $(document).ready(function () {
     }
 
     // Begin polling to update command states
- //   setTimeout(updateCommands, 2000);
+    setTimeout(updateCommandEnabledStates, 2000);
     setTimeout(organizeCommands, 2000);
 });
 

@@ -143,19 +143,6 @@ var $action = $action || {};
                 this.list.removeChild(cmdItem.DOM);
             }
         }
-
-        updateCommandState(command, enabled) {
-            // What should happen when the command state changes 
-/*            var domElement = command.CommandItem.DOM;
-            var disabled = $(domElement).hasClass('genie-audio-ui-disabled');
-            if (disabled && enabled) {
-                $(domElement).removeClass('genie-audio-ui-disabled');
-            }
-
-            if (!disabled && !enabled) {
-                $(domElement).addClass('genie-audio-ui-disabled');
-            }*/
-        }
     };
 
     $action.AudioUI = AudioUI;
