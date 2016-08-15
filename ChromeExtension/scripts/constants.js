@@ -145,6 +145,6 @@ var $action = $action || {};
 
     // List of W3C inline GlobalEventHandlers that are supported
     $action.GlobalEventHandlers = [
-        "onclick", "onmouseover", "onchange"
+        "onclick", "onmouseover", "onchange", "ondblclick", "onkeydown", "onkeyup", "onkeypress", "onmousedown", "onmouseout", "onmousewheel"
     ];
 })($action);

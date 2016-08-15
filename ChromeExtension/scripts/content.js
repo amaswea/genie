@@ -172,7 +172,7 @@ $(document).ready(function () {
 
     // Begin polling to update command states
     setTimeout(updateCommandEnabledStates, 2000);
-    setTimeout(organizeCommands, 2000);
+    setTimeout(organizeCommands, 2000);    
 });
 
 (function initializeCommandManager() {

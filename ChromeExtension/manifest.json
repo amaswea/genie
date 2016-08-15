@@ -36,14 +36,14 @@
                 "css/audio-ui.css", 
                 "css/menu-ui.css", 
                 "css/keyboard-ui.css",
-                "css/jquery.qtip.min.css", 
+                "css/opentip.css", 
                 "css/command-line-ui.css", 
                 "css/shortcut-ui.css"
             ],
             "js": [
                 "scripts/ext/jquery-3.0.0.js",
                 "scripts/ext/jquery.sidr.min.js",
-                "scripts/ext/jquery.qtip.min.js",
+                "scripts/ext/opentip-jquery.min.js",
                 "scripts/ext/lodash.js",
                 "scripts/ext/lexicon.js",
                 "scripts/ext/lexer.js",

@@ -172,7 +172,6 @@ var $action = $action || {};
                     delete window.geniePageHandlerMap[contentObjectID];
                 } else if (event.data.messageType == 'getCommandStates') {
                     // Set the polling mode to enabled 
-                    debugger;
                     var keys = Object.keys(window.geniePageHandlerMap);
                     if (keys.length) {
                         var commandStates = {};
@@ -480,6 +479,8 @@ var $action = $action || {};
             // Call the original on function
             d3.selection.prototype._on.apply(this, arguments);
         }
+        
+/*        var newOnGlobalEventHandler = function*/
 
 
         var script = document.createElement("script");

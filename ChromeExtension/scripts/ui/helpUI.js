@@ -6,6 +6,7 @@ var $action = $action || {};
             // Keep a map between the command labels and their execute() calls so that we can map audio commands to call commands
             super();
             this.init();
+            this._tooltips = {};
         }
 
         init() {
@@ -13,12 +14,27 @@ var $action = $action || {};
         };
 
         hide() {
-            // Remove all of the tooltips
+            // Hide all of the tooltips
+            var keys = Object.keys(this._tooltips);
+            for (var i = 0; i < keys.length; i++) {
+                let element = $action.getElementFromID(keys[i]);
+                let tooltip = this._tooltips[keys[i]];
+                if (tooltip && element) {
+                    tooltip.hide();
+                }
+            }
         }
 
         show() {
-                // Show all of the tooltips
-            } // Override show and hide methods to do nothing since this help interface has no special UI. 
+            var keys = Object.keys(this._tooltips);
+            for (var i = 0; i < keys.length; i++) {
+                let element = $action.getElementFromID(keys[i]);
+                let tooltip = this._tooltips[keys[i]];
+                if (tooltip && element) {
+                    tooltip.show();
+                }
+            }
+        }
 
         appendCommandGroup(label, commands) {
             for (var i = 0; i < commands.length; i++) {
@@ -45,11 +61,7 @@ var $action = $action || {};
         }
 
         getTooltip(command) {
-            var tooltipSelector = "[id='genie-help-ui-tooltip-" + command.ElementID + "']";
-            var tooltip = $(tooltipSelector);
-            if (tooltip.length) {
-                return tooltip[0];
-            }
+            return this._tooltips[command.ElementID];
         }
 
         createTooltip(command, label) {
@@ -57,52 +69,14 @@ var $action = $action || {};
             // Look for a tooltip already attached
             var existingTooltip = this.getTooltip(command);
             if (!existingTooltip) {
-                var tooltip = document.createElement("div");
-                tooltip.setAttribute("id", "genie-help-ui-tooltip-" + command.ElementID);
-                tooltip.classList.add("genie-help-ui-tooltip");
-
-                var header = document.createElement("span");
-                header.textContent = label;
-                tooltip.appendChild(header);
-                header.classList.add("genie-help-ui-tooltip-header");
-
-                var purpose = document.createElement("span");
-                purpose.textContent = "Here is a description of what this command does ... ";
-                tooltip.appendChild(purpose);
-
-                $('html').append(tooltip);
-
-                $(command.Element).qtip({
-                    content: {
-                        text: $("#genie-help-ui-tooltip-" + command.ElementID)
-                    },
-                    position: {
-                        my: 'top left',
-                        at: 'top left',
-                        target: $(command.ElementSelector),
-                        adjust: {
-                            method: 'shift shift'
-                        }
-                    },
-                    show: {
-                        target: $("body"),
-                        ready: true
-                    },
-                    style: {
-                        tip: {
-                            corner: true
-                        }
-                    }
-                });
+                var $element = $(command.Element);
+                var tooltip = new Opentip($element, { showOn: null, target: $element, tipJoint: "bottom"});
+                tooltip.setContent(label);
+               // tooltip.setAttribute("id", "genie-help-ui-tooltip-" + command.ElementID);
+               // tooltip.classList.add("genie-help-ui-tooltip");
+                this._tooltips[command.ElementID] = tooltip;
             } else {
-                var header = document.createElement("span");
-                header.textContent = label;
-                existingTooltip.appendChild(header);
-                header.classList.add("genie-help-ui-tooltip-header");
-
-                var purpose = document.createElement("span");
-                purpose.textContent = "This command does ... ";
-                existingTooltip.appendChild(purpose);
+                
             }
         }
     };
