@@ -172,6 +172,7 @@ var $action = $action || {};
                     delete window.geniePageHandlerMap[contentObjectID];
                 } else if (event.data.messageType == 'getCommandStates') {
                     // Set the polling mode to enabled 
+                    debugger;
                     var keys = Object.keys(window.geniePageHandlerMap);
                     if (keys.length) {
                         var commandStates = {};
@@ -204,7 +205,7 @@ var $action = $action || {};
                                     let result = true;
                                     for (var j = 0; j < pageHandlerObject.dependencies.length; j++) {
                                         try {
-                                            result = eval(pageHandlerObject.dependencies[i]);
+                                            result = eval(pageHandlerObject.dependencies[j]);
                                         } catch (e) {
                                             console.error("Attribute handler dependencies could not be retrieved: " + e.toString());
                                         }

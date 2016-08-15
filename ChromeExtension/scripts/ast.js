@@ -9,6 +9,7 @@ var $action = $action || {};
             if (ast.type == "Program") {
                 if (!visitor.scopes) {
                     visitor.scopes = [];
+                    visitor.scopes.push(new Scope(ast.body));
                 }
 
                 if (visitor.outside && !visitor.within) {
@@ -292,7 +293,18 @@ var $action = $action || {};
 
             if (!statement.testExpression) {
                 var clonedStatement = $.extend(true, {}, statement.test);
-                this.searchIdentifiersInPath(clonedStatement);
+                if (clonedStatement.type == "Identifier") {
+                    if (clonedStatement.lastAssigned) {
+                        this.searchIdentifiersInPath(clonedStatement.lastAssigned);
+                        clonedStatement = clonedStatement.lastAssigned;
+                    } else if (clonedStatement.lastDeclared) {
+                        this.searchIdentifiersInPath(clonedStatement.lastDeclared);
+                        clonedStatement = clonedStatement.lastDeclared;
+                    }
+                } else {
+                    this.searchIdentifiersInPath(clonedStatement);
+                }
+
                 statement.testExpression = this.convertNodeToString(clonedStatement);
             }
         }
@@ -670,7 +682,7 @@ var $action = $action || {};
         }
 
         static findLastAssigned(identifier, visitor) {
-            if (visitor.scopes)
+            if (visitor.scopes) {
                 for (var i = visitor.scopes.length - 1; i >= 0; i--) {
                     var scope = visitor.scopes[i]; // The last element is the closest scope to the reference
                     var assignment = scope.Assignments[identifier.name];
@@ -678,6 +690,7 @@ var $action = $action || {};
                         return assignment;
                     }
                 }
+            }
         }
 
         static findLastDeclared(identifier, visitor) {
