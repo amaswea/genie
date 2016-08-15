@@ -70,7 +70,7 @@ var $action = $action || {};
             var existingTooltip = this.getTooltip(command);
             if (!existingTooltip) {
                 var $element = $(command.Element);
-                var tooltip = new Opentip($element, { showOn: null, target: $element, tipJoint: "bottom"});
+                var tooltip = new Opentip($element, { showOn: null, target: $element, tipJoint: "bottom left", hideTriggers: [], className: "genie-help-ui-tootip" });
                 tooltip.setContent(label);
                // tooltip.setAttribute("id", "genie-help-ui-tooltip-" + command.ElementID);
                // tooltip.classList.add("genie-help-ui-tooltip");

@@ -1,6 +1,33 @@
 window.addEventListener("message", receiveMessage, false);
 var $action = $action || {};
 
+$(document).ready(function () {
+    // For other types of interfaces, they could be instantiated here or through a setting?
+    // Initialize the script manager if not already initialized
+    if (!$action.scriptManager) {
+        $action.scriptManager = new $action.ScriptManager();
+    }
+
+    // Add an observer to watch when new elements are added to the page
+    $action.mutationObserver = new $action.MutationWatcher();
+    $action.mutationObserver.init();
+
+    // Parse all script tags in the page and add them as scripts
+    var scripts = $('script').not('#genie_monitor_script');
+    for (var i = 0; i < scripts.length; i++) {
+        var script = scripts[i];
+        if (!script.attributes.src) {
+            var innerHTML = script.innerHTML;
+            $action.scriptManager.addScript("page", innerHTML);
+        }
+    }
+
+    // Begin polling to update command states
+    setTimeout(instrumentGlobalHandlers, 2000);
+    setTimeout(updateCommandEnabledStates, 2000);
+    setTimeout(organizeCommands, 2000);
+});
+
 /**
  * Description for injectScript
  * @private
@@ -36,6 +63,24 @@ function injectMonitorScript() {
 
     var script = $(header).children("script").first();
     header.insertBefore(monitorScript, script[0]);
+};
+
+/**
+ * Description for injectMonitorScript
+ * @private
+ * @method injectMonitorScript
+ */
+function injectJQueryD3OverrideScript() {
+    // Inject the getActions.js script into the page
+    var header = document.head || document.documentElement;
+    var overrideScript = $action.getJQueryD3OverrideScript();
+    var hasScript = document.querySelector("[id='genie_jquery_d3_override_script']");
+    if (hasScript) {
+        hasScript.remove();
+    }
+
+    var script = $(header).children("script").first();
+    header.insertBefore(overrideScript, script[0]);
 };
 
 /**
@@ -105,7 +150,7 @@ function updateCommandEnabledStates() {
     window.postMessage({
         messageType: 'getCommandStates'
     }, "*");
-    
+
     $action.commandManager.updateVisibleCommands();
     $action.commandsChanged = false;
     setTimeout(updateCommandEnabledStates, 2000);
@@ -115,6 +160,10 @@ function organizeCommands() {
 
     // TODO:think of better way to implement organization
     $action.commandManager.organizeCommands();
+}
+
+function instrumentGlobalHandlers() {
+
 }
 
 /**
@@ -147,39 +196,17 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     }
 });
 
-$(document).ready(function () {
-    // For other types of interfaces, they could be instantiated here or through a setting?
-    // Initialize the script manager if not already initialized
-    if (!$action.scriptManager) {
-        $action.scriptManager = new $action.ScriptManager();
-    }
-
-    // injectMonitorScript();
-
-    // Add an observer to watch when new elements are added to the page
-    $action.mutationObserver = new $action.MutationWatcher();
-    $action.mutationObserver.init();
-
-    // Parse all script tags in the page and add them as scripts
-    var scripts = $('script').not('#genie_monitor_script');
-    for (var i = 0; i < scripts.length; i++) {
-        var script = scripts[i];
-        if (!script.attributes.src) {
-            var innerHTML = script.innerHTML;
-            $action.scriptManager.addScript("page", innerHTML);
-        }
-    }
-
-    // Begin polling to update command states
-    setTimeout(updateCommandEnabledStates, 2000);
-    setTimeout(organizeCommands, 2000);    
-});
-
 (function initializeCommandManager() {
+    document.addEventListener("DOMContentLoaded", function (event) {
+        // Can only override any jQuery or D3 event registrations that occur during or after document.ready
+        injectJQueryD3OverrideScript();
+    });
+
     $action.interface = new $action.HelpUI();
 
     // Create a new instance of the command manager with this instance of the UI
     $action.commandManager = new $action.CommandManager($action.interface, $action.scriptManager);
 
+    // Must be injected before document intialization to intercept all addEventListener calls
     injectMonitorScript();
 })();

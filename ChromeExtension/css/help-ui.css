@@ -1,26 +1,3 @@
-.genie-help-ui-command-border {
-    box-shadow: 0 0 5px rgba(81, 203, 238, 1);
-    border: 1px solid rgba(81, 203, 238, 1);
-}
-
-.genie-help-ui-highlighter {
+.style-genie-help-ui-tooltip {
     z-index: 2147483646 !important;
-}
-
-.genie-help-ui-tooltip {
-    display: none;
-}
-
-.genie-help-ui-tooltip {
-    display: flex !important; 
-    flex-direction: column; 
-}
-
-.genie-help-ui-tooltip-header {
-    font-size: 12pt; 
-    font-weight: bold;
-}
-
-.genie-help-ui-tooltip > span:last-child {
-    padding-top: 10px;
 }
