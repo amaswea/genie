@@ -58,6 +58,7 @@
                 "scripts/ui/helpUI.js",
                 "scripts/ui/shortcutsUI.js",
                 "scripts/command.js",
+                "scripts/commandManager.js",
                 "scripts/util.js",
                 "scripts/mutationWatcher.js",
                 "scripts/constants.js",

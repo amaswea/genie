@@ -53,10 +53,10 @@ $(document).ready(function () {
         // Another comment before the alert
         alert("hello");
         // TEsting if this comment is attached
-        myFunc();
+        myfunc();
         var myvar = 22; 
         test = true;
-        myObj.test();
+        myobj.test();
         rotateDown();
         // If button 1 is not disabled, send an alert.
         if (!$('.button1').attr('disabled')) {

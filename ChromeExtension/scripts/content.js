@@ -3,10 +3,6 @@ var $action = $action || {};
 
 $(document).ready(function () {
     // For other types of interfaces, they could be instantiated here or through a setting?
-    // Initialize the script manager if not already initialized
-    if (!$action.scriptManager) {
-        $action.scriptManager = new $action.ScriptManager();
-    }
 
     // Add an observer to watch when new elements are added to the page
     $action.mutationObserver = new $action.MutationWatcher();
@@ -216,7 +212,15 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     document.addEventListener("DOMContentLoaded", function (event) {
         // Can only override any jQuery or D3 event registrations that occur during or after document.ready
         injectJQueryD3OverrideScript();
+        
+        // Override page and element GlobalEvent
+        inje
     });
+
+    // Initialize the script manager if not already initialized
+    if (!$action.scriptManager) {
+        $action.scriptManager = new $action.ScriptManager();
+    }
 
     $action.interface = new $action.AudioUI();
 

@@ -6,19 +6,22 @@ var $action = $action || {};
         constructor() {}
 
         static searchAST(ast, visitor) {
-            if (ast.type == "Program") {
-                if (!visitor.scopes) {
-                    visitor.scopes = [];
-                    visitor.scopes.push(new Scope(ast.body));
-                }
-
-                if (visitor.outside && !visitor.within) {
-                    visitor.collect = true;
-                }
-
+            if (visitor.outside && !visitor.within) {
+                visitor.collect = true;
+            } else if (visitor.within && !visitor.outside) {
                 if (visitor.within == "Program") {
                     visitor.collect = true;
                 }
+            } else if (!visitor.within && !visitor.outside) {
+                visitor.collect = true;
+            }
+
+            if (!visitor.scopes) {
+                visitor.scopes = [];
+            }
+
+            if (ast.type == "Program") {
+                visitor.scopes.push(new Scope(ast.body));
 
                 for (var i = 0; i < ast.body.length; i++) {
                     this.searchNode(ast.body[i], visitor);
@@ -27,7 +30,8 @@ var $action = $action || {};
                 visitor.collect = false;
                 delete visitor.scopes;
             } else {
-                console.log("Not a valid AST");
+
+                this.searchNode(ast, visitor);
             }
 
             // Searching for any identifiers referenced within the If statement conditional and return their names as dependencies
@@ -202,6 +206,10 @@ var $action = $action || {};
                 // ComprehensionIf
             }
 
+            if (typeof (node) == "object" && !node.stringRepresentation) {
+                node.stringRepresentation = this.convertNodeToString(node);
+            }
+
 
             if (visitor.inside && visitor.outside.length && visitor.outside.indexOf(node.type) > -1) {
                 visitor.inside = false;
@@ -367,7 +375,7 @@ var $action = $action || {};
             var hasProp = visitor.property !== undefined;
             var collect = visitor.collect;
             for (var i = 0; i < props.length; i++) {
-                visitor.collect = hasProp && (visitor.property.indexOf(props[i]) > -1);;
+                visitor.collect = (hasProp && (visitor.property.indexOf(props[i]) > -1)) ? true : collect;
 
                 if (statement[props[i]]) {
                     this.searchNode(statement[props[i]], visitor);
