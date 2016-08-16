@@ -116,6 +116,8 @@ var $difference = $action || {};
             var partsOfSpeech = {};
             partsOfSpeech.nouns = [];
             partsOfSpeech.verbs = [];
+            partsOfSpeech.other = []; 
+            partsOfSpeech.nonEnglish = [];
 
             for (var i = 0; i < words.length; i++) {
                 var word = words[i].toLowerCase();
@@ -128,7 +130,11 @@ var $difference = $action || {};
                             partsOfSpeech.nouns.push(word.toLowerCase());
                         } else if (["VB", "VBP"].indexOf(posValue) > -1) {
                             partsOfSpeech.verbs.push(word.toLowerCase());
+                        }else {
+                            partsOfSpeech.other.push(word.toLowerCase());
                         }
+                    }else {
+                        partsOfSpeech.nonEnglish.push(word);
                     }
                 }
             }

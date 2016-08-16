@@ -97,9 +97,9 @@ var $action = $action || {};
         "change",
         "contextmenu",
         "show",
-        "submit", 
-        "touchmove", 
-        "touchstart", 
+        "submit",
+        "touchmove",
+        "touchstart",
         "touchend"
         // TOOD: rest of HTML DOM events, Drag & Drop events, Touch events
     ];
@@ -147,4 +147,19 @@ var $action = $action || {};
     $action.GlobalEventHandlers = [
         "onclick", "onmouseover", "onchange", "ondblclick", "onkeydown", "onkeyup", "onkeypress", "onmousedown", "onmouseout", "onmousewheel"
     ];
+
+    // Attributes to parse for label metadata
+    $action.LabelAttributes = {
+        "GLOBAL": ["class", "id", "title"],
+        "INPUT": ["name", "placeholder", "alt", "value"],
+        "BUTTON": ["name"],
+        "FIELDSET": ["name"],
+        "TEXTAREA": ["name"],
+        "SELECT": ["name"],
+        "A": ["href"]
+            // TODO: Later fill in the complete set. 
+    }
+    
+    // Attributes that have a URL to parse
+    $action.LabelURLAttributes = ["href"]
 })($action);

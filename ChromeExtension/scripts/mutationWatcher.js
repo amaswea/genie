@@ -78,7 +78,7 @@ var $action = $action || {};
         addCommandsFromElement(element) {
             var tagAdded = element.tagName;
             var hasAction = $action.ActionableElements[tagAdded] != undefined;
-            if (hasAction) {
+            if (hasAction && element.parentNode) {
                 var isActionable = $action.ActionableElements[tagAdded](element);
                 if (isActionable) {
                     var commandData = {

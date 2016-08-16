@@ -11,7 +11,7 @@ var $action = $action || {};
         }
 
         addScript(url, data) {
-            /*if (url == "page" && !this._asts.page) {
+            if (url == "page" && !this._asts.page) {
                 this._asts.page= [];
             }
 
@@ -20,11 +20,9 @@ var $action = $action || {};
                 this._asts.page.push(scriptAST);
             } else {
                 this._asts[url] = scriptAST;
-            }*/
+            }
 
         }
-
-        // removeScript ? 
     }
 
     $action.ScriptManager = ScriptManager;

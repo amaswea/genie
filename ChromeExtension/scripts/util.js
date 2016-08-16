@@ -100,12 +100,14 @@ var $action = $action || {};
             if (selector != null && !handle) {
                 handler = selector;
             }
+            // debugger;
 
             var eventList = typeof (events) == "string" ? events.split(" ") : (typeof (events) == "object" ? [events.type] : []);
             for (var i = 0; i < eventList.length; i++) {
                 var evt = eventList[i];
                 var id = getHandlerID(); // This unique ID will represent this handler, event, and element combination 
-                var element = this[0] ? this[0] : this.context;
+                var element = this[0] ? this[0] : $(this.selector)[0];
+                element = element ? element : this.context;
                 var elementID = detectOrAssignElementID(element);
                 var contentObject = getContentObject(id, elementID, 'eventAdded', evt, handler);
                 window.postMessage(contentObject, "*");
@@ -119,7 +121,8 @@ var $action = $action || {};
         var newJQueryOff = function (events, selector, handler) {
             jQuery.fn._off.apply(this, arguments);
             var eventList = typeof (events) == "string" ? events.split(" ") : (typeof (events) == "object" ? [events.type] : []);
-            var element = this[0] ? this[0] : this.context;
+            var element = this[0] ? this[0] : $(this.selector)[0];
+            element = element ? element : this.context;
             var elementID = detectElementID(element);
             for (var i = 0; i < eventList.length; i++) {
                 var evt = eventList[i];

@@ -46,17 +46,6 @@ var $action = $action || {};
         }
     }
 
-    $action.LabelAttributes = {
-        "GLOBAL": ["class", "id", "title"],
-        "INPUT": ["name", "placeholder", "alt", "value"],
-        "BUTTON": ["name"],
-        "FIELDSET": ["name"],
-        "TEXTAREA": ["name"],
-        "SELECT": ["name"],
-        "A": ["href"]
-            // TODO: Later fill in the complete set. 
-    }
-
     $action.GlobalEventHandlerMappings = { // TODO: Add the rest
         "onclick": "click",
         "onmouseover": "mouseover"
@@ -434,12 +423,27 @@ var $action = $action || {};
             return this._commands[commandID] != undefined;
         }
 
+        findDuplicate(command) {
+            // Filter duplicates by comparing whether two handlers are the same
+            // TODO: Make smarter
+            if (command.eventType != 'default') {
+                var keys = Object.keys(this._commands);
+                for (var i = 0; i < keys.length; i++) {
+                    let cmd = this._commands[keys[i]];
+                    if (cmd.Handler == command.handler) {
+                        return true;
+                    }
+                }
+            }
+        }
+
         addCommand(command) {
-            if (command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1) {
+            let duplicate = this.findDuplicate(command); // Look for duplicate commands
+            if (!duplicate && command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1) {
                 var element = $action.getElementFromID(command.elementID);
                 var newCommand = new $action.Command(command.id, command.elementID, command.eventType, command.handler)
                 this.initMetadata(newCommand);
-                console.log("adding new command " + command.eventType + " " + command.handler + " " + command.elementID);
+              //  console.log("adding new command " + command.eventType + " " + command.handler + " " + command.elementID);
 
                 this._commandCount++;
 
@@ -557,10 +561,12 @@ var $action = $action || {};
                 let first = split[0].toLowerCase();
                 var sentence = split.toString().replace(/\,/g, " ").toLowerCase();
                 sentence = _.upperFirst(sentence);
-                if (tagged.verbs.indexOf(first) > -1) {
-                    labelMetadata.imperativePhrases.push(sentence);
-                } else {
-                    labelMetadata.phrases.push(sentence);
+                if (tagged.nonEnglish.length < split.length) { // Phrase should contain at least one enlish word.  
+                    if (tagged.verbs.indexOf(first) > -1) {
+                        labelMetadata.imperativePhrases.push(sentence);
+                    } else {
+                        labelMetadata.phrases.push(sentence);
+                    }
                 }
             } else {
                 // Not a phrase
@@ -568,6 +574,15 @@ var $action = $action || {};
                 // Convert 
                 labelMetadata.verbs = labelMetadata.verbs.concat(tagged.verbs);
                 labelMetadata.nouns = labelMetadata.nouns.concat(tagged.nouns);
+            }
+        }
+
+        parseURL(labelMetadata, labelString) {
+            var chunks = labelString.split(/\//);
+            if (chunks && chunks.length) {
+                for (var i = 0; i < chunks.length; i++) {
+                    this.parsePhrase(labelMetadata, chunks[i]);
+                }
             }
         }
 
@@ -625,7 +640,6 @@ var $action = $action || {};
                 }
             }
 
-
             var nonGlobalAttrs = $action.LabelAttributes[element.tagName];
             if (nonGlobalAttrs) {
                 for (var j = 0; j < nonGlobalAttrs.length; j++) {
@@ -633,7 +647,11 @@ var $action = $action || {};
                     if (nonGlobalAttr) {
                         let nonGlobalVal = nonGlobalAttr.value;
                         if (nonGlobalVal && nonGlobalVal.length) {
-                            this.parseLabel(command.LabelMetadata.elementLabels, nonGlobalVal);
+                            if ($action.LabelURLAttributes.indexOf(nonGlobalAttrs[j]) > -1) {
+                                this.parseURL(command.LabelMetadata.elementLabels, nonGlobalVal);
+                            } else {
+                                this.parseLabel(command.LabelMetadata.elementLabels, nonGlobalVal);
+                            }
                         }
                     }
                 }
@@ -666,7 +684,8 @@ var $action = $action || {};
             // Retrieve all of the Text nodes on the element
             // Tag them with the parts of speech. 
             var element = command.Element;
-            if (element && !(element instanceof Window)) {
+            if (element && !(element instanceof Window) && !(element instanceof Document) &&
+                !(element.tagName == "BODY")) {
                 var walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
                 var node = walker.nextNode();
                 while (node) {
@@ -689,12 +708,10 @@ var $action = $action || {};
                 for (var k = 0; k < desc.length; k++) {
                     this.parseElement(command, desc[k]);
                 }
+            }
 
-                // Computed styles
-                //  this.initComputedStyles(command, element);
-                if (command.EventType != 'default') {
-                    this.parseHandler(command);
-                }
+            if (command.EventType != 'default') {
+                this.parseHandler(command);
             }
         };
 

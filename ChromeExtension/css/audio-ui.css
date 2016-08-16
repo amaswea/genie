@@ -22,6 +22,7 @@
     position: absolute;
     right: 10px; 
     top: 10px;
+    color: black !important;
 }
 
 .genie-audio-ui-group-label {
@@ -31,6 +32,7 @@
     display: inline-block;
     border-bottom: 0.5px solid lightgray;
     width: 100%;
+    color: black !important;
 }
 
 .genie-audio-ui-list {
@@ -51,17 +53,17 @@
     font-size: 10pt;
     display: flex;
     flex-direction: column;
-    height: 15px;
 }
 
 .genie-audio-ui-list-item-label {
-    white-space: nowrap;
+    color: black !important;
 }
 
 .genie-audio-ui-header {
     padding-top: 10px;
     padding-left: 10px;
     padding-bottom: 10px;
+    color: black !important;
 }
 
 .genie-audio-ui-header,

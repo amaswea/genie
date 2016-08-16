@@ -167,6 +167,18 @@ function instrumentGlobalHandlers() {
 }
 
 /**
+ * Detect origin and check that the url is from the same origin
+ * @private
+ * @method isFromSameOrigin
+ * @param {Object} url
+ */
+function isFromSameOrigin(url) {
+    var origin = window.location.origin;
+    return url.includes(origin);
+}
+
+
+/**
  * Listen for messages from the background script and return the requested information
  * @private
  * @method undefined
@@ -187,11 +199,15 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         var data = msg.data;
         var url = msg.url;
         if (data && data.length) {
+            console.log(url);
+            var orig = window.location.origin;
             if (!$action.scriptManager) {
                 $action.scriptManager = new $action.ScriptManager();
             }
 
-            $action.scriptManager.addScript(url, data);
+            if (isFromSameOrigin(url)) {
+                $action.scriptManager.addScript(url, data);
+            }
         }
     }
 });
@@ -202,7 +218,7 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         injectJQueryD3OverrideScript();
     });
 
-    $action.interface = new $action.HelpUI();
+    $action.interface = new $action.AudioUI();
 
     // Create a new instance of the command manager with this instance of the UI
     $action.commandManager = new $action.CommandManager($action.interface, $action.scriptManager);

@@ -68,7 +68,7 @@ var $action = $action || {};
             });
 */
             // Initialze speech recognition
-            this._recognition = new webkitSpeechRecognition();
+/*            this._recognition = new webkitSpeechRecognition();
             this._recognition.continuous = true;
             this._recognition.interimResults = true;
             this._recognition.lang = "en-US";
@@ -76,7 +76,7 @@ var $action = $action || {};
             this._recognition.onresult = function (event) {
                 self.mapResultsToCommand(event.results);
             }
-            this._recognition.start();
+            this._recognition.start();*/
         };
 
         mapResultsToCommand(speechResults) {
