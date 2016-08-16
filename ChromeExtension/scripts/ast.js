@@ -443,6 +443,12 @@ var $action = $action || {};
             // Search from left to right so that identifiers on the right will be resolved to their mapped nodes in the scope before the assigned variable gets resolved. 
             this.searchNode(expression.right, visitor);
 
+            // TODO: Is this too specific?
+            if (expression.right && expression.left && expression.right.type == "FunctionExpression" && expression.left.type == "Identifier") {
+                expression.right.referenceID = expression.left.name;
+                // TODO: This won't work for ObjectPattern or ArrayPattern node types. decorator.id is a Pattern node.
+            }
+
             // The left property contains a Pattern node. 
             // Currently, just look for Identifier types. Other options are ArrayPattern & ObjectPattern
             if (expression.left.type == "Identifier" && visitor.scopes && visitor.scopes.length) {
@@ -744,36 +750,35 @@ var $action = $action || {};
         }
 
         static searchIdentifiersInPath(node) {
-            var propertyKeys = Object.keys(node);
-            for (var i = 0; i < propertyKeys.length; i++) {
-                var key = propertyKeys[i];
-                var propNode = node[key];
-                if (propNode) {
-                    if (propNode.type == "Identifier") {
-                        if (propNode.lastAssigned) {
-                            node[key] = propNode.lastAssigned;
-                            this.searchIdentifiersInPath(node[key]);
-                        } else if (propNode.lastDeclared) {
-                            node[key] = propNode.lastDeclared;
-                            this.searchIdentifiersInPath(node[key]);
+            if (node && typeof (node) == "object" && !node.searched) {
+                node.searched = true;
+                var propertyKeys = Object.keys(node);
+                for (var i = 0; i < propertyKeys.length; i++) {
+                    var key = propertyKeys[i];
+                    var propNode = node[key];
+                    if (propNode) {
+                        if (propNode.type == "Identifier") {
+                            if (propNode.lastAssigned) {
+                                node[key] = propNode.lastAssigned;
+                                this.searchIdentifiersInPath(node[key]);
+                            } else if (propNode.lastDeclared) {
+                                node[key] = propNode.lastDeclared;
+                                this.searchIdentifiersInPath(node[key]);
+                            }
+                        } else if (Array.isArray(propNode)) {
+                            for (var j = 0; j < propNode.length; j++) {
+                                var item = propNode[j];
+                                this.searchIdentifiersInPath(item);
+                            }
+                        } else if (propNode.type) {
+                            this.searchIdentifiersInPath(propNode);
                         }
-                    } else if (Array.isArray(propNode)) {
-                        for (var j = 0; j < propNode.length; j++) {
-                            var item = propNode[j];
-                            this.searchIdentifiersInPath(item);
-                        }
-                    } else if (propNode.type) {
-                        this.searchIdentifiersInPath(propNode);
                     }
                 }
             }
         }
 
-        static convertNodeToString(node) {
-            if (!node) {
-                return "";
-            }
-
+        static getStringForNode(node) {
             switch (node.type) {
             case "Identifier":
                 return node.name;
@@ -825,11 +830,11 @@ var $action = $action || {};
                 }
             case "ReturnStatement":
                 {
-                    return "return" + (node.argument ? " " + this.convertNodeToString(node.expression) : ";");
+                    return "return" + (node.argument ? " " + this.convertNodeToString(node.argument) : ";");
                 }
             case "ThrowStatement":
                 {
-                    return "throw" + (node.argument ? " " + this.convertNodeToString(node.expression) : ";");
+                    return "throw" + (node.argument ? " " + this.convertNodeToString(node.argument) : ";");
                 }
             case "TryStatement":
                 {
@@ -972,7 +977,10 @@ var $action = $action || {};
                 }
             case "LogicalExpression":
                 {
+                    /*  console.log(node.left.type); 
+                      console.log(node.right.type);*/
                     return this.convertNodeToString(node.left) + " " + node.operator + " " + this.convertNodeToString(node.right);
+
                 }
             case "NewExpression":
                 {
@@ -1001,11 +1009,11 @@ var $action = $action || {};
             case "MemberExpression":
                 {
                     if (node.computed) {
+
                         return this.convertNodeToString(node.object) + "[" + this.convertNodeToString(node.property) + "]";
 
                     } else {
                         return this.convertNodeToString(node.object) + "." + this.convertNodeToString(node.property);
-
                     }
                 }
             case "YieldExpression":
@@ -1092,6 +1100,20 @@ var $action = $action || {};
                 // GraphIndexExpression
                 // ComprehensionBlock
                 // ComprehensionIf
+            }
+        }
+
+        static convertNodeToString(node) {
+            if (!node) {
+                return "";
+            }
+
+            if (node.stringRepresentation) {
+                return node.stringRepresentation;
+            }
+            else {
+                node.stringRepresentation = this.getStringForNode(node);
+                return node.stringRepresentation;
             }
         }
     }

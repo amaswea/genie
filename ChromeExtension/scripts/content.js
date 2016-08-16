@@ -19,7 +19,7 @@ $(document).ready(function () {
     }
 
     // Begin polling to update command states
-    setTimeout(instrumentGlobalHandlers, 2000);
+    setTimeout(injectGlobalEventHandlerOverrides, 0); // ACK -- - Fix this in the future
     setTimeout(updateCommandEnabledStates, 2000);
     setTimeout(organizeCommands, 2000);
 });
@@ -53,6 +53,25 @@ function injectMonitorScript() {
     var header = document.head || document.documentElement;
     var monitorScript = $action.getScript();
     var hasScript = document.querySelector("[id='genie_monitor_script]");
+    if (hasScript) {
+        hasScript.remove();
+    }
+
+    var script = $(header).children("script").first();
+    header.insertBefore(monitorScript, script[0]);
+};
+
+
+/**
+ * Description for injectGlobalEventHandlerOverrides
+ * @private
+ * @method injectGlobalEventHandlerOverrides
+ */
+function injectGlobalEventHandlerOverrides() {
+    // Inject the getActions.js script into the page
+    var header = document.head || document.documentElement;
+    var monitorScript = $action.getGlobalEventHandlerScript();
+    var hasScript = document.querySelector("[id='genie_global_handlers_script']");
     if (hasScript) {
         hasScript.remove();
     }
@@ -158,10 +177,6 @@ function organizeCommands() {
     $action.commandManager.organizeCommands();
 }
 
-function instrumentGlobalHandlers() {
-
-}
-
 /**
  * Detect origin and check that the url is from the same origin
  * @private
@@ -214,7 +229,7 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         injectJQueryD3OverrideScript();
         
         // Override page and element GlobalEvent
-        inje
+       // injectGlobalEventHandlerOverrides();
     });
 
     // Initialize the script manager if not already initialized

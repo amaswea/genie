@@ -98,6 +98,12 @@ var $action = $action || {};
                     imperativePhrases: [],
                     nouns: [],
                     verbs: []
+                },
+                assignments: {
+                    phrases: [],
+                    imperativePhrases: [],
+                    nouns: [],
+                    verbs: []
                 }
             }
 

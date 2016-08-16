@@ -72,6 +72,25 @@ var $action = $action || {};
         }
     };
 
+    $action.detectOrAssignElementID = function (element) {
+        var window = element instanceof Window;
+        var document = element instanceof Document;
+        if (!window && !document) {
+            var id = element.getAttribute("data-genie-element-id");
+            if (id && id.length) {
+                return id;
+            } else {
+                id = getElementID();
+                element.setAttribute("data-genie-element-id", id);
+            }
+        } else if (window) {
+            id = "window";
+        } else if (document) {
+            id = "document";
+        }
+        return id;
+    };
+
     /**
      * Takes the data object passed in and returns a new object with the instrumented handler
      * @private
@@ -201,6 +220,46 @@ var $action = $action || {};
         // TODO: should minify this before inserting into the page. 
         return script;
     }
+
+    $action.getGlobalEventHandlerScript = function () {
+        var directive = `'use strict';`;
+        
+        var postHandlerCommand = function postHandlerCommand(elementID, eventType, listener) {
+            var handlerID = getHandlerID(); // This unique ID will represent this handler, event, and element combination
+            var contentObject = getContentObject(handlerID, elementID, 'eventAdded', eventType, listener);
+            window.postMessage(contentObject, "*");
+
+            // Get a page handler object to cache so that the handler can be instrumented when polling takes place
+            var pageHandlerObject = getPageHandlerObject(handlerID, elementID, eventType, listener);
+            window.geniePageHandlerMap[handlerID] = pageHandlerObject;
+        }
+        
+        var overrideGlobalEventHandlers = function () {
+            var docID = $action.detectOrAssignElementID(document);
+            var documentOverrides = "";
+            for (var i = 0; i < $action.GlobalEventHandlers.length; i++) {
+                documentOverrides = documentOverrides + "if(document." + $action.GlobalEventHandlers[i] +
+                    ") { \n postHandlerCommand('" + docID + "', '" + $action.GlobalEventHandlers[i] + "', document." + $action.GlobalEventHandlers[i] + ".toString(), document); \n } \n";
+            }
+
+            var windowID = $action.detectOrAssignElementID(window);
+            var windowOverrides = "";
+            for (var j = 0; j < $action.GlobalEventHandlers.length; j++) {
+                windowOverrides = windowOverrides + "if(window." + $action.GlobalEventHandlers[j] +
+                    ") { \n postHandlerCommand(" + windowID + ", '" + $action.GlobalEventHandlers[j] + "', window." + $action.GlobalEventHandlers[j] + ".toString(), window); \n } \n";
+            }
+
+            return postHandlerCommand + "\nfunction detectGlobalHandlers() { \n " + documentOverrides + windowOverrides + "\n } \n detectGlobalHandlers();";
+        }
+
+        var script = document.createElement("script");
+        script.setAttribute("defer", "defer"); 
+        script.appendChild(document.createTextNode(directive + "\n" + overrideGlobalEventHandlers()));
+
+        script.id = "genie_global_handlers_script";
+        return script;
+    }
+
 
     $action.getScript = function () {
         var directive = `'use strict';`;
@@ -496,7 +555,7 @@ var $action = $action || {};
         };
 
         var script = document.createElement("script");
-        script.appendChild(document.createTextNode(directive + "\n" + windowListener + "\n" + windowObjects + "\n" + updateEventHandlerOnElement + "; \n" + receiveMessage + "; \n" + getElementFromID + "; \n" + getPageHandlerID + "; \n" + getPageHandlerObject + "; \n" + getContentObject + "; \n" + detectElementID + "; \n" + detectOrAssignElementID + "; \n" + getHandlerID + "; \n" + getElementID + "; \n var ignoreMinifiedJQuery = " + ignoreMinifiedJQuery + "; \n" + ignoreJQueryFunction + "; \n" + "EventTarget.prototype._addEventListener = EventTarget.prototype.addEventListener;\n" + "EventTarget.prototype.addEventListener = " + newAddEventListener + "; \n" + "EventTarget.prototype._removeEventListener = EventTarget.prototype.removeEventListener; \n" + "EventTarget.prototype.removeEventListener = " + newRemoveEventListener + "; \n"));
+        script.appendChild(document.createTextNode(directive + "\n" + windowListener + "\n" + windowObjects + "\n" + updateEventHandlerOnElement + "; \n" + receiveMessage + "; \n" + getElementFromID + "; \n" + getPageHandlerID + "; \n" + getPageHandlerObject + "; \n" + getContentObject + "; \n" + detectElementID + "; \n" + detectOrAssignElementID +  "; \n" + getHandlerID + "; \n" + getElementID + "; \n var ignoreMinifiedJQuery = " + ignoreMinifiedJQuery + "; \n" + ignoreJQueryFunction + "; \n" + "EventTarget.prototype._addEventListener = EventTarget.prototype.addEventListener;\n" + "EventTarget.prototype.addEventListener = " + newAddEventListener + "; \n" + "EventTarget.prototype._removeEventListener = EventTarget.prototype.removeEventListener; \n" + "EventTarget.prototype.removeEventListener = " + newRemoveEventListener + "; \n"));
 
         script.id = "genie_monitor_script";
 

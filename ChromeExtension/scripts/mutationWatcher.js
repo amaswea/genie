@@ -120,6 +120,8 @@ var $action = $action || {};
                         }
                     } 
                 }
+                
+                // Check for object global event handler
             }
         };
 

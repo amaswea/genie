@@ -1,4 +1,9 @@
 var globalVar = false;
+
+window.onload = function() {
+    console.log("testing");
+}
+
 $(document).ready(function () {
     // TODO: Test different types of event handler registrations
 

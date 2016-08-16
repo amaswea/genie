@@ -116,11 +116,17 @@
                     imperativePhrases: [],
                     nouns: [],
                     verbs: []
+                }, 
+                assignments: {
+                    phrases: [],
+                    imperativePhrases: [],
+                    nouns: [],
+                    verbs: []
                 }
             }*/
              var completeLabel = "";
              // Constructs a desired label for the command based on the command metadata available
-             var nodeTypes = ["elementLabels", "handlerComments", "expressionComments", "expressionCalls"];
+             var nodeTypes = ["elementLabels", "handlerComments", "expressionComments", "expressionCalls", "assignments"];
              var phraseTypes = ["phrases", "imperativePhrases", "nouns", "verbs"];
              for (var i = 0; i < nodeTypes.length; i++) {
                  for (var j = 0; j < phraseTypes.length; j++) {
