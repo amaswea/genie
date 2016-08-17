@@ -127,7 +127,7 @@
              var completeLabel = "";
              // Constructs a desired label for the command based on the command metadata available
              var nodeTypes = ["elementLabels", "handlerComments", "expressionComments", "expressionCalls", "assignments"];
-             var phraseTypes = ["phrases", "imperativePhrases", "nouns", "verbs"];
+             var phraseTypes = ["phrases", "imperativePhrases", "nouns", "verbs", "other"];
              for (var i = 0; i < nodeTypes.length; i++) {
                  for (var j = 0; j < phraseTypes.length; j++) {
                      var labelSet = this.command.LabelMetadata[nodeTypes[i]][phraseTypes[j]];

@@ -123,11 +123,13 @@ function receiveMessage(event) {
                     if (added) {
                         // Returns a new object with the computed expression string representing the data dependencies. 
                         dataDependencies = $action.getDataDependencies(event.data);
+                        event.data.dependencies = dataDependencies;
+                        event.data.messageType = 'eventDependenciesFound';
                     } else {
-                        dataDependencies.messageType = 'eventDependenciesNotFound';
+                        event.data.messageType = 'eventDependenciesNotFound';
                     }
 
-                    window.postMessage(dataDependencies, "*")
+                    window.postMessage(event.data, "*")
                 };
             }
 

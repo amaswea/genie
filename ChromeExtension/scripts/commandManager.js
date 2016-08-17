@@ -221,6 +221,7 @@ var $action = $action || {};
                 // Convert 
                 labelMetadata.verbs = labelMetadata.verbs.concat(tagged.verbs);
                 labelMetadata.nouns = labelMetadata.nouns.concat(tagged.nouns);
+                labelMetadata.other = labelMetadata.other.concat(tagged.other);
             }
         }
 
@@ -375,7 +376,7 @@ var $action = $action || {};
 
             // Visitor for searching identifiers within a node
             var findIdentifiersInNode = {
-                lookFor: ["Identifier"],
+                lookFor: ["Identifier", "Literal"],
                 items: []
             }
 
@@ -409,7 +410,7 @@ var $action = $action || {};
 
         parseAssignmentExpressions(command, ast) {
             var findIdentifiersInNode = {
-                lookFor: ["Identifier"],
+                lookFor: ["Identifier", "Literal"],
                 items: []
             }
 
@@ -523,7 +524,11 @@ var $action = $action || {};
 
         parseIdentifiers(labelMetadata, identifiers) {
             for (let i = 0; i < identifiers.length; i++) {
-                this.parseLabel(labelMetadata, identifiers[i].name);
+                if (identifiers[i].name) {
+                    this.parseLabel(labelMetadata, identifiers[i].name);
+                } else if (identifiers[i].stringRepresentation) {
+                    this.parseLabel(labelMetadata, identifiers[i].stringRepresentation);
+                }
             }
         }
 

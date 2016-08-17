@@ -73,37 +73,43 @@ var $action = $action || {};
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
-                    verbs: []
+                    verbs: [], 
+                    other: []
                 },
                 handlerName: {
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
-                    verbs: []
+                    verbs: [], 
+                    other: []
                 },
                 handlerComments: {
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
-                    verbs: []
+                    verbs: [], 
+                    other: []
                 },
                 expressionComments: {
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
-                    verbs: []
+                    verbs: [], 
+                    other: []
                 },
                 expressionCalls: {
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
-                    verbs: []
+                    verbs: [], 
+                    other: []
                 },
                 assignments: {
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
-                    verbs: []
+                    verbs: [], 
+                    other: []
                 }
             }
 
@@ -278,8 +284,8 @@ var $action = $action || {};
             var element = $(this._domElement);
             var displayed = element.css('display') != "none";
             var visibility = element.css('visibility') != "hidden";
-            var heightBigEnough = element.height() > 10;
-            var widthBigEnough = element.width() > 10;
+            var heightBigEnough = element.outerHeight() > 10;
+            var widthBigEnough = element.outerWidth() > 10;
             var notClear = element.css('opacity') != "0" && element.css('opacity') != "0.0";
             var offLeftRight = (element.offset().left >= window.innerWidth) || ((element.offset().left + element.offsetWidth) <= 0);
             var hidden = element.attr('type') == 'hidden';

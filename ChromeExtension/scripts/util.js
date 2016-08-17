@@ -521,8 +521,8 @@ var $action = $action || {};
             if (this instanceof Element || this instanceof Window || this instanceof Document) {
                 var handlerString = listener.toString();
                 var elementID = detectOrAssignElementID(this);
-                var handlerID = getPageHandlerID(type, listener, elementID); // If the handler already exists in the map, ignore it. 
-                //debugger;
+                var handlerID = getPageHandlerID(type, listener, elementID); // If the handler already exists in the map, ignore it.
+                
                 if (handlerString != ignoreJQueryFunction && handlerString != ignoreMinifiedJQuery && !ignore && !handlerID) {
                     var id = getHandlerID(); // This unique ID will represent this handler, event, and element combination
                     var contentObject = getContentObject(id, elementID, 'eventAdded', type, listener);

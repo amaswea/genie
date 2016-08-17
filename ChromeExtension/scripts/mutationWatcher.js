@@ -117,10 +117,15 @@ var $action = $action || {};
                                 messageType: 'pageCommandFound',
                                 commandData: commandData
                             }, "*");
+                        } else {
+                            window.postMessage({
+                                messageType: 'pageDependenciesNotFound',
+                                commandData: commandData
+                            }, "*");
                         }
-                    } 
+                    }
                 }
-                
+
                 // Check for object global event handler
             }
         };
