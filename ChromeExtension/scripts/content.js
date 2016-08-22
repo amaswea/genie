@@ -164,13 +164,13 @@ function receiveMessage(event) {
  * @method getCommandStates
  */
 function updateCommandEnabledStates() {
-    window.postMessage({
+  /*  window.postMessage({
         messageType: 'getCommandStates'
     }, "*");
-
+*/
     $action.commandManager.updateVisibleCommands();
     $action.commandsChanged = false;
-    setTimeout(updateCommandEnabledStates, 2000);
+  //  setTimeout(updateCommandEnabledStates, 2000);
 }
 
 function organizeCommands() {

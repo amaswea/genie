@@ -896,9 +896,12 @@ var $action = $action || {};
                     var toStringValue = node.kind;
                     for (var i = 0; i < node.declarations.length; i++) {
                         var declarator = node.declarations[i];
-                        toStringValue = toStringValue + ", " + this.convertNodeToString(declarator);
+                        toStringValue = toStringValue + " " + this.convertNodeToString(declarator);
+                        if(i < node.declarations.length - 1){
+                            toStringValue = toStringValue + ", ";
+                        }
                     }
-                    toStringValue = ";";
+                    toStringValue = toStringValue + ";";
                     return toStringValue;
                 }
             case "ThisExpression":
@@ -909,13 +912,13 @@ var $action = $action || {};
                     for (var i = 0; i < node.elements.length; i++) {
                         var element = node.elements[i];
                         if (element) {
-                            toStringValue + " " + this.convertNodeToString(element);
+                            toStringValue = toStringValue + " " + this.convertNodeToString(element);
                             if (i < node.elements.length - 1) {
-                                toStringValue + ",";
+                                toStringValue = toStringValue + ",";
                             }
                         }
                     }
-                    toStringValue + ";";
+                    toStringValue = toStringValue + ";";
                     return toStringValue;
                 }
             case "ObjectExpression":
@@ -1088,7 +1091,9 @@ var $action = $action || {};
                 }
             case "Property":
                 // TODO
-                return "";
+                {
+                    return this.convertNodeToString(node.key) + ": " + this.convertNodeToString(node.value);
+                }
             case "Literal":
                 return node.raw;
             default:

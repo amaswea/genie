@@ -32,19 +32,31 @@ $(document).ready(function () {
         }
     });
 */
-    // Command Handlers
+    function mytestfunc(){
+        this.x = false; 
+        this.y = true; 
+        this.z = false;
+    }
+    
+    mytestfunc.prototype.add = true;
 
     // jQuery selectors 
+    this.test = "test";
     var test = false;
     var myfunc = function() {
         alert("hello");
     };
     
     var myobj = {
-        test: function() {
-            alert("testing");
+        test: false, 
+        test2: true, 
+        test3: {
+            test4: true
         }
     }
+    
+    myObj.test3.test4 = false;
+    myobj.test3 = false;
     
     var myfunc2 = function() {
         alert("testing2");

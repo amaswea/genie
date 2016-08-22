@@ -15,9 +15,9 @@ var $action = $action || {};
         get Functions() {
             return this._functions;
         }
-        
-        get Assignments() {
-            return this._assignments;
+
+        get Declarations() {
+            return this._declarationss;
         }
 
         isJQuery(url) {
@@ -64,27 +64,54 @@ var $action = $action || {};
             for (var i = 0; i < findFunctionExpressionsInProgram.items.length; i++) {
                 let item = findFunctionExpressionsInProgram.items[i];
                 if (item.id && item.id.name && item.id.name.length) {
-                    this._functions[item.id.name] = item;
+                    if (this._functions[item.id.name]) {
+                        if (this._functions[item.id.name] instanceof Array) {
+                            this._functions[item.id.name].push(item);
+                        } else {
+                            let oldVal = this._functions[item.id.name];
+                            this._functions[item.id.name] = [];
+                            this._functions[item.id.name].push(oldVal);
+                            this._functions[item.id.name].push(item);
+                        }
+                    } else {
+                        this._functions[item.id.name] = item;
+                    }
                 } else if (item.referenceID && item.referenceID.length) {
                     this._functions[item.referenceID] = item;
                 }
             }
 
-            var findAssignmentExpressionsInProgram = {
-                lookFor: ["AssignmentExpression"],
+            var findVariableDeclarationsInProgram = {
+                lookFor: ["VariableDeclarator"],
                 within: ["Program"],
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, findAssignmentExpressionsInProgram);
-            for (var i = 0; i < findAssignmentExpressionsInProgram.items.length; i++) {
-                let item = findAssignmentExpressionsInProgram.items[i];
-                if (item.left && item.left.name) {
-                    this._assignments[item.left.name] = item;
-                }else if(item.left.type == "MemberExpression" && item.left.property && item.left.property.name){
-                    this._assignments[item.left.property.name] = item;
+            $action.ASTAnalyzer.searchAST(ast, findVariableDeclarationsInProgram);
+            for (var i = 0; i < findVariableDeclarationsInProgram.items.length; i++) {
+                let item = findVariableDeclarationsInProgram.items[i];
+                if (item.left) {
+                    if (item.left.name) {
+                        if (this._declarations[item.left.name] instanceof Array) {
+                            this._declarations[item.left.name].push(item);
+                        } else {
+                            let oldVal = this._declarations[item.left.name];
+                            this._declarations[item.left.name] = [];
+                            this._declarations[item.left.name].push(oldVal);
+                            this._declarations[item.left.name].push(item);
+                        }
+                    } else if (item.left.type == "MemberExpression" && item.left.property && item.left.property.name) {
+                        this._declarations[item.left.property.name] = item;
+                    }
                 }
             }
+
+            var findAssignmentExpressions = {
+                lookFor: ["AssignmentExpression"],
+                within: ["Program"],
+                items: []
+            }
+            $action.ASTAnalyzer.searchAST(ast, findAssignmentExpressions);
         }
     }
 

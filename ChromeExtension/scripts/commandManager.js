@@ -138,6 +138,22 @@ var $action = $action || {};
 
             $action.ASTAnalyzer.searchAST(ast, assignmentExpressionsInProgram);
 
+            var variableDeclaratorsInProgram = {
+                lookFor: "VariableDeclarator",
+                within: "Program",
+                items: []
+            }
+
+            $action.ASTAnalyzer.searchAST(ast, variableDeclaratorsInProgram);
+            var declaratorMap = {};
+            for (let i = 0; i < variableDeclaratorsInProgram.items.length; i++) {
+                let declarator = variableDeclaratorsInProgram.items[i];
+                if (declarator && declarator.id && declarator.id.name) {
+                    declaratorMap[name] = declarator;
+                }
+            }
+
+
             // Go through the returned list of assignment expression identfieris and link them to those with the same name in the script cache
             for (var i = 0; i < assignmentExpressionsInProgram.items.length; i++) {
                 var assignment = assignmentExpressionsInProgram.items[i];
@@ -146,7 +162,13 @@ var $action = $action || {};
                 if (name && name.length) {
                     var referencedIdentifier = this._scriptManager.Assignments[name];
                     if (referencedIdentifier) {
+                        // The assigned variable was originally declared elsewhere in the function
                         assignment.referencedIdentifier = referencedIdentifier;
+                    } else
+                    // The assigned variable was originally declared in the handler
+                        var variableDeclarator = declaratorMap[name];
+                    if (variableDeclarator) {
+                        assignment.referencedIdentifier = variableDeclarator;
                     }
                 }
             }
@@ -204,16 +226,14 @@ var $action = $action || {};
             var toLower = phrase.toLowerCase();
             var tagged = this._parser.parse(phrase);
             var split = this._parser.split(phrase);
-            if (split && split.length > 1) {
+            if (split && split.length > 1 && !tagged.nonEnglish.length) {
                 let first = split[0].toLowerCase();
                 var sentence = split.toString().replace(/\,/g, " ").toLowerCase();
                 sentence = _.upperFirst(sentence);
-                if (tagged.nonEnglish.length < split.length) { // Phrase should contain at least one enlish word.  
-                    if (tagged.verbs.indexOf(first) > -1) {
-                        labelMetadata.imperativePhrases.push(sentence);
-                    } else {
-                        labelMetadata.phrases.push(sentence);
-                    }
+                if (tagged.verbs.indexOf(first) > -1) {
+                    labelMetadata.imperativePhrases.push(sentence);
+                } else {
+                    labelMetadata.phrases.push(sentence);
                 }
             } else {
                 // Not a phrase
@@ -409,11 +429,6 @@ var $action = $action || {};
         }
 
         parseAssignmentExpressions(command, ast) {
-            var findIdentifiersInNode = {
-                lookFor: ["Identifier", "Literal"],
-                items: []
-            }
-
             var findAssignmentExpressionsOutsideConditionals = {
                 lookFor: ["AssignmentExpression"],
                 outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
@@ -425,8 +440,16 @@ var $action = $action || {};
             // Within the assignment expressions that have a referenced identifier, find and parse the identifiers
             for (var i = 0; i < findAssignmentExpressionsOutsideConditionals.items.length; i++) {
                 let item = findAssignmentExpressionsOutsideConditionals.items[i];
+                var findIdentifiersInNode = {
+                    lookFor: ["Identifier", "Literal"],
+                    items: []
+                }
+
                 if (item && item.referencedIdentifier) {
                     $action.ASTAnalyzer.searchAST(item, findIdentifiersInNode);
+
+                    // Then parse all the identifers found within the collection of items
+                    this.parseIdentifiersAsPhrase(command.LabelMetadata.assignments, findIdentifiersInNode.items);
                 }
             }
 
@@ -442,13 +465,18 @@ var $action = $action || {};
             // Within the assignment expressions that have a referenced identifier, find and parse the identifiers
             for (var i = 0; i < findAssignmentExpressionsInsideConditionals.items.length; i++) {
                 let item = findAssignmentExpressionsInsideConditionals.items[i];
+                var findIdentifiersInNode = {
+                    lookFor: ["Identifier", "Literal"],
+                    items: []
+                }
+
                 if (item && item.referencedIdentifier) {
                     $action.ASTAnalyzer.searchAST(item, findIdentifiersInNode);
+
+                    // Then parse all the identifers found within the collection of items
+                    this.parseIdentifiersAsPhrase(command.LabelMetadata.assignments, findIdentifiersInNode.items);
                 }
             }
-
-            // Then parse all the identifers found within the collection of items
-            this.parseIdentifiers(command.LabelMetadata.assignments, findIdentifiersInNode.items);
         }
 
         parseExpressionStatements(command, ast) {
@@ -530,6 +558,19 @@ var $action = $action || {};
                     this.parseLabel(labelMetadata, identifiers[i].stringRepresentation);
                 }
             }
+        }
+
+        parseIdentifiersAsPhrase(labelMetadata, identifiers) {
+            let phraseString = "";
+            for (let i = 0; i < identifiers.length; i++) {
+                if (identifiers[i].name) {
+                    phraseString = phraseString + " " + identifiers[i].name;
+                } else if (identifiers[i].stringRepresentation) {
+                    phraseString = phraseString + " " + identifiers[i].stringRepresentation;
+                }
+            }
+
+            this.parsePhrase(labelMetadata, phraseString);
         }
 
         /**
