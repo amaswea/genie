@@ -443,10 +443,27 @@ var $action = $action || {};
             // Search from left to right so that identifiers on the right will be resolved to their mapped nodes in the scope before the assigned variable gets resolved. 
             this.searchNode(expression.right, visitor);
 
-            // TODO: Is this too specific?
-            if (expression.right && expression.left && expression.right.type == "FunctionExpression" && expression.left.type == "Identifier") {
-                expression.right.referenceID = expression.left.name;
-                // TODO: This won't work for ObjectPattern or ArrayPattern node types. decorator.id is a Pattern node.
+            if (expression.right && expression.left) {
+                if (expression.right.type == "FunctionExpression") {
+                    if (expression.left.type == "Identifier") {
+                        expression.right.referenceID = expression.left.name;
+                    } else if (expression.left.type == "MemberExpression") {
+                        if (expression.left.property.type == "Identifier") {
+                            expression.right.referenceID = expression.left.property.name;
+                        }
+                    }
+                } else if (expression.right.type == "CallExpression") {
+                    // Self executing function expression
+                    if (expression.right.callee && expression.right.callee.type == "FunctionExpression") {
+                        if (expression.left.type == "Identifier") {
+                            expression.right.callee.referenceID = expression.left.name;
+                        } else if (expression.left.type == "MemberExpression") {
+                            if (expression.left.property.type == "Identifier") {
+                                expression.right.callee.referenceID = expression.left.property.name;
+                            }
+                        }
+                    }
+                }
             }
 
             // The left property contains a Pattern node. 
@@ -659,6 +676,12 @@ var $action = $action || {};
             // Only supported by object expressions
             this.searchNode(property.key, visitor);
             this.searchNode(property.value, visitor);
+
+            if (property.value.type == "FunctionExpression") {
+                if (property.key.type == "Identifier") {
+                    property.value.referenceID = property.key.name;
+                }
+            }
 
             //property.kind contains the kind "init" for ordinary property initializers. 
             // "get" and "set" are the kind values for getters and setters
@@ -897,7 +920,7 @@ var $action = $action || {};
                     for (var i = 0; i < node.declarations.length; i++) {
                         var declarator = node.declarations[i];
                         toStringValue = toStringValue + " " + this.convertNodeToString(declarator);
-                        if(i < node.declarations.length - 1){
+                        if (i < node.declarations.length - 1) {
                             toStringValue = toStringValue + ", ";
                         }
                     }
@@ -918,7 +941,7 @@ var $action = $action || {};
                             }
                         }
                     }
-                    toStringValue = toStringValue + ";";
+                    toStringValue = toStringValue + "]";
                     return toStringValue;
                 }
             case "ObjectExpression":
@@ -1115,8 +1138,7 @@ var $action = $action || {};
 
             if (node.stringRepresentation) {
                 return node.stringRepresentation;
-            }
-            else {
+            } else {
                 node.stringRepresentation = this.getStringForNode(node);
                 return node.stringRepresentation;
             }

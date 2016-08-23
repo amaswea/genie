@@ -149,29 +149,35 @@ var $action = $action || {};
             for (let i = 0; i < variableDeclaratorsInProgram.items.length; i++) {
                 let declarator = variableDeclaratorsInProgram.items[i];
                 if (declarator && declarator.id && declarator.id.name) {
-                    declaratorMap[name] = declarator;
+                    declaratorMap[declarator.id.name] = declarator;
                 }
             }
 
-
-            // Go through the returned list of assignment expression identfieris and link them to those with the same name in the script cache
             for (var i = 0; i < assignmentExpressionsInProgram.items.length; i++) {
                 var assignment = assignmentExpressionsInProgram.items[i];
                 var name = this.getAssignmentReference(assignment);
                 // Search through the stored list of functions
                 if (name && name.length) {
-                    var referencedIdentifier = this._scriptManager.Assignments[name];
+                    var referencedIdentifier = this._scriptManager.Declarations[name];
                     if (referencedIdentifier) {
                         // The assigned variable was originally declared elsewhere in the function
                         assignment.referencedIdentifier = referencedIdentifier;
-                    } else
-                    // The assigned variable was originally declared in the handler
-                        var variableDeclarator = declaratorMap[name];
-                    if (variableDeclarator) {
-                        assignment.referencedIdentifier = variableDeclarator;
+                    } else {
+                        var referencedFunction = this._scriptManager.Functions[name];
+                        if (referencedFunction) {
+                            assignment.referencedIdentifier = referencedFunction;
+                        } else {
+                            // The assigned variable was originally declared in the handler
+                            var variableDeclarator = declaratorMap[name];
+                            if (variableDeclarator) {
+                                assignment.referencedIdentifier = variableDeclarator;
+                            }
+                        }
                     }
                 }
             }
+
+            // Find UpdateExpressions as well
         };
 
         // Can be FunctionExpression, FunctionDefinition, or ArrowExpression
@@ -190,25 +196,51 @@ var $action = $action || {};
             var callRef = "";
             if (callExpr.callee.type == "Identifier") {
                 callRef = callExpr.callee.name;
+            } else if (callExpr.callee.type == "MemberExpression") {
+                if (callExpr.callee.property.type == "Identifier") {
+                    callRef = callExpr.callee.property.name;
+                }
             }
-            // TODO: more advanced calls later
+
             return callRef;
         }
 
         // Can be AssignmentExpression
         getAssignmentReference(assignmentExpr) {
+            // types of expressions that can be on the left hand side of teh assignment
+            // Left --
+            // Identifier - Look for identifier.name in the list of declarations
+            // StaticMemberExpression (el.x) - Find the object name,call recursively if left hand is another static member or computed)
+            // ComputedMemberExpression - Same as above
+            // ThisExpression - Ignore
+            // ArrayExpression - Ignore
+            // ObjectExpressoin - Ignore
+            // FunctionExpression - Ignore
+            // Arrow Expression - Ignore
+            // Sequence Expression - Ignore
             var assignmentRef = "";
             if (assignmentExpr.left) {
                 if (assignmentExpr.left.type == "Identifier") {
                     assignmentRef = assignmentExpr.left.name;
                 } else if (assignmentExpr.left.type == "MemberExpression") {
-                    if (assignmentExpr.left.property && assignmentExpr.left.property.name) {
-                        assignmentRef = assignmentExpr.left.property.name;
-                    }
+                    assignmentRef = this.getBaseMemberExpressionReference(assignmentExpr.left);
                 }
             }
             // TODO: more advanced calls later
             return assignmentRef;
+        }
+
+        /**
+         * Gets the base reference of an object. For example, for 'myObj.property.test = true', it would return 'myObj'
+         * @private
+         * @property undefined
+         */
+        getBaseMemberExpressionReference(expression) {
+            if (expression.object && expression.object.type == "Identifier" && expression.object.name) {
+                return expression.object.name;
+            } else {
+                return this.getBaseMemberExpressionReference(expression.object);
+            }
         }
 
         filterTagNodes(text) {
