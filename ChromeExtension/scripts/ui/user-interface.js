@@ -132,7 +132,7 @@
                  for (var j = 0; j < phraseTypes.length; j++) {
                      var labelSet = this.command.LabelMetadata[nodeTypes[i]][phraseTypes[j]];
                      for (var k = 0; k < labelSet.length; k++) {
-                         completeLabel = completeLabel + labelSet[k] + ", ";
+                         completeLabel = completeLabel + _.upperFirst(labelSet[k]) + ", ";
                      }
                  }
              }

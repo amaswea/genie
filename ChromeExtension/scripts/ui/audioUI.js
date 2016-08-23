@@ -18,9 +18,21 @@ var $action = $action || {};
             listItem.classList.add("genie-audio-ui-list-item");
 
             var labelSpan = document.createElement("span");
+            var commandLabelSpan = document.createElement("span"); 
+            commandLabelSpan.classList.add("genie-audio-ui-list-item-command");
             labelSpan.classList.add("genie-audio-ui-list-item-label");
-            labelSpan.textContent = this.label();
-
+            
+            var label = this.label().split(",");
+            var rest = "";
+            var first = "";
+            if(label.length){
+                first = label[0]; // The first chunk of the label goes in a separate element so it can be bolded as the command string
+                rest = _.drop(label, 1); // The second chunk of the label is the rest
+            }
+            labelSpan.textContent = rest; 
+            commandLabelSpan.textContent = first;
+            
+            listItem.appendChild(commandLabelSpan);
             listItem.appendChild(labelSpan);
 
             this._domElement = listItem;

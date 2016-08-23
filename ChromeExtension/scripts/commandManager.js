@@ -48,7 +48,7 @@ var $action = $action || {};
 
         addCommand(command) {
             let duplicate = this.findDuplicate(command); // Look for duplicate commands
-            if (!duplicate && command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1) {
+            if ((!duplicate) && (command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1)) {
                 var element = $action.getElementFromID(command.elementID);
                 var newCommand = new $action.Command(command.id, command.elementID, command.eventType, command.handler)
                 this.initMetadata(newCommand);
@@ -239,7 +239,11 @@ var $action = $action || {};
             if (expression.object && expression.object.type == "Identifier" && expression.object.name) {
                 return expression.object.name;
             } else {
-                return this.getBaseMemberExpressionReference(expression.object);
+                if (expression.type == "CallExpression") {
+                    return this.getBaseMemberExpressionReference(expression.callee);
+                } else {
+                    return this.getBaseMemberExpressionReference(expression.object);
+                }
             }
         }
 

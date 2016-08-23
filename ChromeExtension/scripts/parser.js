@@ -15,6 +15,10 @@ var $difference = $action || {};
             var splitString = camelCasedTokens.split(' ');
             if (splitString.length > 1) {
                 return splitString;
+            }else {
+                camelCasedTokens = stringToSplit.replace(/([A-Z](?=[a-z]))/g, '$1 ');
+                splitString = camelCasedTokens.split(' ');
+                return splitString; 
             }
         };
 

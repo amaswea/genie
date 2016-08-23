@@ -33,6 +33,7 @@
     border-bottom: 0.5px solid lightgray;
     width: 100%;
     color: black !important;
+    background-color: #e4e4e4;
 }
 
 .genie-audio-ui-list {
@@ -57,6 +58,10 @@
 
 .genie-audio-ui-list-item-label {
     color: black !important;
+}
+
+.genie-audio-ui-list-item-command {
+    font-weight: bold;
 }
 
 .genie-audio-ui-header {
