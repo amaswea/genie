@@ -160,6 +160,15 @@ var $action = $action || {};
             // TODO: Later fill in the complete set. 
     }
     
+    // List of key codes and word mappings
+    $action.KeyCodes = {
+        37: "Left", 
+        38: "Up", 
+        39: "Right", 
+        40: "Down"
+        // TODO: Populate the rest later
+    }
+    
     // Attributes that have a URL to parse
     $action.LabelURLAttributes = ["href"]
 })($action);

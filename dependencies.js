@@ -67,38 +67,65 @@ $(document).ready(function () {
 
     }
 
-    $('.button1-dependent')[0].addEventListener('click', function clickButton() {
-        // Another comment before the alert
-        myobj.test3.test4 = false;
-        alert("hello");
-        // TEsting if this comment is attached
-        myfunc();
-        var myvar = 22;
-        test = true;
-        myobj.test();
-        rotateDown();
-        // If button 1 is not disabled, send an alert.
-        if (!$('.button1').attr('disabled')) {
+    /*  $('.button1-dependent')[0].addEventListener('click', function clickButton() {
+          // Another comment before the alert
+          myobj.test3.test4 = false;
+          alert("hello");
+          // TEsting if this comment is attached
+          myfunc();
+          var myvar = 22;
+          test = true;
+          myobj.test();
+          rotateDown();
+          // If button 1 is not disabled, send an alert.
+          if (!$('.button1').attr('disabled')) {
 
-            // Testing if this second comment is attached
-            // This is a comment before the alert.
-            myfunc2();
-            // This is a comment after the alert
+              // Testing if this second comment is attached
+              // This is a comment before the alert.
+              myfunc2();
+              // This is a comment after the alert
 
-            if (test) {
-                myfunc3();
-            } else if (test) {
-                myfunc4();
+              if (test) {
+                  myfunc3();
+              } else if (test) {
+                  myfunc4();
 
-                if (test) {
-                    myfunc5();
-                }
-            }
+                  if (test) {
+                      myfunc5();
+                  }
+              }
+          }
+          /** 
+          This is a block comment 
+          */
+
+
+    var mover = {
+        down: false,
+        up: false,
+        left: false,
+        right: false
+    }
+    $('.button1-dependent')[0].addEventListener('keydown', function handleKeyDown(evt) {
+        var storedKeyCode = evt.keyCode;
+        storedKeyCode = evt.keyCode;
+        if (evt.keyCode == 40) {
+            mover.down = true;
+        } else if (evt.keyCode == 39) {
+            mover.right = true;
+        } else if (evt.keyCode == 38) {
+            mover.down = true;
+        } else if (evt.keyCode == 37) {
+            mover.left = true;
         }
-        /** 
-        This is a block comment 
-        */
+        
+        if(storedKeyCode == 37){
+            mover.left = true;
+        }
+        
     });
+
+
 
     /*    $('.button2-dependent')[0].addEventListener('click', function (evt, arg2) {
             var disabled = $('.button3').attr('disabled');

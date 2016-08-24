@@ -15,12 +15,22 @@ var $difference = $action || {};
             var splitString = camelCasedTokens.split(' ');
             if (splitString.length > 1) {
                 return splitString;
-            }else {
-                camelCasedTokens = stringToSplit.replace(/([A-Z](?=[a-z]))/g, '$1 ');
-                splitString = camelCasedTokens.split(' ');
-                return splitString; 
             }
         };
+
+        splitCamelCaseNonEnglish(stringToSplit) {
+            var camelCasedTokens = stringToSplit.replace(/([A-Z](?=[a-z]))/g, '$1 ');
+            var splitString = camelCasedTokens.split(' ');
+            if (splitString.length > 1) {
+                return splitString;
+            } else {
+                camelCasedTokens = stringToSplit.replace(/([a-z](?=[A-Z]))/g, '$1 ');
+                splitString = camelCasedTokens.split(' ');
+                if (splitString.length > 1) {
+                    return splitString;
+                }
+            }
+        }
 
         // Split the string by dashes "-"
         splitDashed(stringToSplit) {
@@ -70,6 +80,9 @@ var $difference = $action || {};
         };
 
         parseString(wordString) {
+            // First remove & and replace with 'and'
+            wordString = wordString.replace("&", "and");
+
             // TODO: See if lodash _.words could be used instead. 
             // Things that don't work
             // Classes with numbers in them
@@ -120,7 +133,7 @@ var $difference = $action || {};
             var partsOfSpeech = {};
             partsOfSpeech.nouns = [];
             partsOfSpeech.verbs = [];
-            partsOfSpeech.other = []; 
+            partsOfSpeech.other = [];
             partsOfSpeech.nonEnglish = [];
 
             for (var i = 0; i < words.length; i++) {
@@ -130,20 +143,45 @@ var $difference = $action || {};
                     if (this.isEnglish(word)) {
                         var pos = this.partOfSpeech(word);
                         var posValue = pos[0][1];
-                        if (["NN", "NNP", "NNPS", "NNS"].indexOf(posValue) > -1) {
-                            partsOfSpeech.nouns.push(word.toLowerCase());
-                        } else if (["VB", "VBP"].indexOf(posValue) > -1) {
-                            partsOfSpeech.verbs.push(word.toLowerCase());
+                        this.savePartOfSpeech(word, posValue, partsOfSpeech);
+                    } else {
+                        // Try to parse them by camel casing & re-tag
+                        var splitCamelCase = this.splitCamelCaseNonEnglish(word);
+                        if (splitCamelCase && splitCamelCase.length > 1) {
+                            var newPos, newPosValue;
+                            if (this.isEnglish(splitCamelCase[1])) {
+                                newPos = this.partOfSpeech(splitCamelCase[1]);
+                                newPosValue = newPos[0][1];
+                                this.savePartOfSpeech(splitCamelCase[1], newPosValue, partsOfSpeech);
+                            }else {
+                                partsOfSpeech.nonEnglish.push(splitCamelCase[1]);
+                            }
+
+                            if (this.isEnglish(splitCamelCase[0])) {
+                                newPos = this.partOfSpeech(splitCamelCase[0]);
+                                newPosValue = newPos[0][1];
+                                this.savePartOfSpeech(splitCamelCase[0], newPosValue, partsOfSpeech);
+                            }else {
+                                partsOfSpeech.nonEnglish.push(splitCamelCase[0]);   
+                            }
                         }else {
-                            partsOfSpeech.other.push(word.toLowerCase());
+                            partsOfSpeech.nonEnglish.push(word);
                         }
-                    }else {
-                        partsOfSpeech.nonEnglish.push(word);
                     }
                 }
             }
             return partsOfSpeech;
         };
+
+        savePartOfSpeech(word, posValue, partsOfSpeech) {
+            if (["NN", "NNP", "NNPS", "NNS"].indexOf(posValue) > -1) {
+                partsOfSpeech.nouns.push(word.toLowerCase());
+            } else if (["VB", "VBP"].indexOf(posValue) > -1) {
+                partsOfSpeech.verbs.push(word.toLowerCase());
+            } else {
+                partsOfSpeech.other.push(word.toLowerCase());
+            }
+        }
 
         isEnglish(word) {
             var is_spelled_correctly = this.dictionary.check(word);

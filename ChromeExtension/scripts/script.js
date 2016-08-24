@@ -25,17 +25,39 @@ var $action = $action || {};
             return this._assignments;
         }
 
-        isJQuery(url) {
+        isFramework(url) {
             console.log(url);
+            // TODO: Make this more sophisticated later
             // Does the URL contain jQuery? 
             if (url.includes("jquery") || url.includes("lodash")) {
+                return true;
+            }
+            if(url.includes("twitter")){
+                return true;
+            }
+            if(url.includes("google-analytics")){
+                return true;
+            }
+            if(url.includes("swfobject")){
+                return true;
+            }
+            if(url.includes("js.cookie")){
+                return true;
+            }
+            if(url.includes("keypress")){
+                return true;
+            }
+            if(url.includes("hammer.min")){
+                return true; 
+            }
+            if(url.includes("jsonfn.min")){
                 return true;
             }
             return false;
         }
 
         addScript(url, data) {
-            if (this.isJQuery(url)) {
+            if (this.isFramework(url)) {
                 return;
             }
 

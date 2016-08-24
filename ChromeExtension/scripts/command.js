@@ -66,7 +66,10 @@ var $action = $action || {};
             this._dependencies = [];
             this._dataDependent = false;
             this._computedStyles = {};
-
+            
+            // Collection of possible command arguments (inputs)
+            this._arguments = []; 
+            
             // Label metadata collection structure
             this._labelMetadata = {
                 elementLabels: {
@@ -171,6 +174,10 @@ var $action = $action || {};
              */
         get Handler() {
             return this._handler;
+        }
+        
+        get Arguments() {
+            return this._arguments;
         }
 
         get ElementSelector() {

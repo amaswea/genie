@@ -139,6 +139,16 @@
 
              return completeLabel.substring(0, completeLabel.length - 2);
          }
+         
+         arguments() {
+             var args = "";
+             for(var i=0; i<this.command.Arguments.length; i++){
+                 args = args + this.command.Arguments[i];
+                 if(i < this.command.Arguments.length -1){
+                     args = args + ",";
+                 }
+             }
+         }
      };
 
      $action.CommandItem = CommandItem;

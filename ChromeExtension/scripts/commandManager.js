@@ -296,7 +296,7 @@ var $action = $action || {};
 
             if (sentences.length > 1) {
                 for (var i = 0; i < sentences.length; i++) {
-                    this.parsePhrase(labelMetadata, sentences[i]);
+                    this.parsePhrase(labelMetadata, sentences[i].toLowerCase());
                 }
             } else {
                 let sentence = sentences[0].trim();
@@ -572,8 +572,86 @@ var $action = $action || {};
                 // DOM APIs
                 // Later
                 // Differentiate between statements & function calls?
+
+                this.parseKeycodeInputs(command, ast);
             }
         };
+
+        parseKeycodeInputs(command, ast) {
+            // Locate keycodes in the AST
+            var commandArguments = command.Arguments;
+
+            // First, look for any MemberExpressions outside of conditionals that have references to keycodes
+            // These references should be found in any assignment expression
+            // TOOD: maybe this really should be just outiside because they could be nested
+            var findKeyCodesReferencedOutsideConditionals = {
+                lookFor: ["AssignmentExpression", "VariableDeclarator"],
+                outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
+                items: []
+            }
+
+            $action.ASTAnalyzer.searchAST(ast, findKeyCodesReferencedOutsideConditionals);
+
+            var keyCodeExpressions = []; // Locate any variables that will have a stored reference to a keyCode
+            for (var k = 0; k < findKeyCodesReferencedOutsideConditionals.length; k++) {
+                var expression = findKeyCodesReferencedOutsideConditionals[k];
+                if (expression.type == "AssignmentExpression") {
+                    if (expression.right.type == "MemberExpression" && expression.right.property.type == "Identifier" && expression.right.property.name == "keyCode") {
+                        keyCodeExpressions.push(expression.left);
+                    }
+                } else if (expression.type == "VariableDeclarator") {
+                    if (expression.init.type == "MemberExpression" && expression.init.property.type == "Identifier" && expression.init.property.name == "keyCode") {
+                        keyCodeExpressions.push(expression.id);
+                    }
+                }
+            }
+
+
+            // Find BinaryExpressions inside of Conditional statements
+            // Binary Expressions should be the only ones we care about
+            var findBinaryExpressionsInTest = {
+                lookFor: ["BinaryExpression"],
+                within: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
+                property: ["test"],
+                items: []
+            }
+            $action.ASTAnalyzer.searchAST(ast, findBinaryExpressionsInTest);
+
+            // After finding them, find the member epxressions that have a property that is an identifier with the name of 'keyCode', or an identifier that matches up with the collected keyCode expressions above
+            var keyCodeValues = []; // Keeps track of all referenced keycode values found
+            for (var i = 0; i < findBinaryExpressionsInTest.items.length; i++) {
+                var item = findBinaryExpressionsInTest.items[i];
+                if (item.left.type == "MemberExpression" && item.right.type == "Literal") {
+                    if (item.left.property && item.left.property.type == "Identifier" && item.left.property.name == "keyCode") {
+                        keyCodeValues.push(item.right.raw);
+                    }
+                } else if (item.left.type == "Literal" && item.right.type == "MemberExpression") {
+                    if (item.right.property && item.right.property.type == "Identifier" && item.right.property.name == "keyCode") {
+                        keyCodeValues.push(item.left.raw);
+                    }
+                }
+
+                // Check if the left or right of the expression contains any of the Identifiers or MemberExpressions assigned to keyCode values
+                // MemberExpressions
+                if ((item.left.type == "MemberExpression" || item.left.type == "Identifier") && item.right.type == "Literal") {
+                    for (var m = 0; m < keyCodeExpressions.length; m++) {
+                        if (item.left.stringRepresentation === keyCodeExpressions[m].stringRepresentation) {
+                            keyCodeValues.push(item.right.raw);
+                        }
+                    }
+                } else if (item.left.type == "Literal" && (item.right.type == "MemberExpression" || item.right.type == "Identifier")) {
+                    for (var m = 0; m < keyCodeExpressions.length; m++) {
+                        if (item.right.stringRepresentation === keyCodeExpressions[m].stringRepresentation) {
+                            keyCodeValues.push(item.left.raw);
+                        }
+                    }
+                }
+            }
+
+            for (var j = 0; j < keyCodeValues.length; j++) {
+                commandArguments.push($action.KeyCodes[keycodeValues[j]]);
+            }
+        }
 
         parseComments(labelMetadata, expressionStatements) {
             for (let i = 0; i < expressionStatements.length; i++) {
