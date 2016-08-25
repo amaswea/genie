@@ -42,7 +42,7 @@ var $action = $action || {};
                                     newCommand.DOM.classList.add('genie-audio-ui-disabled');
                                 }*/
 
-                let commandLabel = newCommand.label().toLowerCase();
+                let commandLabel = newCommand.firstImperativeLabel().toLowerCase();
                 this._commandsMap[commandLabel] = newCommand.Command;
             }
         }

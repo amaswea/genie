@@ -122,17 +122,19 @@ function receiveMessage(event) {
                     var dataDependencies = {};
                     if (added) {
                         // Returns a new object with the computed expression string representing the data dependencies. 
-                        dataDependencies = $action.getDataDependencies(event.data);
-                        event.data.dependencies = dataDependencies;
-                        event.data.messageType = 'eventDependenciesFound';
+                        var ast = $action.getAST(event.data);
+                        if (!$action.hasSideEffectsOutsideConditionals(ast)) {
+                            dataDependencies = $action.getDataDependencies(event.data);
+                            event.data.dependencies = dataDependencies;
+                            event.data.messageType = 'eventDependenciesFound';
+                            window.postMessage(event.data, "*")
+                        }
                     } else {
                         event.data.messageType = 'eventDependenciesNotFound';
+                        window.postMessage(event.data, "*")
                     }
-
-                    window.postMessage(event.data, "*")
                 };
             }
-
         }
 
         if (event.data.messageType == 'eventRemoved') {
@@ -164,13 +166,13 @@ function receiveMessage(event) {
  * @method getCommandStates
  */
 function updateCommandEnabledStates() {
-  /*  window.postMessage({
+    window.postMessage({
         messageType: 'getCommandStates'
     }, "*");
-*/
+
     $action.commandManager.updateVisibleCommands();
     $action.commandsChanged = false;
-  //  setTimeout(updateCommandEnabledStates, 2000);
+    setTimeout(updateCommandEnabledStates, 2000);
 }
 
 function organizeCommands() {
@@ -212,7 +214,6 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         var data = msg.data;
         var url = msg.url;
         if (data && data.length) {
-            console.log(url);
             var orig = window.location.origin;
             if (!$action.scriptManager) {
                 $action.scriptManager = new $action.ScriptManager();
@@ -229,9 +230,9 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     document.addEventListener("DOMContentLoaded", function (event) {
         // Can only override any jQuery or D3 event registrations that occur during or after document.ready
         injectJQueryD3OverrideScript();
-        
+
         // Override page and element GlobalEvent
-       // injectGlobalEventHandlerOverrides();
+        // injectGlobalEventHandlerOverrides();
     });
 
     // Initialize the script manager if not already initialized

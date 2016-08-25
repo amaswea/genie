@@ -97,12 +97,36 @@ var $action = $action || {};
      * @method instrumentHandler
      * @param {Object} data
      */
-    $action.getDataDependencies = function (data) {
+    $action.getDataDependencies = function (ast) {
+        return $action.computeSideEffectFreeExpressions(ast);
+    }
+
+    $action.hasSideEffectsOutsideConditionals = function (ast) {
+        var findFunctionCallsOutsideOfConditionals = {
+            outside: [
+                    "IfStatement",
+                    "ConditionalExpression",
+                    "WhileStatement",
+                    "DoWhileStatement",
+                    "ForStatement",
+                    "ForInStatement",
+                    "ForOfStatement"],
+            lookFor: [
+                "CallExpression"
+            ],
+            items: []
+        }
+
+        $action.ASTAnalyzer.searchAST(ast, findFunctionCallsOutsideOfConditionals);
+        return findFunctionCallsOutsideOfConditionals.items.length > 0; 
+    }
+
+    $action.getAST = function (data) {
         try {
             var ast = esprima.parse(data.handler, {
                 tolerant: true
             });
-            return $action.computeSideEffectFreeExpressions(ast);
+            return ast;
         } catch (e) {
             // console.log("Could not parse this handler into an AST: " + data.handler);
             // console.log("Error message from parser: " + e.toString());
@@ -574,25 +598,7 @@ var $action = $action || {};
      * @param {Object} ast
      */
     $action.computeSideEffectFreeExpressions = function (ast) {
-        // First, search for any function calls that are outside of conditionals. 
-        // Consider these to have side effects    
-        var findFunctionCallsOutsideOfConditionals = {
-            outside: [
-                    "IfStatement",
-                    "ConditionalExpression",
-                    "WhileStatement",
-                    "DoWhileStatement",
-                    "ForStatement",
-                    "ForInStatement",
-                    "ForOfStatement"],
-            lookFor: [
-                "CallExpression"
-            ],
-            items: []
-        }
-
-        $action.ASTAnalyzer.searchAST(ast, findFunctionCallsOutsideOfConditionals);
-
+        // Find functions called outside conditionals and assume they are side effects
         var findConditionals = {
             within: "Program",
             lookFor: [
@@ -608,31 +614,35 @@ var $action = $action || {};
 
         $action.ASTAnalyzer.searchAST(ast, findConditionals);
 
-        var testExpressions = [];
+        var dependencies = [];
         for (var i = 0; i < findConditionals.items.length; i++) {
-            let expr = findConditionals.items[i].testExpression;
-            if (expr) {
-                testExpressions.push(expr);
+            let expr = findConditionals.items[i].testConditionString;
+            let path = findConditionals.items[i].pathConditionString;
+            if (expr && path) {
+                dependencies.push(path + " && " + expr);
+            } else if (expr) {
+                dependencies.push(expr);
             }
         }
-
+        
         // Look for identifiers that are contained within SwitchStatements (uses the discriminant property instead of 'test')
-        var findIdentifiersWithinSwitch = {
-            lookFor: "Identifier",
-            within: ["SwitchStatement"],
-            property: "discriminant",
-            items: []
-        }
+        // TODO: Support switch statements later
+        /* var findIdentifiersWithinSwitch = {
+             lookFor: "Identifier",
+             within: ["SwitchStatement"],
+             property: "discriminant",
+             items: []
+         }
 
-        $action.ASTAnalyzer.searchAST(ast, findIdentifiersWithinSwitch);
+         $action.ASTAnalyzer.searchAST(ast, findIdentifiersWithinSwitch);
 
-        for (var j = 0; j < findIdentifiersWithinSwitch.items.length; j++) {
-            let expr = findIdentifiersWithinSwitch.items[j].testExpression;
-            if (expr) {
-                testExpressions.push(expr);
-            }
-        }
-        return testExpressions;
+         for (var j = 0; j < findIdentifiersWithinSwitch.items.length; j++) {
+             let expr = findIdentifiersWithinSwitch.items[j].testExpression;
+             if (expr) {
+                 testExpressions.push(expr);
+             }
+         }*/
+        return dependencies;
     };
 
     $action.getInstrumentedHandler = function (handlerString) {

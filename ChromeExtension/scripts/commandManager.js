@@ -47,8 +47,9 @@ var $action = $action || {};
         }
 
         addCommand(command) {
-            let duplicate = this.findDuplicate(command); // Look for duplicate commands
-            if ((!duplicate) && (command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1)) {
+            // let duplicate = this.findDuplicate(command); // Look for duplicate commands
+            // TODO: Fix this later
+            if ((command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1)) {
                 var element = $action.getElementFromID(command.elementID);
                 var newCommand = new $action.Command(command.id, command.elementID, command.eventType, command.handler)
                 this.initMetadata(newCommand);
@@ -419,16 +420,42 @@ var $action = $action || {};
             }
         };
 
-        parseFunctionCalls(command, ast) {
-            // Find all function call expressions inside conditionals
-            var findFunctionCallExpressionsInsideConditionals = {
-                within: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
+        parseFunctionCallsOutsideConditionals(command, ast) {
+            var findFunctionCallExpressionsOutsideConditionals = {
+                outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
                 lookFor: ["CallExpression"],
-                property: ["consequent", "alternate"],
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, findFunctionCallExpressionsInsideConditionals);
+            $action.ASTAnalyzer.searchAST(ast, findFunctionCallExpressionsOutsideConditionals);
+
+            // Visitor for searching identifiers within a node
+            var findIdentifiersInNode = {
+                lookFor: ["Identifier", "Literal"],
+                items: []
+            }
+
+            // Within the call expressions that have a referenced function, find and parse the identifiers
+            for (var i = 0; i < findFunctionCallExpressionsOutsideConditionals.items.length; i++) {
+                let item = findFunctionCallExpressionsOutsideConditionals.items[i];
+                if (item && item.referencedFunction) {
+                    $action.ASTAnalyzer.searchAST(item, findIdentifiersInNode);
+                }
+            }
+
+            // Parse the located identifiers
+            this.parseIdentifiers(command.LabelMetadata.expressionCalls, findIdentifiersInNode.items);
+        }
+
+        parseFunctionCallsInsideConditional(command, keyCodes, dependency, conditional) {
+            // Find all function call expressions inside conditionals
+            var findFunctionCallExpressionsInsideConditionals = {
+                outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
+                lookFor: ["CallExpression"],
+                items: []
+            }
+
+            $action.ASTAnalyzer.searchAST(conditional, findFunctionCallExpressionsInsideConditionals);
 
             // Visitor for searching identifiers within a node
             var findIdentifiersInNode = {
@@ -444,27 +471,25 @@ var $action = $action || {};
                 }
             }
 
-            var findFunctionCallExpressionsOutsideConditionals = {
-                outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
-                lookFor: ["CallExpression"],
-                items: []
-            }
-
-            $action.ASTAnalyzer.searchAST(ast, findFunctionCallExpressionsOutsideConditionals);
-
-            // Within the call expressions that have a referenced function, find and parse the identifiers
-            for (var i = 0; i < findFunctionCallExpressionsOutsideConditionals.items.length; i++) {
-                let item = findFunctionCallExpressionsOutsideConditionals.items[i];
-                if (item && item.referencedFunction) {
-                    $action.ASTAnalyzer.searchAST(item, findIdentifiersInNode);
+            // Object to hold the data
+            if (findIdentifiersInNode.items.length) {
+                var data = { // For each conditional expression
+                    keyCodeValues: keyCodes,
+                    pathCondition: dependency,
+                    phrases: [],
+                    imperativePhrases: [],
+                    nouns: [],
+                    verbs: [],
+                    other: []
                 }
-            }
 
-            // Parse the located identifiers
-            this.parseIdentifiers(command.LabelMetadata.expressionCalls, findIdentifiersInNode.items);
+                command.LabelMetadata.conditionals.expressionCalls.push(data);
+                this.parseIdentifiers(data, findIdentifiersInNode.items);
+            }
         }
 
-        parseAssignmentExpressions(command, ast) {
+
+        parseAssignmentExpressionsOutsideConditionals(command, ast) {
             var findAssignmentExpressionsOutsideConditionals = {
                 lookFor: ["AssignmentExpression"],
                 outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
@@ -488,15 +513,17 @@ var $action = $action || {};
                     this.parseIdentifiersAsPhrase(command.LabelMetadata.assignments, findIdentifiersInNode.items);
                 }
             }
+        }
 
+        parseAssignmentExpressionsInsideConditional(command, keyCodes, dependency, conditional) {
             var findAssignmentExpressionsInsideConditionals = {
                 lookFor: ["AssignmentExpression"],
-                within: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
-                property: ["consequent", "alternate"],
+                outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, findAssignmentExpressionsInsideConditionals);
+
+            $action.ASTAnalyzer.searchAST(conditional, findAssignmentExpressionsInsideConditionals);
 
             // Within the assignment expressions that have a referenced identifier, find and parse the identifiers
             for (var i = 0; i < findAssignmentExpressionsInsideConditionals.items.length; i++) {
@@ -509,13 +536,27 @@ var $action = $action || {};
                 if (item && item.referencedIdentifier) {
                     $action.ASTAnalyzer.searchAST(item, findIdentifiersInNode);
 
-                    // Then parse all the identifers found within the collection of items
-                    this.parseIdentifiersAsPhrase(command.LabelMetadata.assignments, findIdentifiersInNode.items);
+                    if (findIdentifiersInNode.items.length) {
+                        var data = { // For each conditional expression
+                            keyCodeValues: keyCodes,
+                            pathCondition: dependency,
+                            phrases: [],
+                            imperativePhrases: [],
+                            nouns: [],
+                            verbs: [],
+                            other: []
+                        }
+
+                        command.LabelMetadata.conditionals.assignments.push(data);
+
+                        // Then parse all the identifers found within the collection of items
+                        this.parseIdentifiersAsPhrase(data, findIdentifiersInNode.items);
+                    }
                 }
             }
         }
 
-        parseExpressionStatements(command, ast) {
+        parseExpressionStatementsOutsideConditionals(command, ast) {
             var findExpressionStatementsOutsideConditionals = {
                 lookFor: ["ExpressionStatement"],
                 outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
@@ -524,16 +565,40 @@ var $action = $action || {};
 
             $action.ASTAnalyzer.searchAST(ast, findExpressionStatementsOutsideConditionals);
             this.parseComments(command.LabelMetadata.expressionComments, findExpressionStatementsOutsideConditionals.items);
+        }
 
+        parseExpressionStatementsInsideConditional(command, keyCodes, dependency, conditional) {
             var findExpressionStatementsInsideConditionals = {
                 lookFor: ["ExpressionStatement"],
-                within: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
-                property: ["consequent", "alternate"],
+                outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, findExpressionStatementsInsideConditionals);
-            this.parseComments(command.LabelMetadata.expressionComments, findExpressionStatementsInsideConditionals.items);
+            $action.ASTAnalyzer.searchAST(conditional, findExpressionStatementsInsideConditionals);
+
+            // Object to hold the data
+            if (findExpressionStatementsInsideConditionals.items.length) {
+                var data = { // For each conditional expression
+                    keyCodeValues: keyCodes,
+                    pathCondition: dependency,
+                    phrases: [],
+                    imperativePhrases: [],
+                    nouns: [],
+                    verbs: [],
+                    other: []
+                }
+
+                var added = false;
+                for (var i = 0; i < findExpressionStatementsInsideConditionals.items.length; i++) {
+                    if (findExpressionStatementsInsideConditionals.items[i].leadingComments) {
+                        if (!added) {
+                            added = true;
+                            command.LabelMetadata.conditionals.expressionComments.push(data);
+                        }
+                        this.parseComment(data, findExpressionStatementsInsideConditionals.items[i]);
+                    }
+                }
+            }
         }
 
 
@@ -559,28 +624,77 @@ var $action = $action || {};
                     this.parseLabel(command.LabelMetadata.handlerName, identifier.name);
                 }
 
-                // Find comments on the handler function
+                //TODO:  Find comments on the handler function
 
-                // Find all function calls and parse their identifiers
-                this.parseFunctionCalls(command, ast);
-
-                // Find all state changes (Assignment expressions)
-                this.parseAssignmentExpressions(command, ast);
-
-                // Find all expression statements for their leading and trailing comments
-                this.parseExpressionStatements(command, ast);
                 // DOM APIs
                 // Later
                 // Differentiate between statements & function calls?
 
-                this.parseKeycodeInputs(command, ast);
+                this.parseOutsideConditionals(command, ast);
+                this.parseConditionals(command, ast);
             }
         };
 
-        parseKeycodeInputs(command, ast) {
-            // Locate keycodes in the AST
-            var commandArguments = command.Arguments;
+        parseOutsideConditionals(command, ast) {
+            this.parseFunctionCallsOutsideConditionals(command, ast);
+            this.parseAssignmentExpressionsOutsideConditionals(command, ast);
+            this.parseExpressionStatementsOutsideConditionals(command, ast);
+        }
 
+        parseConditionals(command, ast) {
+            // Find functions called outside conditionals and assume they are side effects
+            var findConditionals = {
+                within: "Program",
+                lookFor: [
+                    "IfStatement",
+                    "ConditionalExpression",
+                    "WhileStatement",
+                    "DoWhileStatement",
+                    "ForStatement",
+                    "ForInStatement",
+                    "ForOfStatement"],
+                items: [] // Will contain the collection of requested elements you are looking for
+            }
+
+            $action.ASTAnalyzer.searchAST(ast, findConditionals);
+
+            for (var i = 0; i < findConditionals.items.length; i++) {
+                var keyCodes = this.parseKeyCodeInputs(command, ast, findConditionals.items[i]);
+                var dependency = this.getDependency(findConditionals.items[i]);
+
+                // Function calls
+                this.parseFunctionCallsInsideConditional(command, keyCodes, dependency, findConditionals.items[i].consequent);
+                this.parseAssignmentExpressionsInsideConditional(command, keyCodes, dependency, findConditionals.items[i].consequent);
+                this.parseExpressionStatementsInsideConditional(command, keyCodes, dependency, findConditionals.items[i].consequent);
+
+                if (findConditionals.items[i].alternate) {
+                    dependency = this.getDependency(findConditionals.items[i], true);
+                    this.parseFunctionCallsInsideConditional(command, keyCodes, dependency, findConditionals.items[i].alternate);
+                    this.parseAssignmentExpressionsInsideConditional(command, keyCodes, dependency, findConditionals.items[i].alternate);
+                    this.parseExpressionStatementsInsideConditional(command, keyCodes, dependency, findConditionals.items[i].alternate);
+                }
+            }
+        }
+
+        getDependency(conditional, alternate) {
+            var dependency = "";
+            if (conditional.pathConditionString) {
+                dependency = dependency + conditional.pathConditionString;
+            }
+            if (conditional.pathConditionString && conditional.testConditionString) {
+                dependency = dependency + " && ";
+            }
+            if (conditional.testConditionString) {
+                if (alternate) {
+                    dependency = dependency + "!(" + conditional.testConditionString + ")";
+                } else {
+                    dependency = dependency + conditional.testConditionString;
+                }
+            }
+            return dependency;
+        }
+
+        parseKeyCodeInputs(command, ast, conditional) {
             // First, look for any MemberExpressions outside of conditionals that have references to keycodes
             // These references should be found in any assignment expression
             // TOOD: maybe this really should be just outiside because they could be nested
@@ -611,11 +725,11 @@ var $action = $action || {};
             // Binary Expressions should be the only ones we care about
             var findBinaryExpressionsInTest = {
                 lookFor: ["BinaryExpression"],
-                within: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
+                outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
                 property: ["test"],
                 items: []
             }
-            $action.ASTAnalyzer.searchAST(ast, findBinaryExpressionsInTest);
+            $action.ASTAnalyzer.searchAST(conditional, findBinaryExpressionsInTest);
 
             // After finding them, find the member epxressions that have a property that is an identifier with the name of 'keyCode', or an identifier that matches up with the collected keyCode expressions above
             var keyCodeValues = []; // Keeps track of all referenced keycode values found
@@ -648,9 +762,7 @@ var $action = $action || {};
                 }
             }
 
-            for (var j = 0; j < keyCodeValues.length; j++) {
-                commandArguments.push($action.KeyCodes[keycodeValues[j]]);
-            }
+            return keyCodeValues;
         }
 
         parseComments(labelMetadata, expressionStatements) {
@@ -660,6 +772,15 @@ var $action = $action || {};
                     for (let j = 0; j < comments.length; j++) {
                         this.parseLabel(labelMetadata, comments[j].value);
                     }
+                }
+            }
+        }
+
+        parseComment(labelMetadata, statement) {
+            let comments = statement.leadingComments;
+            if (comments) {
+                for (let j = 0; j < comments.length; j++) {
+                    this.parseLabel(labelMetadata, comments[j].value);
                 }
             }
         }

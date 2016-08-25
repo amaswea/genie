@@ -139,12 +139,27 @@
 
              return completeLabel.substring(0, completeLabel.length - 2);
          }
-         
+
+         firstImperativeLabel() {
+             var nodeTypes = ["elementLabels", "handlerComments", "expressionComments", "expressionCalls", "assignments"];
+             var phraseTypes = ["imperativePhrases", "verbs", "nouns", "phrases", "other"];
+             for (var i = 0; i < nodeTypes.length; i++) {
+                 for (var j = 0; j < phraseTypes.length; j++) {
+                     var labelSet = this.command.LabelMetadata[nodeTypes[i]][phraseTypes[j]];
+                     for (var k = 0; k < labelSet.length; k++) {
+                         let first = _.upperFirst(labelSet[k]);
+                         return first;
+                     }
+                 }
+             }
+             return "";
+         }
+
          arguments() {
              var args = "";
-             for(var i=0; i<this.command.Arguments.length; i++){
+             for (var i = 0; i < this.command.Arguments.length; i++) {
                  args = args + this.command.Arguments[i];
-                 if(i < this.command.Arguments.length -1){
+                 if (i < this.command.Arguments.length - 1) {
                      args = args + ",";
                  }
              }

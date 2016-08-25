@@ -162,10 +162,13 @@ var $action = $action || {};
     
     // List of key codes and word mappings
     $action.KeyCodes = {
+        32: "Space", 
         37: "Left", 
         38: "Up", 
         39: "Right", 
-        40: "Down"
+        40: "Down", 
+        65: "a", 
+        90: "z"
         // TODO: Populate the rest later
     }
     

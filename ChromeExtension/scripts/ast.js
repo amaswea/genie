@@ -20,6 +20,10 @@ var $action = $action || {};
                 visitor.scopes = [];
             }
 
+            if (!visitor.pathConditions) {
+                visitor.pathConditions = [];
+            }
+
             if (ast.type == "Program") {
                 visitor.scopes.push(new Scope(ast.body));
 
@@ -298,23 +302,6 @@ var $action = $action || {};
             default:
                 break;
             }
-
-            if (!statement.testExpression) {
-                var clonedStatement = $.extend(true, {}, statement.test);
-                if (clonedStatement.type == "Identifier") {
-                    if (clonedStatement.lastAssigned) {
-                        this.searchIdentifiersInPath(clonedStatement.lastAssigned);
-                        clonedStatement = clonedStatement.lastAssigned;
-                    } else if (clonedStatement.lastDeclared) {
-                        this.searchIdentifiersInPath(clonedStatement.lastDeclared);
-                        clonedStatement = clonedStatement.lastDeclared;
-                    }
-                } else {
-                    this.searchIdentifiersInPath(clonedStatement);
-                }
-
-                statement.testExpression = this.convertNodeToString(clonedStatement);
-            }
         }
 
         static searchSwitchStatement(statement, visitor) {
@@ -368,22 +355,48 @@ var $action = $action || {};
         }
 
         static searchIfStatement(statement, visitor) {
-            // scope
-            //   Identifier -> AssignmentExpression
-            //   Identifier -> VariableDeclaration 
-            var props = ["test", "consequent", "alternate"];
+            if (!statement.testConditionString) {
+                var clonedStatement = $.extend(true, {}, statement.test);
+                if (clonedStatement.type == "Identifier") {
+                    if (clonedStatement.lastAssigned) {
+                        this.searchIdentifiersInPath(clonedStatement.lastAssigned);
+                        clonedStatement = clonedStatement.lastAssigned;
+                    } else if (clonedStatement.lastDeclared) {
+                        this.searchIdentifiersInPath(clonedStatement.lastDeclared);
+                        clonedStatement = clonedStatement.lastDeclared;
+                    }
+                } else {
+                    this.searchIdentifiersInPath(clonedStatement);
+                }
+                statement.testConditionString = this.convertNodeToString(clonedStatement);
+            }
+
+            if (!statement.pathConditionString && visitor.pathConditions && visitor.pathConditions.length) {
+                statement.pathConditionString = this.getPathConditionString(visitor.pathConditions);
+            }
+
             var hasProp = visitor.property !== undefined;
             var collect = visitor.collect;
-            for (var i = 0; i < props.length; i++) {
-                visitor.collect = (hasProp && (visitor.property.indexOf(props[i]) > -1)) ? true : collect;
 
-                if (statement[props[i]]) {
-                    this.searchNode(statement[props[i]], visitor);
-                }
+            visitor.collect = hasProp ? visitor.property.indexOf("test") > -1 : collect;
+            this.searchNode(statement.test, visitor);
 
-                if (!collect) {
-                    visitor.collect = false;
-                }
+            visitor.collect = hasProp ? visitor.property.indexOf("consequent") > -1 : collect;
+            visitor.pathConditions.push(statement.testConditionString); // Add the test condition to the path
+            this.searchNode(statement.consequent, visitor)
+            visitor.pathConditions.pop(); // remove the test condition from the path when exiting the conditonal
+
+
+            if (statement.alternate) {
+                visitor.collect = hasProp ? visitor.property.indexOf("alternate") > -1 : collect;
+                visitor.pathConditions.push("!(" + statement.testConditionString + ")"); 
+                this.searchNode(statement.alternate, visitor)
+                visitor.pathConditions.pop();
+            }
+
+
+            if (!collect) {
+                visitor.collect = false;
             }
         }
 
@@ -1142,6 +1155,17 @@ var $action = $action || {};
                 node.stringRepresentation = this.getStringForNode(node);
                 return node.stringRepresentation;
             }
+        }
+
+        static getPathConditionString(conditions) {
+            let pathString = "";
+            for (var i = 0; i < conditions.length; i++) {
+                pathString = pathString + conditions[i]; 
+                if (i < conditions.length - 1) {
+                    pathString = pathString + " && ";
+                }
+            }
+            return pathString;
         }
     }
 

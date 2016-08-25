@@ -135,7 +135,7 @@ var $action = $action || {};
             }
 
             var result = [];
-            var keys = Object.keys(commandsMap);
+            var keys = Object.keys(commandsMap).sort();
             for (var j = 0; j < keys.length; j++) {
                 let cmds = commandsMap[keys[j]];
                 result.push({

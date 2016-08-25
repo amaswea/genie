@@ -53,6 +53,9 @@ var $action = $action || {};
             if(url.includes("jsonfn.min")){
                 return true;
             }
+            if(url.includes("d3.min")){
+                return true;
+            }
             return false;
         }
 

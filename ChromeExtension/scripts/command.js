@@ -63,44 +63,44 @@ var $action = $action || {};
             this._domElement = $action.getElementFromID(elementID);
 
             this._handler = handler;
-            this._dependencies = [];
+            this._dependencies = [ /* { keyCode: "", dependencyString: "" } */ ];
             this._dataDependent = false;
             this._computedStyles = {};
-            
+
             // Collection of possible command arguments (inputs)
-            this._arguments = []; 
-            
+            this._arguments = [];
+
             // Label metadata collection structure
             this._labelMetadata = {
                 elementLabels: {
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
-                    verbs: [], 
+                    verbs: [],
                     other: []
                 },
                 handlerName: {
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
-                    verbs: [], 
+                    verbs: [],
                     other: []
                 },
                 handlerComments: {
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
-                    verbs: [], 
-                    other: []
-                },
-                expressionComments: {
-                    phrases: [],
-                    imperativePhrases: [],
-                    nouns: [],
-                    verbs: [], 
+                    verbs: [],
                     other: []
                 },
                 expressionCalls: {
+                    phrases: [],
+                    imperativePhrases: [],
+                    nouns: [],
+                    verbs: [],
+                    other: []
+                },
+                expressionComments: {
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
@@ -113,6 +113,20 @@ var $action = $action || {};
                     nouns: [],
                     verbs: [], 
                     other: []
+                },
+                conditionals: {
+                    assignments: [], 
+                    expressionComments: [], 
+                    expressionCalls: []
+/*                    { // For each conditional expression
+                        keyCodeValues: "",
+                        pathCondition: "",
+                        phrases: [],
+                        imperativePhrases: [],
+                        nouns: [],
+                        verbs: [],
+                        other: []
+                    }*/
                 }
             }
 
@@ -175,7 +189,7 @@ var $action = $action || {};
         get Handler() {
             return this._handler;
         }
-        
+
         get Arguments() {
             return this._arguments;
         }
