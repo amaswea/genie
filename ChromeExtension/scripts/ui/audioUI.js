@@ -23,14 +23,14 @@ var $action = $action || {};
             //   labelSpan.classList.add("genie-audio-ui-list-item-label");
 
             var label = this.label().split(",");
-            var rest = "";
+          /*  var rest = "";
             var first = "";
             if (label.length) {
                 first = label[0]; // The first chunk of the label goes in a separate element so it can be bolded as the command string
                 rest = _.drop(label, 1); // The second chunk of the label is the rest
             }
-            //labelSpan.textContent = rest;
-            commandLabelSpan.textContent = first;
+            //labelSpan.textContent = rest;*/
+            commandLabelSpan.textContent = label;
 
             listItem.appendChild(commandLabelSpan);
             //  listItem.appendChild(labelSpan);

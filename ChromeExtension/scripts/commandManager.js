@@ -510,7 +510,7 @@ var $action = $action || {};
                     $action.ASTAnalyzer.searchAST(item, findIdentifiersInNode);
 
                     // Then parse all the identifers found within the collection of items
-                    this.parseIdentifiersAsPhrase(command.LabelMetadata.assignments, findIdentifiersInNode.items);
+                    this.parseIdentifiers(command.LabelMetadata.assignments, findIdentifiersInNode.items);
                 }
             }
         }
@@ -550,7 +550,7 @@ var $action = $action || {};
                         command.LabelMetadata.conditionals.assignments.push(data);
 
                         // Then parse all the identifers found within the collection of items
-                        this.parseIdentifiersAsPhrase(data, findIdentifiersInNode.items);
+                        this.parseIdentifiers(data, findIdentifiersInNode.items);
                     }
                 }
             }
@@ -632,8 +632,47 @@ var $action = $action || {};
 
                 this.parseOutsideConditionals(command, ast);
                 this.parseConditionals(command, ast);
+                this.createArgumentsMap(command);
             }
         };
+
+        createArgumentsMap(command) {
+            var argumentsMap = {};
+            var types = ["assignments", "expressionCalls", "expressionComments"];
+            var labelTypes = ["imperativePhrases", "phrases", "verbs", "nouns", "other"];
+            for (var i = 0; i < types.length; i++) {
+                var type = command.LabelMetadata.conditionals[types[i]];
+                for (var j = 0; j < type.length; j++) {
+                    var obj = type[j];
+                    var condition = obj.pathCondition;
+                    var labelsString = "";
+                    for (var k = 0; k < labelTypes.length; k++) {
+                        var labelNode = obj[labelTypes[k]];
+                        if (labelNode.length) {
+                            labelsString = labelsString + labelNode.toString() + ",";
+                        }
+                    }
+                    labelsString = labelsString.substring(0, labelsString.length - 1);
+                    argumentsMap[condition] = {
+                        label: labelsString,
+                        keyCodes: this.convertKeyCodesToString(obj.keyCodeValues)
+                    };
+                }
+            }
+            command.ArgumentsMap = argumentsMap;
+        }
+        
+        convertKeyCodesToString(keyCodesArray){
+            var keyCodeString = "";
+            for(var i=0; i<keyCodesArray.length; i++){
+                keyCodeString = keyCodeString + $action.KeyCodes[keyCodesArray[i]]; 
+                if(i < keyCodesArray.length - 1){
+                    keyCodeString = keyCodeString + ", ";
+                }
+            }
+            
+            return keyCodeString;
+        }
 
         parseOutsideConditionals(command, ast) {
             this.parseFunctionCallsOutsideConditionals(command, ast);
@@ -659,19 +698,19 @@ var $action = $action || {};
             $action.ASTAnalyzer.searchAST(ast, findConditionals);
 
             for (var i = 0; i < findConditionals.items.length; i++) {
-                var keyCodes = this.parseKeyCodeInputs(command, ast, findConditionals.items[i]);
                 var dependency = this.getDependency(findConditionals.items[i]);
 
                 // Function calls
+                var keyCodes = this.parseKeyCodeInputs(command, ast, findConditionals.items[i]);
                 this.parseFunctionCallsInsideConditional(command, keyCodes, dependency, findConditionals.items[i].consequent);
                 this.parseAssignmentExpressionsInsideConditional(command, keyCodes, dependency, findConditionals.items[i].consequent);
                 this.parseExpressionStatementsInsideConditional(command, keyCodes, dependency, findConditionals.items[i].consequent);
 
                 if (findConditionals.items[i].alternate) {
                     dependency = this.getDependency(findConditionals.items[i], true);
-                    this.parseFunctionCallsInsideConditional(command, keyCodes, dependency, findConditionals.items[i].alternate);
-                    this.parseAssignmentExpressionsInsideConditional(command, keyCodes, dependency, findConditionals.items[i].alternate);
-                    this.parseExpressionStatementsInsideConditional(command, keyCodes, dependency, findConditionals.items[i].alternate);
+                    this.parseFunctionCallsInsideConditional(command, [], dependency, findConditionals.items[i].alternate);
+                    this.parseAssignmentExpressionsInsideConditional(command, [], dependency, findConditionals.items[i].alternate);
+                    this.parseExpressionStatementsInsideConditional(command, [], dependency, findConditionals.items[i].alternate);
                 }
             }
         }
@@ -688,7 +727,7 @@ var $action = $action || {};
                 if (alternate) {
                     dependency = dependency + "!(" + conditional.testConditionString + ")";
                 } else {
-                    dependency = dependency + conditional.testConditionString;
+                    dependency = dependency + "(" + conditional.testConditionString + ")";
                 }
             }
             return dependency;
@@ -725,11 +764,9 @@ var $action = $action || {};
             // Binary Expressions should be the only ones we care about
             var findBinaryExpressionsInTest = {
                 lookFor: ["BinaryExpression"],
-                outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
-                property: ["test"],
                 items: []
             }
-            $action.ASTAnalyzer.searchAST(conditional, findBinaryExpressionsInTest);
+            $action.ASTAnalyzer.searchAST(conditional.test, findBinaryExpressionsInTest);
 
             // After finding them, find the member epxressions that have a property that is an identifier with the name of 'keyCode', or an identifier that matches up with the collected keyCode expressions above
             var keyCodeValues = []; // Keeps track of all referenced keycode values found
@@ -789,8 +826,8 @@ var $action = $action || {};
             for (let i = 0; i < identifiers.length; i++) {
                 if (identifiers[i].name) {
                     this.parseLabel(labelMetadata, identifiers[i].name);
-                } else if (identifiers[i].stringRepresentation) {
-                    this.parseLabel(labelMetadata, identifiers[i].stringRepresentation);
+                } else if (identifiers[i].value) {
+                    this.parseLabel(labelMetadata, identifiers[i].value.toString());
                 }
             }
         }

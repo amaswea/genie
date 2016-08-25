@@ -1160,7 +1160,7 @@ var $action = $action || {};
         static getPathConditionString(conditions) {
             let pathString = "";
             for (var i = 0; i < conditions.length; i++) {
-                pathString = pathString + conditions[i]; 
+                pathString = pathString + "(" + conditions[i] + ")"; 
                 if (i < conditions.length - 1) {
                     pathString = pathString + " && ";
                 }

@@ -68,7 +68,7 @@ var $action = $action || {};
             this._computedStyles = {};
 
             // Collection of possible command arguments (inputs)
-            this._arguments = [];
+            this._arguments = {};
 
             // Label metadata collection structure
             this._labelMetadata = {
@@ -189,11 +189,7 @@ var $action = $action || {};
         get Handler() {
             return this._handler;
         }
-
-        get Arguments() {
-            return this._arguments;
-        }
-
+        
         get ElementSelector() {
             if (this._domElement instanceof Window) {
                 return "body";
@@ -203,7 +199,11 @@ var $action = $action || {};
                 return "[data-genie-element-id='" + this._domElement.getAttribute("data-genie-element-id") + "']";
             }
         }
-
+        
+        set ArgumentsMap(argumentsMap){
+            this._argumentsMap = argumentsMap;
+        }
+        
         /**
          * Adds a command to the list of post commands that must be executed directly after this command
          * @private

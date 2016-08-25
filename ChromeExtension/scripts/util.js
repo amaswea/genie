@@ -619,7 +619,7 @@ var $action = $action || {};
             let expr = findConditionals.items[i].testConditionString;
             let path = findConditionals.items[i].pathConditionString;
             if (expr && path) {
-                dependencies.push(path + " && " + expr);
+                dependencies.push(path + " && (" + expr + ")");
             } else if (expr) {
                 dependencies.push(expr);
             }
