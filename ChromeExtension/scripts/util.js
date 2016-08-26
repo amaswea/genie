@@ -151,7 +151,7 @@ var $action = $action || {};
             if (selector != null && !handle) {
                 handler = selector;
             }
-            // debugger;
+            console.log(events + " " + selector + " " + handler.toString());
 
             var eventList = typeof (events) == "string" ? events.split(" ") : (typeof (events) == "object" ? [events.type] : []);
             for (var i = 0; i < eventList.length; i++) {
@@ -554,12 +554,14 @@ var $action = $action || {};
         var newAddEventListener = function (type, listener, options = null, useCapture = false, ignore = false) {
             // Instrument the handler with a call to retreive the data dependencies
             //  debugger;
+            
             this._addEventListener(type, listener, options, useCapture);
             if (listener && (this instanceof Element || this instanceof Window || this instanceof Document)) {
                 var handlerString = listener.toString();
                 var elementID = detectOrAssignElementID(this);
                 var handlerID = getPageHandlerID(type, listener, elementID); // If the handler already exists in the map, ignore it.
 
+                console.log(type + " " + listener.toString() + " " + this);
                 if (handlerString != ignoreJQueryFunction && handlerString != ignoreMinifiedJQuery && !ignore && !handlerID) {
                     var id = getHandlerID(); // This unique ID will represent this handler, event, and element combination
                     var contentObject = getContentObject(id, elementID, 'eventAdded', type, listener);

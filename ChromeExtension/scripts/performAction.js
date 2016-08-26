@@ -35,6 +35,7 @@ function receiveMessage(event) {
         } else if (data.elementID == "window") {
             element = window;
         }
+        debugger;
         if (element) {
             // Execute the action using the trigger or the associated action function
             if (data.event != 'default') {

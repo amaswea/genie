@@ -694,12 +694,7 @@ var $action = $action || {};
                 within: "Program",
                 lookFor: [
                     "IfStatement",
-                    "ConditionalExpression",
-                    "WhileStatement",
-                    "DoWhileStatement",
-                    "ForStatement",
-                    "ForInStatement",
-                    "ForOfStatement"],
+                    "ConditionalExpression"],
                 items: [] // Will contain the collection of requested elements you are looking for
             }
 

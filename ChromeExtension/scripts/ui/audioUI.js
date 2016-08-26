@@ -92,28 +92,59 @@ var $action = $action || {};
 */
         };
 
-        mapResultsToCommand(speechResults, resultIndex) {
-            // Speech results are are in the results property
-            let result = speechResults[resultIndex];
-            // Result will have a set of SpeechRecognitionAlternative objects. Find the first one with > .90 confidence rate. 
-            for (var j = 0; j < result.length; j++) {
-                let alternative = result[j];
-                console.log(alternative.transcript);
-                // Execute the command
-                let commandText = alternative.transcript.trim().toLowerCase();
-                console.log(commandText);
-
-                // Find the commands corresponding execute() method in the commandsMap
-                let command = this._audioCommands[commandText];
-                if (command) {
-                    if (command.hasArguments()) {
-                        command.execute(commandText);
-                    } else {
-                        // Call the execute method to perform the command
-                        command.execute();
+        findFinalResult(speechResults) {
+            var highest;
+            for (var i = 0; i < speechResults.length; i++) {
+                if (speechResults[i].isFinal) {
+                    for (var j = 0; j < speechResults[i].length; j++) {
+                        let alternative = speechResults[i][j];
+                        if (!highest) {
+                            highest = alternative;
+                        } else if (alternative.confidence > highest.confidence) {
+                            highest = alternative;
+                        }
                     }
                 }
             }
+            
+            if(highest){
+                return highest;
+            }
+
+            // Otherwise return the result with the highest confidence value
+            for (var i = 0; i < speechResults.length; i++) {
+                for (var j = 0; j < speechResults[i].length; j++) {
+                    let alternative = speechResults[i][j];
+                    if (!highest) {
+                        highest = alternative;
+                    } else if (alternative.confidence > highest.confidence) {
+                        highest = alternative;
+                    }
+                }
+            }
+            return highest;
+        }
+
+        mapResultsToCommand(speechResults, resultIndex) {
+            // Speech results are are in the results property
+            let result = this.findFinalResult(speechResults);
+            // Result will have a set of SpeechRecognitionAlternative objects. Find the first one with > .90 confidence rate. 
+
+            // Execute the command
+            let commandText = result.transcript.trim().toLowerCase();
+            console.log(commandText);
+
+            // Find the commands corresponding execute() method in the commandsMap
+            let command = this._audioCommands[commandText];
+            if (command) {
+                if (command.hasArguments()) {
+                    command.execute(commandText);
+                } else {
+                    // Call the execute method to perform the command
+                    command.execute();
+                }
+            }
+
         }
 
         appendCommandGroup(label, commands) {
@@ -144,7 +175,7 @@ var $action = $action || {};
                 // Command could have multiple arguments
                 if (commands[i].hasArguments()) {
                     var commandArgumentKeys = Object.keys(commands[i].ArgumentsMap);
-                    for (var i = 0; i < commandArgumentKeys.length; i++) {
+                    for (var j = 0; j < commandArgumentKeys.length; j++) {
                         this._audioCommands[commandArgumentKeys[i]] = newCommand.Command;
 
                     }
