@@ -17,24 +17,35 @@ var $action = $action || {};
             var listItem = document.createElement("li");
             listItem.classList.add("genie-audio-ui-list-item");
 
-            //  var labelSpan = document.createElement("span");
             var commandLabelSpan = document.createElement("span");
             commandLabelSpan.classList.add("genie-audio-ui-list-item-command");
-            //   labelSpan.classList.add("genie-audio-ui-list-item-label");
 
             var label = this.label().split(",");
-          /*  var rest = "";
-            var first = "";
-            if (label.length) {
-                first = label[0]; // The first chunk of the label goes in a separate element so it can be bolded as the command string
-                rest = _.drop(label, 1); // The second chunk of the label is the rest
-            }
-            //labelSpan.textContent = rest;*/
             commandLabelSpan.textContent = label;
 
             listItem.appendChild(commandLabelSpan);
-            //  listItem.appendChild(labelSpan);
 
+            // Command arguments (if there are any)
+            var argumentsDiv = document.createElement("div");
+            argumentsDiv.classList.add("genie-audio-ui-arguments");
+            if (this.Command.ArgumentsMap) {
+                var keys = Object.keys(this.Command.ArgumentsMap);
+                for (var i = 0; i < keys.length; i++) {
+                    var argDiv = document.createElement("div");
+                    argDiv.classList.add("genie-audio-ui-arguments-item");
+                    var argSpan = document.createElement("span");
+                    argSpan.classList.add("genie-audio-ui-arguments-span");
+                    argSpan.textContent = _.upperFirst(keys[i]) + ": ";
+                    var valueSpan = document.createElement("span");
+                    valueSpan.classList.add("genie-audio-ui-value-span");
+                    valueSpan.textContent = this.Command.ArgumentsMap[keys[i]];
+                    argDiv.appendChild(argSpan);
+                    argDiv.appendChild(valueSpan);
+                    argumentsDiv.appendChild(argDiv);
+                }
+            }
+
+            listItem.appendChild(argumentsDiv);
             this._domElement = listItem;
         }
     };
@@ -81,21 +92,23 @@ var $action = $action || {};
 */
         };
 
-        mapResultsToCommand(speechResults) {
+        mapResultsToCommand(speechResults, resultIndex) {
             // Speech results are are in the results property
-            for (var i = 0; i < speechResults.length; i++) {
-                let result = speechResults[i];
-                // Result will have a set of SpeechRecognitionAlternative objects. Find the first one with > .90 confidence rate. 
-                for (var j = 0; j < result.length; j++) {
-                    let alternative = result[j];
-                    console.log(alternative.transcript);
-                    // Execute the command
-                    let commandText = alternative.transcript.trim().toLowerCase();
-                    console.log(commandText);
+            let result = speechResults[resultIndex];
+            // Result will have a set of SpeechRecognitionAlternative objects. Find the first one with > .90 confidence rate. 
+            for (var j = 0; j < result.length; j++) {
+                let alternative = result[j];
+                console.log(alternative.transcript);
+                // Execute the command
+                let commandText = alternative.transcript.trim().toLowerCase();
+                console.log(commandText);
 
-                    // Find the commands corresponding execute() method in the commandsMap
-                    let command = this._audioCommands[commandText];
-                    if (command) {
+                // Find the commands corresponding execute() method in the commandsMap
+                let command = this._audioCommands[commandText];
+                if (command) {
+                    if (command.hasArguments()) {
+                        command.execute(commandText);
+                    } else {
                         // Call the execute method to perform the command
                         command.execute();
                     }
@@ -127,8 +140,19 @@ var $action = $action || {};
                     newCommand.DOM.classList.add('genie-audio-ui-disabled');
                 }
 
-                let commandLabel = newCommand.label().toLowerCase();
-                this._audioCommands[commandLabel] = newCommand.Command;
+
+                // Command could have multiple arguments
+                if (commands[i].hasArguments()) {
+                    var commandArgumentKeys = Object.keys(commands[i].ArgumentsMap);
+                    for (var i = 0; i < commandArgumentKeys.length; i++) {
+                        this._audioCommands[commandArgumentKeys[i]] = newCommand.Command;
+
+                    }
+                } else {
+                    let commandLabel = newCommand.label().toLowerCase();
+                    this._audioCommands[commandLabel] = newCommand.Command;
+                }
+
                 commandItems.push(newCommand);
             }
 
@@ -152,15 +176,15 @@ var $action = $action || {};
             this.list.appendChild(group);
 
             // Initialze speech recognition
-         /*   this._recognition = new webkitSpeechRecognition();
+            this._recognition = new webkitSpeechRecognition();
             this._recognition.continuous = true;
             this._recognition.interimResults = true;
             this._recognition.lang = "en-US";
             var self = this;
             this._recognition.onresult = function (event) {
-                self.mapResultsToCommand(event.results);
+                self.mapResultsToCommand(event.results, event.resultIndex);
             }
-            this._recognition.start();*/
+            this._recognition.start();
         }
 
         /**

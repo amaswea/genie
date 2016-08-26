@@ -62,6 +62,14 @@ var $action = $action || {};
         return this.pushStack(results);
     };
 
+    $action.isKeyboardEvent = function(eventType) {
+        return $action.KeyboardEvents.indexOf(eventType) > -1;
+    }
+
+    $action.isMouseEvent = function(eventType) {
+        return $action.MouseEvents.indexOf(eventType) > -1;
+    }
+
     $action.getElementFromID = function (id) {
         if (id == "window") {
             return window;
@@ -118,7 +126,7 @@ var $action = $action || {};
         }
 
         $action.ASTAnalyzer.searchAST(ast, findFunctionCallsOutsideOfConditionals);
-        return findFunctionCallsOutsideOfConditionals.items.length > 0; 
+        return findFunctionCallsOutsideOfConditionals.items.length > 0;
     }
 
     $action.getAST = function (data) {
@@ -254,6 +262,7 @@ var $action = $action || {};
         var postHandlerCommand = function postHandlerCommand(elementID, eventType, listener) {
             var handlerID = getHandlerID(); // This unique ID will represent this handler, event, and element combination
             var contentObject = getContentObject(handlerID, elementID, 'eventAdded', eventType, listener);
+            contentObject.global = true;
             window.postMessage(contentObject, "*");
 
             // Get a page handler object to cache so that the handler can be instrumented when polling takes place
@@ -624,7 +633,7 @@ var $action = $action || {};
                 dependencies.push(expr);
             }
         }
-        
+
         // Look for identifiers that are contained within SwitchStatements (uses the discriminant property instead of 'test')
         // TODO: Support switch statements later
         /* var findIdentifiersWithinSwitch = {

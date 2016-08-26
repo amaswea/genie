@@ -49,6 +49,9 @@ var $action = $action || {};
         addCommand(command) {
             // let duplicate = this.findDuplicate(command); // Look for duplicate commands
             // TODO: Fix this later
+            if(command.global){
+                command.eventType = $action.GlobalEventHandlersMap[command.eventType];
+            }
             if ((command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1)) {
                 var element = $action.getElementFromID(command.elementID);
                 var newCommand = new $action.Command(command.id, command.elementID, command.eventType, command.handler)
@@ -534,7 +537,8 @@ var $action = $action || {};
                 }
 
                 if (item && item.referencedIdentifier) {
-                    $action.ASTAnalyzer.searchAST(item, findIdentifiersInNode);
+                    $action.ASTAnalyzer.searchAST(item.left, findIdentifiersInNode);
+                    $action.ASTAnalyzer.searchAST(item.right, findIdentifiersInNode);
 
                     if (findIdentifiersInNode.items.length) {
                         var data = { // For each conditional expression
@@ -653,24 +657,28 @@ var $action = $action || {};
                         }
                     }
                     labelsString = labelsString.substring(0, labelsString.length - 1);
-                    argumentsMap[condition] = {
-                        label: labelsString,
-                        keyCodes: this.convertKeyCodesToString(obj.keyCodeValues)
-                    };
+                    for (var k = 0; k < obj.keyCodeValues.length; k++) {
+                        var keyCodeValueString = $action.KeyCodes[obj.keyCodeValues[k]];
+                        if (!argumentsMap[keyCodeValueString]) {
+                            argumentsMap[keyCodeValueString] = labelsString;
+                        } else {
+                            argumentsMap[keyCodeValueString] = argumentsMap[keyCodeValueString] + ", " + labelsString;
+                        }
+                    }
                 }
             }
             command.ArgumentsMap = argumentsMap;
         }
-        
-        convertKeyCodesToString(keyCodesArray){
+
+        convertKeyCodesToString(keyCodesArray) {
             var keyCodeString = "";
-            for(var i=0; i<keyCodesArray.length; i++){
-                keyCodeString = keyCodeString + $action.KeyCodes[keyCodesArray[i]]; 
-                if(i < keyCodesArray.length - 1){
+            for (var i = 0; i < keyCodesArray.length; i++) {
+                keyCodeString = keyCodeString + $action.KeyCodes[keyCodesArray[i]];
+                if (i < keyCodesArray.length - 1) {
                     keyCodeString = keyCodeString + ", ";
                 }
             }
-            
+
             return keyCodeString;
         }
 
@@ -759,19 +767,26 @@ var $action = $action || {};
                 }
             }
 
-
-            // Find BinaryExpressions inside of Conditional statements
-            // Binary Expressions should be the only ones we care about
-            var findBinaryExpressionsInTest = {
-                lookFor: ["BinaryExpression"],
-                items: []
+            // Go through each path condition and look for referenced keycodes
+            var keyCodeValues = [];
+            if (conditional.pathConditions) {
+                for (var i = 0; i < conditional.pathConditions.length; i++) {
+                    var pathCondition = conditional.pathConditions[i];
+                    if (pathCondition.type == "BinaryExpression") {
+                        keyCodeValues = this.parseTestExpressionForKeyCodes(pathCondition, keyCodeValues, keyCodeExpressions);
+                    }
+                }
             }
-            $action.ASTAnalyzer.searchAST(conditional.test, findBinaryExpressionsInTest);
 
-            // After finding them, find the member epxressions that have a property that is an identifier with the name of 'keyCode', or an identifier that matches up with the collected keyCode expressions above
-            var keyCodeValues = []; // Keeps track of all referenced keycode values found
-            for (var i = 0; i < findBinaryExpressionsInTest.items.length; i++) {
-                var item = findBinaryExpressionsInTest.items[i];
+            if (conditional.testCondition) {
+                keyCodeValues = this.parseTestExpressionForKeyCodes(conditional.testCondition, keyCodeValues, keyCodeExpressions);
+            }
+
+            return keyCodeValues;
+        }
+
+        parseTestExpressionForKeyCodes(item, keyCodeValues, keyCodeExpressions) {
+            if (item.type == "BinaryExpression") {
                 if (item.left.type == "MemberExpression" && item.right.type == "Literal") {
                     if (item.left.property && item.left.property.type == "Identifier" && item.left.property.name == "keyCode") {
                         keyCodeValues.push(item.right.raw);
@@ -782,8 +797,6 @@ var $action = $action || {};
                     }
                 }
 
-                // Check if the left or right of the expression contains any of the Identifiers or MemberExpressions assigned to keyCode values
-                // MemberExpressions
                 if ((item.left.type == "MemberExpression" || item.left.type == "Identifier") && item.right.type == "Literal") {
                     for (var m = 0; m < keyCodeExpressions.length; m++) {
                         if (item.left.stringRepresentation === keyCodeExpressions[m].stringRepresentation) {
@@ -797,8 +810,10 @@ var $action = $action || {};
                         }
                     }
                 }
+            } else if (item.type == "LogicalExpression") {
+                this.parseTestExpressionForKeyCodes(item.left, keyCodeValues, keyCodeExpressions);
+                this.parseTestExpressionForKeyCodes(item.right, keyCodeValues, keyCodeExpressions);
             }
-
             return keyCodeValues;
         }
 

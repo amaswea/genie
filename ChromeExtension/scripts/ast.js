@@ -369,10 +369,12 @@ var $action = $action || {};
                     this.searchIdentifiersInPath(clonedStatement);
                 }
                 statement.testConditionString = this.convertNodeToString(clonedStatement);
+                statement.testCondition = clonedStatement;
             }
 
             if (!statement.pathConditionString && visitor.pathConditions && visitor.pathConditions.length) {
                 statement.pathConditionString = this.getPathConditionString(visitor.pathConditions);
+                statement.pathConditions = $.extend(true, [], visitor.pathConditions);
             }
 
             var hasProp = visitor.property !== undefined;
@@ -382,14 +384,14 @@ var $action = $action || {};
             this.searchNode(statement.test, visitor);
 
             visitor.collect = hasProp ? visitor.property.indexOf("consequent") > -1 : collect;
-            visitor.pathConditions.push(statement.testConditionString); // Add the test condition to the path
+            visitor.pathConditions.push(statement.testCondition); // Add the test condition to the path
             this.searchNode(statement.consequent, visitor)
             visitor.pathConditions.pop(); // remove the test condition from the path when exiting the conditonal
 
 
             if (statement.alternate) {
                 visitor.collect = hasProp ? visitor.property.indexOf("alternate") > -1 : collect;
-                visitor.pathConditions.push("!(" + statement.testConditionString + ")"); 
+                visitor.pathConditions.push(this.negateExpression(statement.testCondition));
                 this.searchNode(statement.alternate, visitor)
                 visitor.pathConditions.pop();
             }
@@ -398,6 +400,17 @@ var $action = $action || {};
             if (!collect) {
                 visitor.collect = false;
             }
+        }
+
+        static negateExpression(statement) {
+            var negated = {
+                argument: statement,
+                operator: "!",
+                prefix: true,
+                stringRepresentation: "!(" + this.convertNodeToString(statement) + ")",
+                type: "UnaryExpression"
+            }
+            return negated;
         }
 
         static searchLetStatement(statement, visitor) {
@@ -1160,7 +1173,7 @@ var $action = $action || {};
         static getPathConditionString(conditions) {
             let pathString = "";
             for (var i = 0; i < conditions.length; i++) {
-                pathString = pathString + "(" + conditions[i] + ")"; 
+                pathString = pathString + "(" + this.convertNodeToString(conditions[i]) + ")";
                 if (i < conditions.length - 1) {
                     pathString = pathString + " && ";
                 }

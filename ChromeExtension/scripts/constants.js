@@ -104,6 +104,20 @@ var $action = $action || {};
         // TOOD: rest of HTML DOM events, Drag & Drop events, Touch events
     ];
 
+    $action.KeyboardEvents = [
+        "keydown", "keyup", "keypress"
+    ]
+
+    $action.MouseEvents = [
+        "mousedown",
+        "mouseenter",
+        "mouseleave",
+        "mousemove",
+        "mouseout",
+        "mouseover",
+        "mouseup"
+    ]
+
     /**
      * Orders for mouse related events
      * @private
@@ -147,6 +161,19 @@ var $action = $action || {};
     $action.GlobalEventHandlers = [
         "onclick", "onmouseover", "onchange", "ondblclick", "onkeydown", "onkeyup", "onkeypress", "onmousedown", "onmouseout", "onmousewheel"
     ];
+    
+    $action.GlobalEventHandlersMap = {
+        "onclick": "click", 
+        "onmouseover": "mouseover", 
+        "onchange": "change", 
+        "ondblclick": "dblclick", 
+        "onkeydown": "keydown", 
+        "onkeypress": "keypress",
+        "onkeyup": "keyup", 
+        "onmousedown": "mousedown", 
+        "onmouseout": "mouseout", 
+        "onmousewheel": "mousewheel"
+    }
 
     // Attributes to parse for label metadata
     $action.LabelAttributes = {
@@ -159,19 +186,29 @@ var $action = $action || {};
         "A": ["href"]
             // TODO: Later fill in the complete set. 
     }
-    
+
     // List of key codes and word mappings
     $action.KeyCodes = {
-        32: "Space", 
-        37: "Left", 
-        38: "Up", 
-        39: "Right", 
-        40: "Down", 
-        65: "a", 
+        32: "space",
+        37: "left",
+        38: "up",
+        39: "right",
+        40: "down",
+        65: "a",
         90: "z"
-        // TODO: Populate the rest later
+            // TODO: Populate the rest later
     }
-    
+
+    $action.KeyCodesReverseMap = {
+        "space": 32,
+        "left": 37,
+        "up": 37,
+        "right": 39,
+        "down": 40,
+        "a": 65,
+        "z": 90
+    }
+
     // Attributes that have a URL to parse
     $action.LabelURLAttributes = ["href"]
 })($action);

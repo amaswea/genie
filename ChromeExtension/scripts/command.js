@@ -204,6 +204,14 @@ var $action = $action || {};
             this._argumentsMap = argumentsMap;
         }
         
+        get ArgumentsMap(){
+            return this._argumentsMap;
+        }
+        
+        hasArguments() {
+            return this._argumentsMap && Object.keys(this._argumentsMap).length
+        }
+        
         /**
          * Adds a command to the list of post commands that must be executed directly after this command
          * @private
@@ -390,16 +398,27 @@ var $action = $action || {};
             };
         };
 
-        execute() {
+        execute(argument) {
             var s = document.createElement('script');
             s.src = chrome.extension.getURL("scripts/performAction.js");
             (document.head || document.documentElement).appendChild(s);
 
             // Perform the action
+            var argValue; 
+            if(argument){
+                argValue = $action.KeyCodesReverseMap[argument];
+            }
             var action = {
                 messageType: 'performAction',
                 event: this.EventType,
-                elementID: this.Element.getAttribute("data-genie-element-id")
+                argument: argValue,
+                elementID: $action.detectOrAssignElementID(this.Element)
+            }
+
+            if($action.isKeyboardEvent(this.EventType)){
+                action.keyboard = true;
+            }else if($action.isMouseEvent(this.EventType)){
+                action.mouse = true;
             }
 
             window.postMessage(action, "*");

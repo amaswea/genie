@@ -99,7 +99,7 @@ var $action = $action || {};
                 if (attributeValue && attributeValue.length > 0) {
                     var commandData = {
                         id: this.getHandlerID(),
-                        eventType: eventHandler,
+                        eventType: $action.GlobalEventHandlerMap[eventHandler],
                         handler: attributeValue,
                         elementID: this.detectOrAssignElementID(element)
                     }
@@ -156,7 +156,7 @@ var $action = $action || {};
                 var attributeValue = $element.attr(eventHandler);
                 if (attributeValue && attributeValue.length > 0) {
                     var commandData = {
-                        eventType: eventHandler,
+                        eventType: $action.GlobalEventHandlerMap[eventHandler],
                         handler: attributeValue
                     }
 
@@ -207,7 +207,7 @@ var $action = $action || {};
                             var oldValue = mutation.oldValue;
                             if (oldValue) {
                                 var oldCommandData = {
-                                    eventType: attribute,
+                                    eventType: $action.GlobalEventHandlerMap[attribute],
                                     handler: oldValue
                                 }
 
@@ -217,7 +217,7 @@ var $action = $action || {};
 
                             if (newValue) {
                                 var newCommandData = {
-                                    eventType: attribute,
+                                    eventType: $action.GlobalEventHandlerMap[attribute],
                                     handler: newValue
                                 };
 

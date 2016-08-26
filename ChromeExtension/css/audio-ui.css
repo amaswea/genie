@@ -83,6 +83,11 @@
 }
 
 
+.genie-audio-ui-arguments-span {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
 /** 
   Overrides of sidr styles
 */

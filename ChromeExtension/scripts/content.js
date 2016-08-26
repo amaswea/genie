@@ -172,7 +172,7 @@ function updateCommandEnabledStates() {
 
     $action.commandManager.updateVisibleCommands();
     $action.commandsChanged = false;
-    setTimeout(updateCommandEnabledStates, 2000);
+  //  setTimeout(updateCommandEnabledStates, 2000);
 }
 
 function organizeCommands() {
