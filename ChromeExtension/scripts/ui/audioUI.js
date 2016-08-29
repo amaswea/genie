@@ -176,7 +176,7 @@ var $action = $action || {};
                 if (commands[i].hasArguments()) {
                     var commandArgumentKeys = Object.keys(commands[i].ArgumentsMap);
                     for (var j = 0; j < commandArgumentKeys.length; j++) {
-                        this._audioCommands[commandArgumentKeys[i]] = newCommand.Command;
+                        this._audioCommands[commandArgumentKeys[j]] = newCommand.Command;
 
                     }
                 } else {

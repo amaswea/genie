@@ -561,7 +561,7 @@ var $action = $action || {};
                 var elementID = detectOrAssignElementID(this);
                 var handlerID = getPageHandlerID(type, listener, elementID); // If the handler already exists in the map, ignore it.
 
-                console.log(type + " " + listener.toString() + " " + this);
+               // console.log(type + " " + listener.toString() + " " + this);
                 if (handlerString != ignoreJQueryFunction && handlerString != ignoreMinifiedJQuery && !ignore && !handlerID) {
                     var id = getHandlerID(); // This unique ID will represent this handler, event, and element combination
                     var contentObject = getContentObject(id, elementID, 'eventAdded', type, listener);

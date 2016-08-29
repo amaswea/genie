@@ -42,8 +42,16 @@ var $action = $action || {};
                                     newCommand.DOM.classList.add('genie-audio-ui-disabled');
                                 }*/
 
-                let commandLabel = newCommand.firstImperativeLabel().toLowerCase();
-                this._commandsMap[commandLabel] = newCommand.Command;
+                if (commands[i].hasArguments()) {
+                    var commandArgumentKeys = Object.keys(commands[i].ArgumentsMap);
+                    for (var j = 0; j < commandArgumentKeys.length; j++) {
+                        this._commandsMap[commandArgumentKeys[j]] = newCommand.Command;
+
+                    }
+                } else {
+                    let commandLabel = newCommand.firstImperativeLabel().toLowerCase();
+                    this._commandsMap[commandLabel] = newCommand.Command;
+                }
             }
         }
 
@@ -83,13 +91,24 @@ var $action = $action || {};
                         labelString = labelString + ",";
                     }
                 }
-                this._textarea.value = this._textarea.value + "\n" + labelString; 
+                this._textarea.value = this._textarea.value + "\n" + labelString;
+            } else if (text == "help") {
+                var commandKeys = Object.keys(this._commandsMap);
+                for (var i = 0; i < commandKeys.length; i++) {
+                    let command = this._commandsMap[commandKeys[i]];
+                    this._textarea.value = this._textarea.value + "\n" + commandKeys[i] + ": " + command.CommandItem.label();
+                }
             } else {
                 // Find the commands corresponding execute() method in the commandsMap
                 let command = this._commandsMap[text];
                 if (command) {
                     // Call the execute method to perform the command
-                    command.execute();
+                    if (command.hasArguments()) {
+                        command.execute(text);
+                    } else {
+                        // Call the execute method to perform the command
+                        command.execute();
+                    }
                 } else {
                     // No command found
                     this._textarea.value = this._textarea.value + "\nSorry. No command found.";

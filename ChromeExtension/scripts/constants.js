@@ -105,7 +105,7 @@ var $action = $action || {};
     ];
 
     $action.KeyboardEvents = [
-        "keydown", "keyup", "keypress"
+        "keydown", "keyup", "keypress", "input"
     ]
 
     $action.MouseEvents = [
@@ -154,24 +154,26 @@ var $action = $action || {};
         "cut": ["keydown", "keydown", "cut", "input", "keyup", "keyup"], // TOOD: Need to pass in the right keycodes for input
         "paste": ["keydown", "keydown", "paste", "input", "keyup", "keyup"],
         "copy": ["keydown", "keydown", "copy", "input", "keyup", "keyup"],
-        "input": ["keydown", "keypress", "input", "keyup"]
+        "input": ["keydown", "keypress", "input", "keyup"],
+        "keydown": ["keydown", "keypress", "input", "keyup"],
+        "keyup": ["keydown", "keypress", "input", "keyup"],
     }
 
     // List of W3C inline GlobalEventHandlers that are supported
     $action.GlobalEventHandlers = [
         "onclick", "onmouseover", "onchange", "ondblclick", "onkeydown", "onkeyup", "onkeypress", "onmousedown", "onmouseout", "onmousewheel"
     ];
-    
+
     $action.GlobalEventHandlersMap = {
-        "onclick": "click", 
-        "onmouseover": "mouseover", 
-        "onchange": "change", 
-        "ondblclick": "dblclick", 
-        "onkeydown": "keydown", 
+        "onclick": "click",
+        "onmouseover": "mouseover",
+        "onchange": "change",
+        "ondblclick": "dblclick",
+        "onkeydown": "keydown",
         "onkeypress": "keypress",
-        "onkeyup": "keyup", 
-        "onmousedown": "mousedown", 
-        "onmouseout": "mouseout", 
+        "onkeyup": "keyup",
+        "onmousedown": "mousedown",
+        "onmouseout": "mouseout",
         "onmousewheel": "mousewheel"
     }
 

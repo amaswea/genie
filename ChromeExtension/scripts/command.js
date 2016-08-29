@@ -104,29 +104,29 @@ var $action = $action || {};
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
-                    verbs: [], 
+                    verbs: [],
                     other: []
                 },
                 assignments: {
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
-                    verbs: [], 
+                    verbs: [],
                     other: []
                 },
                 conditionals: {
-                    assignments: [], 
-                    expressionComments: [], 
+                    assignments: [],
+                    expressionComments: [],
                     expressionCalls: []
-/*                    { // For each conditional expression
-                        keyCodeValues: "",
-                        pathCondition: "",
-                        phrases: [],
-                        imperativePhrases: [],
-                        nouns: [],
-                        verbs: [],
-                        other: []
-                    }*/
+                        /*                    { // For each conditional expression
+                                                keyCodeValues: "",
+                                                pathCondition: "",
+                                                phrases: [],
+                                                imperativePhrases: [],
+                                                nouns: [],
+                                                verbs: [],
+                                                other: []
+                                            }*/
                 }
             }
 
@@ -189,7 +189,7 @@ var $action = $action || {};
         get Handler() {
             return this._handler;
         }
-        
+
         get ElementSelector() {
             if (this._domElement instanceof Window) {
                 return "body";
@@ -199,19 +199,19 @@ var $action = $action || {};
                 return "[data-genie-element-id='" + this._domElement.getAttribute("data-genie-element-id") + "']";
             }
         }
-        
-        set ArgumentsMap(argumentsMap){
+
+        set ArgumentsMap(argumentsMap) {
             this._argumentsMap = argumentsMap;
         }
-        
-        get ArgumentsMap(){
+
+        get ArgumentsMap() {
             return this._argumentsMap;
         }
-        
+
         hasArguments() {
             return this._argumentsMap && Object.keys(this._argumentsMap).length
         }
-        
+
         /**
          * Adds a command to the list of post commands that must be executed directly after this command
          * @private
@@ -358,6 +358,14 @@ var $action = $action || {};
                         this._cachedPreDeviceDependencies = _.slice(mouseOrder, 0, index);
                     }
                 }
+
+                var keyboardOrder = $action.KeyboardOrders[this.EventType];
+                if (keyboardOrder) {
+                    var index = keyboardOrder.indexOf(this.EventType);
+                    if (index > -1) {
+                        this._cachedPreDeviceDependencies = _.slice(keyboardOrder, 0, index);
+                    }
+                }
             }
 
             return this._cachedPreDeviceDependencies;
@@ -376,6 +384,15 @@ var $action = $action || {};
                     var index = mouseOrder.indexOf(this.EventType);
                     if (index > -1) {
                         this._cachedPostDeviceDependencies = _.slice(mouseOrder, index + 1, mouseOrder.length);
+                    }
+                }
+
+                // If this command were executed, which commands would need to be executed first
+                var keyboardOrder = $action.KeyboardOrders[this.EventType];
+                if (keyboardOrder) {
+                    var index = keyboardOrder.indexOf(this.EventType);
+                    if (index > -1) {
+                        this._cachedPostDeviceDependencies = _.slice(keyboardOrder, index + 1, keyboardOrder.length);
                     }
                 }
             }
@@ -398,33 +415,74 @@ var $action = $action || {};
             };
         };
 
+        getActionsToPerform(argValue, elementID) {
+            var data = {};
+            data.messageType = 'performAction';
+            var actions = [];
+
+            var preActions = this.preDeviceDependencies();
+            for (var i = 0; i < preActions.length; i++) {
+                var preAction = {
+                    event: preActions[i],
+                    argument: $action.KeyCodesReverseMap[argValue],
+                    elementID: elementID
+                }
+
+                if ($action.isKeyboardEvent(preActions[i])) {
+                    preAction.keyboard = true;
+                } else if ($action.isMouseEvent(preActions[i])) {
+                    preAction.mouse = true;
+                }
+
+                actions.push(preAction);
+            }
+
+            var action = {}; 
+            action.event = this.EventType; 
+            action.argument = $action.KeyCodesReverseMap[argValue]; 
+            action.elementID = this.ElementID; 
+            if ($action.isKeyboardEvent(this.EventType)) {
+                action.keyboard = true;
+            } else if ($action.isMouseEvent(preActions[i])) {
+                action.mouse = true;
+            }
+            actions.push(action);
+
+            var postActions = this.postDeviceDependencies();
+            for (var j = 0; j < postActions.length; j++) {
+                var postAction = {
+                    event: postActions[i],
+                    argument: $action.KeyCodesReverseMap[argValue],
+                    elementID: elementID
+                }
+
+
+                if ($action.isKeyboardEvent(postActions[i])) {
+                    postAction.keyboard = true;
+                } else if ($action.isMouseEvent(postActions[i])) {
+                    postAction.mouse = true;
+                }
+
+                actions.push(postAction);
+            }
+
+            data.actions = actions;
+            return data;
+        }
+
         execute(argument) {
             var s = document.createElement('script');
             s.src = chrome.extension.getURL("scripts/performAction.js");
             (document.head || document.documentElement).appendChild(s);
 
             // Perform the action
-            var argValue; 
-            if(argument){
+            var argValue;
+            if (argument) {
                 argValue = $action.KeyCodesReverseMap[argument];
             }
-            var action = {
-                messageType: 'performAction',
-                event: this.EventType,
-                argument: argValue,
-                elementID: $action.detectOrAssignElementID(this.Element)
-            }
 
-            if($action.isKeyboardEvent(this.EventType)){
-                action.keyboard = true;
-            }else if($action.isMouseEvent(this.EventType)){
-                action.mouse = true;
-            }
-
-            window.postMessage(action, "*");
-
-            // Perform any of the post dependency commands that are set for this command; 
-            // TODO
+            var actions = this.getActionsToPerform(argument, this.ElementID);
+            window.postMessage(actions, "*");
 
             // Unload the script
             (document.head || document.documentElement).removeChild(s);
