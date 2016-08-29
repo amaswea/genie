@@ -96,7 +96,12 @@ var $action = $action || {};
                 var commandKeys = Object.keys(this._commandsMap);
                 for (var i = 0; i < commandKeys.length; i++) {
                     let command = this._commandsMap[commandKeys[i]];
-                    this._textarea.value = this._textarea.value + "\n" + commandKeys[i] + ": " + command.CommandItem.label();
+                    this._textarea.value = this._textarea.value + "\n" + commandKeys[i] + ": ";
+                    if (command.CommandItem.label().length) {
+                        this._textarea.value = this._textarea.value + command.CommandItem.label();
+                    } else {
+                        this._textarea.value = this._textarea.value + command.ArgumentsMap[commandKeys[i]];
+                    }
                 }
             } else {
                 // Find the commands corresponding execute() method in the commandsMap
