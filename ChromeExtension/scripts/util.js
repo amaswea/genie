@@ -62,11 +62,11 @@ var $action = $action || {};
         return this.pushStack(results);
     };
 
-    $action.isKeyboardEvent = function(eventType) {
+    $action.isKeyboardEvent = function (eventType) {
         return $action.KeyboardEvents.indexOf(eventType) > -1;
     }
 
-    $action.isMouseEvent = function(eventType) {
+    $action.isMouseEvent = function (eventType) {
         return $action.MouseEvents.indexOf(eventType) > -1;
     }
 
@@ -243,12 +243,47 @@ var $action = $action || {};
             }
 
             // Call the original on function
-            debugger;
-            d3.selection.prototype._on.apply(this, arguments);
+            return d3.selection.prototype._on.apply(this, arguments);
         }
 
+        var newKeypress = function (combo) {
+            if (combo.keys) {
+                if (combo.on_keydown) {
+                    var handler = combo.on_keydown.toString();
+                    var elementID = detectOrAssignElementID(document.body);
+                    var handlerID = getPageHandlerID("keydown", handler, elementID);
+                    if (!handlerID) {
+                        var handlerID = getHandlerID();
+                        var contentObject = getContentObject(handlerID, elementID, 'eventAdded', "keydown", handler, combo.keys);
+                        window.postMessage(contentObject, "*");
+
+                        var pageHandlerObject = getPageHandlerObject(handlerID, elementID, "keydown", combo.on_keydown);
+                        window.geniePageHandlerMap[handlerID] = pageHandlerObject;
+                    }
+                }
+
+                if (combo.on_keyup) {
+                    var handler = combo.on_keyup.toString();
+                    var elementID = detectOrAssignElementID(document.body);
+                    var handlerID = getPageHandlerID("keyup", handler, elementID);
+                    if (!handlerID) {
+                        var handlerID = getHandlerID();
+                        var contentObject = getContentObject(handlerID, elementID, 'eventAdded', "keyup", handler, combo.keys);
+                        window.postMessage(contentObject, "*");
+
+                        var pageHandlerObject = getPageHandlerObject(handlerID, elementID, "keyup", combo.on_keyup);
+                        window.geniePageHandlerMap[handlerID] = pageHandlerObject;
+                    }
+                }
+            }
+
+            keypress._register_combo(combo);
+        };
+
+        // TODO: unregister_combo for keypress libary
+
         var script = document.createElement("script");
-        script.appendChild(document.createTextNode(directive + "\nif(typeof(jQuery) == 'function') { \n jQuery.fn._off = jQuery.fn.off; \n" + "jQuery.fn.off = " + newJQueryOff + "; \n" + "jQuery.fn._on = jQuery.fn.on; \n" + "jQuery.fn.on = " + newJQueryOn + '; } \n'));
+        script.appendChild(document.createTextNode(directive + "\nif(typeof(jQuery) == 'function') { \n jQuery.fn._off = jQuery.fn.off; \n" + "jQuery.fn.off = " + newJQueryOff + "; \n" + "jQuery.fn._on = jQuery.fn.on; \n" + "jQuery.fn.on = " + newJQueryOn + "; } \n if(typeof(d3) =='object') { d3.selection.prototype._on = d3.selection.prototype.on; d3.selection.prototype.on = " + newD3 + "; \n } \n if(typeof(keypress) == 'object'){ keypress._register_combo = keypress.register_combo; keypress.register_combo = " + newKeypress + "; \n}"));
 
         script.id = "genie_jquery_d3_override_script";
 
@@ -325,6 +360,7 @@ var $action = $action || {};
                     return result;
                 } else {
                     oldHandler.apply(this, [evt]);
+                    console.log("calling " + oldHandler.toString());s
                 }
             };
 
@@ -363,14 +399,15 @@ var $action = $action || {};
                     var contentObjectID = event.data.id;
                     var pageHandlerObject = window.geniePageHandlerMap[contentObjectID];
                     if (pageHandlerObject) {
-                        var element = getElementFromID(pageHandlerObject.elementID);
+                        /*var element = getElementFromID(pageHandlerObject.elementID);
                         if (element) {
                             var newHandler = updateEventHandlerOnElement(element, pageHandlerObject.eventType, event.data.dependencies, pageHandlerObject.handler, pageHandlerObject.options, pageHandlerObject.useCapture);
 
                             // Update the page handler map 
                             window.geniePageHandlerMap[contentObjectID].handler = newHandler;
                             window.geniePageHandlerMap[contentObjectID].instrumented = true;
-                        }
+                        }*/
+                        pageHandlerObject.dependencies = event.data.dependencies; 
                     }
                 } else if (event.data.messageType == 'eventDependenciesNotFound') {
                     // If the command handler could not be parsed, remove it from the map
@@ -383,7 +420,7 @@ var $action = $action || {};
                         var commandStates = {};
                         for (var i = 0; i < keys.length; i++) {
                             var pageHandlerObject = window.geniePageHandlerMap[keys[i]];
-                            if (pageHandlerObject.instrumented) {
+                            /*if (pageHandlerObject.instrumented) {
                                 // Only call the handler if it is already instrumented
                                 // TODO: figure out how to set up this event so that it mimics the original dependencies
                                 var event = new Event(pageHandlerObject.eventType, {
@@ -401,7 +438,7 @@ var $action = $action || {};
                                     var commandState = pageHandlerObject.handler.apply(element, [event]); // The element should be the 'this' context when the handler gets applied
                                     commandStates[pageHandlerObject.id] = commandState; // Enabled or disabled state   
                                 }
-                            }
+                            }*/
 
                             // Page handlers (added through inline handler attributes do not have a wrapper, so we evaluate the dependencies directly. 
                             if (pageHandlerObject.dependencies && pageHandlerObject.dependencies.length) {
@@ -487,7 +524,7 @@ var $action = $action || {};
             return pageHandlerObj;
         }
 
-        function getContentObject(id, elementID, messageType, eventType, handler) {
+        function getContentObject(id, elementID, messageType, eventType, handler, commandArguments) {
             if (handler) { // TODO: Handler arguments for jQuery on override better  s
                 var handlerObj = {
                     messageType: messageType,
@@ -496,6 +533,10 @@ var $action = $action || {};
                     elementID: elementID,
                     id: id
                 };
+                
+                if(arguments){
+                    handlerObj.commandArguments = commandArguments;
+                }
             }
 
             return handlerObj;
@@ -549,19 +590,20 @@ var $action = $action || {};
             }`;
 
         var ignoreMinifiedJQuery = "`function (e){return typeof b===i||e&&b.event.triggered===e.type?t:b.event.dispatch.apply(f.elem,arguments)}`";
+        var ignoreMinifiedListener = "`function (e){return st===t||e&&st.event.triggered===e.type?t:st.event.dispatch.apply(s.elem,arguments)}`";
 
 
         var newAddEventListener = function (type, listener, options = null, useCapture = false, ignore = false) {
             // Instrument the handler with a call to retreive the data dependencies
-            //  debugger;
-            
+            // debugger;
+
             this._addEventListener(type, listener, options, useCapture);
             if (listener && (this instanceof Element || this instanceof Window || this instanceof Document)) {
                 var handlerString = listener.toString();
                 var elementID = detectOrAssignElementID(this);
                 var handlerID = getPageHandlerID(type, listener, elementID); // If the handler already exists in the map, ignore it.
 
-               // console.log(type + " " + listener.toString() + " " + this);
+                //  console.log(type + " " + listener.toString() + " " + this);
                 if (handlerString != ignoreJQueryFunction && handlerString != ignoreMinifiedJQuery && !ignore && !handlerID) {
                     var id = getHandlerID(); // This unique ID will represent this handler, event, and element combination
                     var contentObject = getContentObject(id, elementID, 'eventAdded', type, listener);

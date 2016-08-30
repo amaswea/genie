@@ -124,7 +124,7 @@ function receiveMessage(event) {
                         // Returns a new object with the computed expression string representing the data dependencies. 
                         var ast = $action.getAST(event.data);
                         if (!$action.hasSideEffectsOutsideConditionals(ast)) {
-                            dataDependencies = $action.getDataDependencies(event.data);
+                            dataDependencies = $action.getDataDependencies(ast);
                             event.data.dependencies = dataDependencies;
                             event.data.messageType = 'eventDependenciesFound';
                             window.postMessage(event.data, "*")
@@ -170,9 +170,9 @@ function updateCommandEnabledStates() {
         messageType: 'getCommandStates'
     }, "*");
 
-   // $action.commandManager.updateVisibleCommands();
+    // $action.commandManager.updateVisibleCommands();
     $action.commandsChanged = false;
-  //  setTimeout(updateCommandEnabledStates, 2000);
+    //  setTimeout(updateCommandEnabledStates, 2000);
 }
 
 function organizeCommands() {
@@ -245,6 +245,8 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     // Create a new instance of the command manager with this instance of the UI
     $action.commandManager = new $action.CommandManager($action.interface, $action.scriptManager);
 
+   // injectJQueryD3OverrideScript();
+    
     // Must be injected before document intialization to intercept all addEventListener calls
     injectMonitorScript();
 })();

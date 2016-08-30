@@ -16,7 +16,7 @@ window.addEventListener("message", receiveMessage, false, false, true);
 
 function performAction(data) {
     var element = document.querySelector("[data-genie-element-id='" + data.elementID + "']");
-    if (data.elementID = "document") {
+    if (data.elementID == "document") {
         element = document;
     } else if (data.elementID == "window") {
         element = window;
@@ -26,39 +26,62 @@ function performAction(data) {
         // Execute the action using the trigger or the associated action function
         if (data.event != 'default') {
             var event = data.event;
-
             // TODO: Verify that all UIEvent types are cancelable and bubble
             if (data.keyboard) {
                 var keyboardEvent = document.createEvent('KeyboardEvent');
 
                 // Chromium Hack
-                Object.defineProperty(keyboardEvent, 'keyCode', {
-                    get: function () {
-                        return data.argument;
+                if (data.argument) {
+                    Object.defineProperty(keyboardEvent, 'keyCode', {
+                        get: function () {
+                            return data.argument;
+                        }
+                    });
+                    Object.defineProperty(keyboardEvent, 'which', {
+                        get: function () {
+                            return data.argument;
+                        }
+                    });
+
+                    if (data.specialKey) {
+                        Object.defineProperty(keyboardEvent, 'keyIdentifier', {
+                            get: function () {
+                                return data.keyString;
+                            }
+                        });
+
+                        Object.defineProperty(keyboardEvent, 'key', {
+                            get: function () {
+                                return data.specialKey;
+                            }
+                        });
+
+                        Object.defineProperty(keyboardEvent, 'code', {
+                            get: function () {
+                                return data.specialKey;
+                            }
+                        });
                     }
-                });
-                Object.defineProperty(keyboardEvent, 'which', {
-                    get: function () {
-                        return data.argument;
-                    }
-                });
+                }
 
                 if (keyboardEvent.initKeyboardEvent) {
-                    keyboardEvent.initKeyboardEvent(event, true, true, document.defaultView, false, false, false, false, data.argument, data.argument);
+                    keyboardEvent.initKeyboardEvent(event, true, true, document.defaultView, data.keyString);
                 } else {
                     keyboardEvent.initKeyEvent(event, true, true, document.defaultView, false, false, false, false, data.argument, 0);
                 }
 
-                keyboardEvent.keyCodeVal = data.argument;
-               // console.log(keyboardEvent);
+                if (data.argument) {
+                    keyboardEvent.keyCodeVal = data.argument;
+                }
+                // console.log(keyboardEvent);
                 element.dispatchEvent(keyboardEvent);
             } else if (data.mouse) {
-                var eventObj = new MouseEvent(event, {
-                    "bubbles": true,
-                    "cancelable": false
-                });
+                var mouseEvent = document.createEvent('MouseEvent');
+                if (mouseEvent.initMouseEvent) {
+                    mouseEvent.initMouseEvent(event, true, true, document.defaultView, false, false, false, false);
+                }
 
-                element.dispatchEvent(eventObj);
+                element.dispatchEvent(mouseEvent);
             } else {
                 var eventObj = new Event(event, {
                     "bubbles": true,

@@ -71,7 +71,6 @@ var $action = $action || {};
         "cut",
         "copy",
         "paste",
-        "blur",
         "click",
         "compositionend",
         "compositionstart",
@@ -109,6 +108,7 @@ var $action = $action || {};
     ]
 
     $action.MouseEvents = [
+        "click",
         "mousedown",
         "mouseenter",
         "mouseleave",
@@ -124,6 +124,7 @@ var $action = $action || {};
      * @property undefined
      */
     $action.MouseOrders = {
+        "mousedown": ["mousedown", "mouseup"],
         "mouseup": ["mousedown", "mouseup"],
         "click": ["mousedown", "mouseup", "click"],
         "dblclick": ["mousedown", "mouseup", "click", "mousedown", "mouseup", "click"],
@@ -197,7 +198,12 @@ var $action = $action || {};
         39: "right",
         40: "down",
         65: "a",
-        90: "z"
+        90: "z", 
+        80: "p", 
+        68: "d", 
+        65: "a", 
+        81: "q", 
+        13: "enter"
             // TODO: Populate the rest later
     }
 
@@ -207,8 +213,18 @@ var $action = $action || {};
         "up": 37,
         "right": 39,
         "down": 40,
+        "enter": 13, 
         "a": 65,
-        "z": 90
+        "z": 90, 
+        "p": 80, 
+        "d": 68, 
+        "a": 65, 
+        "q": 81
+    }
+    
+    $action.SpecialKeys = {
+        "left": "ArrowLeft", 
+        "right": "ArrowRight"
     }
 
     // Attributes that have a URL to parse

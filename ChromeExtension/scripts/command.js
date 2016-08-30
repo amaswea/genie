@@ -68,7 +68,7 @@ var $action = $action || {};
             this._computedStyles = {};
 
             // Collection of possible command arguments (inputs)
-            this._arguments = {};
+            this._argumentsMap = {};
 
             // Label metadata collection structure
             this._labelMetadata = {
@@ -357,13 +357,13 @@ var $action = $action || {};
                     if (index > -1) {
                         this._cachedPreDeviceDependencies = _.slice(mouseOrder, 0, index);
                     }
-                }
-
-                var keyboardOrder = $action.KeyboardOrders[this.EventType];
-                if (keyboardOrder) {
-                    var index = keyboardOrder.indexOf(this.EventType);
-                    if (index > -1) {
-                        this._cachedPreDeviceDependencies = _.slice(keyboardOrder, 0, index);
+                } else {
+                    var keyboardOrder = $action.KeyboardOrders[this.EventType];
+                    if (keyboardOrder) {
+                        var index = keyboardOrder.indexOf(this.EventType);
+                        if (index > -1) {
+                            this._cachedPreDeviceDependencies = _.slice(keyboardOrder, 0, index);
+                        }
                     }
                 }
             }
@@ -385,14 +385,14 @@ var $action = $action || {};
                     if (index > -1) {
                         this._cachedPostDeviceDependencies = _.slice(mouseOrder, index + 1, mouseOrder.length);
                     }
-                }
-
-                // If this command were executed, which commands would need to be executed first
-                var keyboardOrder = $action.KeyboardOrders[this.EventType];
-                if (keyboardOrder) {
-                    var index = keyboardOrder.indexOf(this.EventType);
-                    if (index > -1) {
-                        this._cachedPostDeviceDependencies = _.slice(keyboardOrder, index + 1, keyboardOrder.length);
+                } else {
+                    // If this command were executed, which commands would need to be executed first
+                    var keyboardOrder = $action.KeyboardOrders[this.EventType];
+                    if (keyboardOrder) {
+                        var index = keyboardOrder.indexOf(this.EventType);
+                        if (index > -1) {
+                            this._cachedPostDeviceDependencies = _.slice(keyboardOrder, index + 1, keyboardOrder.length);
+                        }
                     }
                 }
             }
@@ -424,6 +424,8 @@ var $action = $action || {};
             for (var i = 0; i < preActions.length; i++) {
                 var preAction = {
                     event: preActions[i],
+                    specialKey: $action.SpecialKeys[argValue], 
+                    keyString: _.upperFirst(argValue), 
                     argument: $action.KeyCodesReverseMap[argValue],
                     elementID: elementID
                 }
@@ -437,13 +439,15 @@ var $action = $action || {};
                 actions.push(preAction);
             }
 
-            var action = {}; 
-            action.event = this.EventType; 
-            action.argument = $action.KeyCodesReverseMap[argValue]; 
-            action.elementID = this.ElementID; 
+            var action = {};
+            action.event = this.EventType;
+            action.specialKey = $action.SpecialKeys[argValue];
+            action.keyString = _.upperFirst(argValue);
+            action.argument = $action.KeyCodesReverseMap[argValue];
+            action.elementID = this.ElementID;
             if ($action.isKeyboardEvent(this.EventType)) {
                 action.keyboard = true;
-            } else if ($action.isMouseEvent(preActions[i])) {
+            } else if ($action.isMouseEvent(this.EventType)) {
                 action.mouse = true;
             }
             actions.push(action);
@@ -451,15 +455,17 @@ var $action = $action || {};
             var postActions = this.postDeviceDependencies();
             for (var j = 0; j < postActions.length; j++) {
                 var postAction = {
-                    event: postActions[i],
+                    event: postActions[j],
+                    specialKey: $action.SpecialKeys[argValue],
+                    keyString: _.upperFirst(argValue), 
                     argument: $action.KeyCodesReverseMap[argValue],
                     elementID: elementID
                 }
 
 
-                if ($action.isKeyboardEvent(postActions[i])) {
+                if ($action.isKeyboardEvent(postActions[j])) {
                     postAction.keyboard = true;
-                } else if ($action.isMouseEvent(postActions[i])) {
+                } else if ($action.isMouseEvent(postActions[j])) {
                     postAction.mouse = true;
                 }
 
@@ -476,11 +482,6 @@ var $action = $action || {};
             (document.head || document.documentElement).appendChild(s);
 
             // Perform the action
-            var argValue;
-            if (argument) {
-                argValue = $action.KeyCodesReverseMap[argument];
-            }
-
             var actions = this.getActionsToPerform(argument, this.ElementID);
             window.postMessage(actions, "*");
 

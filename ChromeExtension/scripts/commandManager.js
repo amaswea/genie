@@ -49,13 +49,26 @@ var $action = $action || {};
         addCommand(command) {
             // let duplicate = this.findDuplicate(command); // Look for duplicate commands
             // TODO: Fix this later
-            if(command.global){
+            if (command.global) {
                 command.eventType = $action.GlobalEventHandlersMap[command.eventType];
             }
             if ((command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1)) {
                 var element = $action.getElementFromID(command.elementID);
                 var newCommand = new $action.Command(command.id, command.elementID, command.eventType, command.handler)
                 this.initMetadata(newCommand);
+
+                if (command.commandArguments) {
+                    if (command.commandArguments instanceof Array) {
+                        for (var i = 0; i < command.commandArguments.length; i++) {
+                            let arg = command.commandArguments[i];
+                            this.addArgumentToMetadata(newCommand, arg);
+                        }
+                    } else {
+                        this.addArgumentToMetadata(newCommand, command.commandArguments);
+                    }
+                }
+
+                this.createArgumentsMap(newCommand);
                 //  console.log("adding new command " + command.eventType + " " + command.handler + " " + command.elementID);
 
                 this._commandCount++;
@@ -636,12 +649,10 @@ var $action = $action || {};
 
                 this.parseOutsideConditionals(command, ast);
                 this.parseConditionals(command, ast);
-                this.createArgumentsMap(command);
             }
         };
 
         createArgumentsMap(command) {
-            var argumentsMap = {};
             var types = ["assignments", "expressionCalls", "expressionComments"];
             var labelTypes = ["imperativePhrases", "phrases", "verbs", "nouns", "other"];
             for (var i = 0; i < types.length; i++) {
@@ -659,15 +670,26 @@ var $action = $action || {};
                     labelsString = labelsString.substring(0, labelsString.length - 1);
                     for (var k = 0; k < obj.keyCodeValues.length; k++) {
                         var keyCodeValueString = $action.KeyCodes[obj.keyCodeValues[k]];
-                        if (!argumentsMap[keyCodeValueString]) {
-                            argumentsMap[keyCodeValueString] = labelsString;
+                        if (!command.ArgumentsMap[keyCodeValueString]) {
+                            command.ArgumentsMap[keyCodeValueString] = labelsString;
                         } else {
-                            argumentsMap[keyCodeValueString] = argumentsMap[keyCodeValueString] + ", " + labelsString;
+                            command.ArgumentsMap[keyCodeValueString] = command.ArgumentsMap[keyCodeValueString] + ", " + labelsString;
                         }
                     }
                 }
             }
-            command.ArgumentsMap = argumentsMap;
+        }
+
+        addArgumentToMetadata(command, arg) {
+            var keyCode = $action.KeyCodesReverseMap[arg];
+            var types = ["assignments", "expressionCalls", "expressionComments"];
+            for (var i = 0; i < types.length; i++) {
+                let metadata = command.LabelMetadata.conditionals[types[i]];
+                for (var j = 0; j < metadata.length; j++) {
+                    let item = metadata[j];
+                    item.keyCodeValues.push(keyCode);
+                }
+            }
         }
 
         convertKeyCodesToString(keyCodesArray) {
