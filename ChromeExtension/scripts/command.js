@@ -415,74 +415,99 @@ var $action = $action || {};
             };
         };
 
-        getActionsToPerform(argValue, elementID) {
+        getActionsToPerform(arg1Value, arg2Value) {
             var data = {};
             data.messageType = 'performAction';
             var actions = [];
 
             var preActions = this.preDeviceDependencies();
-            for (var i = 0; i < preActions.length; i++) {
-                var preAction = {
-                    event: preActions[i],
-                    specialKey: $action.SpecialKeys[argValue], 
-                    keyString: _.upperFirst(argValue), 
-                    argument: $action.KeyCodesReverseMap[argValue],
-                    elementID: elementID
-                }
+            if (preActions) {
+                for (var i = 0; i < preActions.length; i++) {
+                    var preAction = {
+                        event: preActions[i],
+                        elementID: this.ElementID
+                    }
 
-                if ($action.isKeyboardEvent(preActions[i])) {
-                    preAction.keyboard = true;
-                } else if ($action.isMouseEvent(preActions[i])) {
-                    preAction.mouse = true;
-                }
+                    if ($action.isKeyboardEvent(preActions[i])) {
+                        preAction.specialKey = $action.SpecialKeys[arg1Value];
+                        preAction.keyString = _.upperFirst(arg1Value);
+                        preAction.argument = $action.KeyCodesReverseMap[arg1Value];
+                        preAction.keyboard = true;
+                    } else if ($action.isMouseEvent(preActions[i])) {
+                        preAction.mouseButton = arg1Value;
+                        preAction.mousePosition = arg2Value;
+                        preAction.mouse = true;
+                    }
 
-                actions.push(preAction);
+                    actions.push(preAction);
+                }
             }
 
             var action = {};
             action.event = this.EventType;
-            action.specialKey = $action.SpecialKeys[argValue];
-            action.keyString = _.upperFirst(argValue);
-            action.argument = $action.KeyCodesReverseMap[argValue];
             action.elementID = this.ElementID;
             if ($action.isKeyboardEvent(this.EventType)) {
+                action.specialKey = $action.SpecialKeys[arg1Value];
+                action.keyString = _.upperFirst(arg1Value);
+                action.argument = $action.KeyCodesReverseMap[arg1Value];
                 action.keyboard = true;
             } else if ($action.isMouseEvent(this.EventType)) {
+                action.mouseButton = arg1Value;
+                action.mousePosition = arg2Value;
                 action.mouse = true;
             }
             actions.push(action);
 
             var postActions = this.postDeviceDependencies();
-            for (var j = 0; j < postActions.length; j++) {
-                var postAction = {
-                    event: postActions[j],
-                    specialKey: $action.SpecialKeys[argValue],
-                    keyString: _.upperFirst(argValue), 
-                    argument: $action.KeyCodesReverseMap[argValue],
-                    elementID: elementID
+            if (postActions) {
+                for (var j = 0; j < postActions.length; j++) {
+                    var postAction = {
+                        event: postActions[j],
+                        elementID: this.ElementID
+                    }
+
+                    if ($action.isKeyboardEvent(postActions[j])) {
+                        postAction.specialKey = $action.SpecialKeys[arg1Value];
+                        postAction.keyString = _.upperFirst(arg1Value);
+                        postAction.argument = $action.KeyCodesReverseMap[arg1Value];
+                        postAction.keyboard = true;
+                    } else if ($action.isMouseEvent(postActions[j])) {
+                        postAction.mouseButton = arg1Value;
+                        postAction.mousePosition = arg2Value;
+                        postAction.mouse = true;
+                    }
+
+                    actions.push(postAction);
                 }
-
-
-                if ($action.isKeyboardEvent(postActions[j])) {
-                    postAction.keyboard = true;
-                } else if ($action.isMouseEvent(postActions[j])) {
-                    postAction.mouse = true;
-                }
-
-                actions.push(postAction);
             }
 
             data.actions = actions;
             return data;
         }
 
-        execute(argument) {
+        execute(argument1, argument2) {
             var s = document.createElement('script');
             s.src = chrome.extension.getURL("scripts/performAction.js");
             (document.head || document.documentElement).appendChild(s);
 
             // Perform the action
-            var actions = this.getActionsToPerform(argument, this.ElementID);
+            var actions = {};
+            if ($action.isKeyboardEvent(this.EventType)) {
+                actions = this.getActionsToPerform(argument1, undefined);
+            } else if ($action.isMouseEvent(this.EventType)) {
+                if (!argument2) {
+                    argument2 = {
+                        x: 200000,
+                        y: 200000
+                    };
+                }
+
+                if (!argument1) {
+                    argument1 = "0";
+                }
+                actions = this.getActionsToPerform(argument1, argument2);
+            }
+
             window.postMessage(actions, "*");
 
             // Unload the script

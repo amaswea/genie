@@ -43,25 +43,41 @@ var $action = $action || {};
 
                 // When a command gets added, add a glowing border around the command element
                 var commandElement = commands[i].Element;
-                if (!(commandElement instanceof Window) && !(commandElement instanceof Document)) { // TODO: make this generic
-                    // Attach a tooltip to the command
-                    // Look for a tooltip already
-                    var tooltipSelector = "#genie-help-ui-tooltip-" + commands[i].ElementID;
-                    var tooltip = $(tooltipSelector);
-                    if (tooltip.length) {
-                        // Update the text
-                    } else {
-                        this.createTooltip(commands[i], newCommand.label());
-                    }
 
-                    // How to handle when element has multiple commands? 
-
+                if (commandElement instanceof Window || commandElement instanceof Document) {
+                    commandElement = document.body;
                 }
+
+                // Attach a tooltip to the command
+                // Look for a tooltip already
+                var tooltipSelector = "#genie-help-ui-tooltip-" + commands[i].ElementID;
+                var tooltip = $(tooltipSelector);
+                if (tooltip.length) {
+                    // Update the text
+                } else {
+                    var commandLabel = 
+                    this.createTooltip(commands[i], newCommand.label());
+                }
+
+                // How to handle when element has multiple commands? 
             }
         }
 
         getTooltip(command) {
             return this._tooltips[command.ElementID];
+        }
+        
+        arguments(argumentsMap) {
+            var keys = Object.keys(argumentsMap);
+            var argString = ""; 
+            for(var i=0; i<keys.length; i++){
+                argString = argString + keys[i] + ": " + argumentsMap[keys[i]]; 
+                if(i < keys.length -1){
+                    argString = argString + ",";
+                }
+            }
+            
+            return argString;
         }
 
         createTooltip(command, label) {
@@ -70,13 +86,24 @@ var $action = $action || {};
             var existingTooltip = this.getTooltip(command);
             if (!existingTooltip) {
                 var $element = $(command.Element);
-                var tooltip = new Opentip($element, { showOn: null, target: $element, tipJoint: "bottom left", hideTriggers: [], className: "genie-help-ui-tootip" });
+                var tooltip = new Opentip($element, {
+                    showOn: null,
+                    target: $element,
+                    tipJoint: "bottom left",
+                    hideTriggers: [],
+                    className: "genie-help-ui-tootip"
+                });
+                
+                var commandArguments = this.arguments(command.ArgumentsMap); 
+                if(commandArguments && commandArguments.length) {
+                    label = label + commandArguments;
+                }
                 tooltip.setContent(label);
-               // tooltip.setAttribute("id", "genie-help-ui-tooltip-" + command.ElementID);
-               // tooltip.classList.add("genie-help-ui-tooltip");
+                // tooltip.setAttribute("id", "genie-help-ui-tooltip-" + command.ElementID);
+                // tooltip.classList.add("genie-help-ui-tooltip");
                 this._tooltips[command.ElementID] = tooltip;
             } else {
-                
+
             }
         }
     };

@@ -56,6 +56,9 @@ var $action = $action || {};
             if(url.includes("d3.min")){
                 return true;
             }
+            if(url.includes("cloudflare") && url.includes("rocket")){
+                return true;
+            }
             return false;
         }
 

@@ -126,7 +126,7 @@
             }*/
              var completeLabel = "";
              // Constructs a desired label for the command based on the command metadata available
-             var nodeTypes = ["elementLabels", "handlerComments", "expressionComments", "expressionCalls", "assignments"];
+             var nodeTypes = ["elementLabels", "handlerComments", "expressionComments", "expressionCalls", "assignments", "handlerName"];
              var phraseTypes = ["phrases", "imperativePhrases", "nouns", "verbs", "other"];
              for (var i = 0; i < nodeTypes.length; i++) {
                  for (var j = 0; j < phraseTypes.length; j++) {
@@ -139,7 +139,7 @@
 
              return completeLabel.substring(0, completeLabel.length - 2);
          }
-
+         
          firstImperativeLabel() {
              var nodeTypes = ["elementLabels", "handlerComments", "expressionComments", "expressionCalls", "assignments"];
              var phraseTypes = ["imperativePhrases", "verbs", "nouns", "phrases", "other"];
@@ -153,10 +153,6 @@
                  }
              }
              return "";
-         }
-
-         arguments() {
-             return this.command.ArgumentsMap;
          }
      };
 

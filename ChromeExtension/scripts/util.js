@@ -144,6 +144,7 @@ var $action = $action || {};
 
     $action.getJQueryD3OverrideScript = function () {
         var directive = `'use strict';`;
+        
         var newJQueryOn = function (events, selector, handler) { // TODO: handle when selector, data options are used
             jQuery.fn._on.apply(this, arguments);
             var handle = handler;
@@ -524,7 +525,7 @@ var $action = $action || {};
             return pageHandlerObj;
         }
 
-        function getContentObject(id, elementID, messageType, eventType, handler, commandArguments) {
+        function getContentObject(id, elementID, messageType, eventType, handler, keyCodeArguments) {
             if (handler) { // TODO: Handler arguments for jQuery on override better  s
                 var handlerObj = {
                     messageType: messageType,
@@ -534,8 +535,8 @@ var $action = $action || {};
                     id: id
                 };
                 
-                if(arguments){
-                    handlerObj.commandArguments = commandArguments;
+                if(keyCodeArguments){
+                    handlerObj.keyCodeArguments = keyCodeArguments;
                 }
             }
 

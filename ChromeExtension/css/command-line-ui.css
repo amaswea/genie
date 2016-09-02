@@ -3,7 +3,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 15%;
+    height: 20%;
     z-index: 2147483646 !important;
     background: black;
     font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
@@ -21,4 +21,8 @@
 
 .genie-command-line-label {
     color: #eee4da;
+}
+
+canvas.genie-audio-ui-input-canvas {
+    background: none;
 }

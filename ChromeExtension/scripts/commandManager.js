@@ -57,14 +57,14 @@ var $action = $action || {};
                 var newCommand = new $action.Command(command.id, command.elementID, command.eventType, command.handler)
                 this.initMetadata(newCommand);
 
-                if (command.commandArguments) {
-                    if (command.commandArguments instanceof Array) {
-                        for (var i = 0; i < command.commandArguments.length; i++) {
-                            let arg = command.commandArguments[i];
-                            this.addArgumentToMetadata(newCommand, arg);
+                if (command.keyCodeArguments && $action.isKeyboardEvent(command.eventType)) {
+                    if (command.keyCodeArguments instanceof Array) {
+                        for (var i = 0; i < command.keyCodeArguments.length; i++) {
+                            let arg = command.keyCodeArguments[i];
+                            this.addKeyCodeArgumentToMetadata(newCommand, arg);
                         }
                     } else {
-                        this.addArgumentToMetadata(newCommand, command.commandArguments);
+                        this.addKeyCodeArgumentToMetadata(newCommand, command.keyCodeArguments);
                     }
                 }
 
@@ -175,27 +175,59 @@ var $action = $action || {};
                 var name = this.getAssignmentReference(assignment);
                 // Search through the stored list of functions
                 if (name && name.length) {
-                    var referencedIdentifier = this._scriptManager.Declarations[name];
+                    // Check the declarator map first to see if it was declared somewhere in the handler (local scope)
+                    var referencedIdentifier = declaratorMap[assignment.name];
                     if (referencedIdentifier) {
-                        // The assigned variable was originally declared elsewhere in the function
                         assignment.referencedIdentifier = referencedIdentifier;
                     } else {
-                        var referencedFunction = this._scriptManager.Functions[name];
-                        if (referencedFunction) {
-                            assignment.referencedIdentifier = referencedFunction;
+                        referencedIdentifier = this._scriptManager.Declarations[name];
+                        if (referencedIdentifier) {
+                            assignment.referencedIdentifier = referencedIdentifier;
                         } else {
-                            // The assigned variable was originally declared in the handler
-                            var variableDeclarator = declaratorMap[name];
-                            if (variableDeclarator) {
-                                assignment.referencedIdentifier = variableDeclarator;
+                            referencedIdentifier = this._scriptManager.Functions[name];
+                            if (referencedIdentifier) {
+                                assignment.referencedIdentifier = referencedIdentifier;
                             }
                         }
                     }
+
+                    // All identifiers referenced in the right-hand side of the assignment should also be linked
+                    this.linkIdentifiers(assignment.right, declaratorMap);
                 }
             }
 
             // Find UpdateExpressions as well
         };
+
+        linkIdentifiers(ast, declaratorMap) {
+            var findIdentifiersInNode = {
+                lookFor: ["Identifier", "Literal"],
+                items: []
+            }
+
+            $action.ASTAnalyzer.searchAST(ast, findIdentifiersInNode);
+
+            for (var i = 0; i < findIdentifiersInNode.items.length; i++) {
+                var identifier = findIdentifiersInNode.items[i];
+
+                // Check the declarator map first to see if it was declared somewhere in the handler (local scope)
+                var referencedIdentifier = declaratorMap[identifier.name];
+                if (referencedIdentifier) {
+                    identifier.referencedIdentifier = referencedIdentifier;
+                } else {
+                    referencedIdentifier = this._scriptManager.Declarations[identifier.name];
+                    if (referencedIdentifier) {
+                        identifier.referencedIdentifier = referencedIdentifier;
+                    } else {
+                        referencedIdentifier = this._scriptManager.Functions[identifier.name];
+                        if (referencedIdentifier) {
+                            identifier.referencedIdentifier = referencedIdentifier;
+                        }
+                    }
+                }
+            }
+        }
+
 
         // Can be FunctionExpression, FunctionDefinition, or ArrowExpression
         getFunctionName(functionExpr) {
@@ -253,7 +285,9 @@ var $action = $action || {};
          * @property undefined
          */
         getBaseMemberExpressionReference(expression) {
-            if (expression.object && expression.object.type == "Identifier" && expression.object.name) {
+            if (!expression.object && !expression.callee) {
+                return expression.stringRepresentation;
+            } else if (expression.object && expression.object.type == "Identifier" && expression.object.name) {
                 return expression.object.name;
             } else {
                 if (expression.type == "CallExpression") {
@@ -460,10 +494,12 @@ var $action = $action || {};
             }
 
             // Parse the located identifiers
-            this.parseIdentifiers(command.LabelMetadata.expressionCalls, findIdentifiersInNode.items);
+            for (let i = 0; i < findIdentifiersInNode.items.length; i++) {
+                this.parseIdentifier(command.LabelMetadata.expressionCalls, findIdentifiersInNode.items[i]);
+            }
         }
 
-        parseFunctionCallsInsideConditional(command, keyCodes, dependency, conditional) {
+        parseFunctionCallsInsideConditional(command, keyCodes, mouseButtons, dependency, conditional) {
             // Find all function call expressions inside conditionals
             var findFunctionCallExpressionsInsideConditionals = {
                 outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
@@ -491,6 +527,7 @@ var $action = $action || {};
             if (findIdentifiersInNode.items.length) {
                 var data = { // For each conditional expression
                     keyCodeValues: keyCodes,
+                    mouseButtonValues: mouseButtons,
                     pathCondition: dependency,
                     phrases: [],
                     imperativePhrases: [],
@@ -500,7 +537,10 @@ var $action = $action || {};
                 }
 
                 command.LabelMetadata.conditionals.expressionCalls.push(data);
-                this.parseIdentifiers(data, findIdentifiersInNode.items);
+                // Parse the located identifiers
+                for (let j = 0; j < findIdentifiersInNode.items.length; j++) {
+                    this.parseIdentifier(command.LabelMetadata.expressionCalls, findIdentifiersInNode.items[j]);
+                }
             }
         }
 
@@ -526,12 +566,17 @@ var $action = $action || {};
                     $action.ASTAnalyzer.searchAST(item, findIdentifiersInNode);
 
                     // Then parse all the identifers found within the collection of items
-                    this.parseIdentifiers(command.LabelMetadata.assignments, findIdentifiersInNode.items);
+                    // Parse the located identifiers
+                    for (let j = 0; j < findIdentifiersInNode.items.length; j++) {
+                        if (findIdentifiersInNode.items[j]) {
+                            this.parseIdentifier(command.LabelMetadata.expressionCalls, findIdentifiersInNode.items[j]);
+                        }
+                    }
                 }
             }
         }
 
-        parseAssignmentExpressionsInsideConditional(command, keyCodes, dependency, conditional) {
+        parseAssignmentExpressionsInsideConditional(command, keyCodes, mouseButtons, dependency, conditional) {
             var findAssignmentExpressionsInsideConditionals = {
                 lookFor: ["AssignmentExpression"],
                 outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
@@ -556,6 +601,7 @@ var $action = $action || {};
                     if (findIdentifiersInNode.items.length) {
                         var data = { // For each conditional expression
                             keyCodeValues: keyCodes,
+                            mouseButtonValues: mouseButtons,
                             pathCondition: dependency,
                             phrases: [],
                             imperativePhrases: [],
@@ -567,7 +613,11 @@ var $action = $action || {};
                         command.LabelMetadata.conditionals.assignments.push(data);
 
                         // Then parse all the identifers found within the collection of items
-                        this.parseIdentifiers(data, findIdentifiersInNode.items);
+                        for (let j = 0; j < findIdentifiersInNode.items.length; j++) {
+                            if (findIdentifiersInNode.items[j]) {
+                                this.parseIdentifier(command.LabelMetadata.expressionCalls, findIdentifiersInNode.items[j]);
+                            }
+                        }
                     }
                 }
             }
@@ -584,7 +634,7 @@ var $action = $action || {};
             this.parseComments(command.LabelMetadata.expressionComments, findExpressionStatementsOutsideConditionals.items);
         }
 
-        parseExpressionStatementsInsideConditional(command, keyCodes, dependency, conditional) {
+        parseExpressionStatementsInsideConditional(command, keyCodes, mouseButtons, dependency, conditional) {
             var findExpressionStatementsInsideConditionals = {
                 lookFor: ["ExpressionStatement"],
                 outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
@@ -597,6 +647,7 @@ var $action = $action || {};
             if (findExpressionStatementsInsideConditionals.items.length) {
                 var data = { // For each conditional expression
                     keyCodeValues: keyCodes,
+                    mouseButtonValues: mouseButtons,
                     pathCondition: dependency,
                     phrases: [],
                     imperativePhrases: [],
@@ -668,19 +719,33 @@ var $action = $action || {};
                         }
                     }
                     labelsString = labelsString.substring(0, labelsString.length - 1);
-                    for (var k = 0; k < obj.keyCodeValues.length; k++) {
-                        var keyCodeValueString = $action.KeyCodes[obj.keyCodeValues[k]];
-                        if (!command.ArgumentsMap[keyCodeValueString]) {
-                            command.ArgumentsMap[keyCodeValueString] = labelsString;
-                        } else {
-                            command.ArgumentsMap[keyCodeValueString] = command.ArgumentsMap[keyCodeValueString] + ", " + labelsString;
+                    if ($action.isKeyboardEvent(command.EventType)) {
+                        for (var k = 0; k < obj.keyCodeValues.length; k++) {
+                            var keyCodeValueString = $action.KeyCodes[obj.keyCodeValues[k]];
+                            if (!command.ArgumentsMap[keyCodeValueString]) {
+                                command.ArgumentsMap[keyCodeValueString] = labelsString;
+                            } else {
+                                command.ArgumentsMap[keyCodeValueString] = command.ArgumentsMap[keyCodeValueString] + ", " + labelsString;
+                            }
+                        }
+                    }
+
+                    if ($action.isMouseEvent) {
+                        // Parse conditional for mouse button 
+                        for (var l = 0; l < obj.mouseButtonValues.length; l++) {
+                            var mouseButtonValueString = $action.MouseButtons[obj.mouseButtonValues[l]];
+                            if (!command.ArgumentsMap[mouseButtonValueString]) {
+                                command.ArgumentsMap[mouseButtonValueString] = labelsString;
+                            } else {
+                                command.ArgumentsMap[mouseButtonValueString] = command.ArgumentsMap[mouseButtonValueString] + ", " + labelsString;
+                            }
                         }
                     }
                 }
             }
         }
 
-        addArgumentToMetadata(command, arg) {
+        addKeyCodeArgumentToMetadata(command, arg) {
             var keyCode = $action.KeyCodesReverseMap[arg];
             var types = ["assignments", "expressionCalls", "expressionComments"];
             for (var i = 0; i < types.length; i++) {
@@ -726,16 +791,24 @@ var $action = $action || {};
                 var dependency = this.getDependency(findConditionals.items[i]);
 
                 // Function calls
-                var keyCodes = this.parseKeyCodeInputs(command, ast, findConditionals.items[i]);
-                this.parseFunctionCallsInsideConditional(command, keyCodes, dependency, findConditionals.items[i].consequent);
-                this.parseAssignmentExpressionsInsideConditional(command, keyCodes, dependency, findConditionals.items[i].consequent);
-                this.parseExpressionStatementsInsideConditional(command, keyCodes, dependency, findConditionals.items[i].consequent);
+                var keyCodes = {};
+                var mouseButtons = {};
+                if ($action.isKeyboardEvent(command.EventType)) {
+                    keyCodes = this.parseKeyCodeInputs(command, ast, findConditionals.items[i]);
+                } else if ($action.isMouseEvent(command.EventType)) {
+                    mouseButtons = this.parseMouseButtons(command, ast, findConditionals.items[i]);
+                    command.RequiresMousePosition = this.parseMousePosition(command, ast, findConditionals.items[i]);
+                }
+
+                this.parseFunctionCallsInsideConditional(command, keyCodes, mouseButtons, dependency, findConditionals.items[i].consequent);
+                this.parseAssignmentExpressionsInsideConditional(command, keyCodes, mouseButtons, dependency, findConditionals.items[i].consequent);
+                this.parseExpressionStatementsInsideConditional(command, keyCodes, mouseButtons, dependency, findConditionals.items[i].consequent);
 
                 if (findConditionals.items[i].alternate) {
                     dependency = this.getDependency(findConditionals.items[i], true);
-                    this.parseFunctionCallsInsideConditional(command, [], dependency, findConditionals.items[i].alternate);
-                    this.parseAssignmentExpressionsInsideConditional(command, [], dependency, findConditionals.items[i].alternate);
-                    this.parseExpressionStatementsInsideConditional(command, [], dependency, findConditionals.items[i].alternate);
+                    this.parseFunctionCallsInsideConditional(command, [], [], dependency, findConditionals.items[i].alternate);
+                    this.parseAssignmentExpressionsInsideConditional(command, [], [], dependency, findConditionals.items[i].alternate);
+                    this.parseExpressionStatementsInsideConditional(command, [], [], dependency, findConditionals.items[i].alternate);
                 }
             }
         }
@@ -756,6 +829,191 @@ var $action = $action || {};
                 }
             }
             return dependency;
+        }
+
+        parseTestExpressionForMousePositions(item, mousePositionValues, mousePositionExpressions) {
+            if (item.type == "BinaryExpression") {
+                if (item.left.type == "MemberExpression" && item.right.type == "Literal") {
+                    if (item.left.property && item.left.property.type == "Identifier" && item.right.property && (item.right.property.name == "clientX" || item.right.property.name == "x" || item.right.property.name == "clientY" || item.right.property.name == "y")) {
+                        mousePositionValues.push(item.right.raw);
+                    }
+                } else if (item.left.type == "Literal" && item.right.type == "MemberExpression") {
+                    if (item.right.property && item.right.property.type == "Identifier" && item.right.property && (item.right.property.name == "clientX" || item.right.property.name == "x" || item.right.property.name == "clientY" || item.right.property.name == "y")) {
+                        mousePositionValues.push(item.left.raw);
+                    }
+                }
+
+                if ((item.left.type == "MemberExpression" || item.left.type == "Identifier") && item.right.type == "Literal") {
+                    for (var m = 0; m < mousePositionExpressions.length; m++) {
+                        if (item.left.stringRepresentation === mousePositionExpressions[m].stringRepresentation) {
+                            mousePositionValues.push(item.right.raw);
+                        }
+                    }
+                } else if (item.left.type == "Literal" && (item.right.type == "MemberExpression" || item.right.type == "Identifier")) {
+                    for (var m = 0; m < mousePositionExpressions.length; m++) {
+                        if (item.right.stringRepresentation === mousePositionExpressions[m].stringRepresentation) {
+                            mousePositionValues.push(item.left.raw);
+                        }
+                    }
+                }
+            } else if (item.type == "LogicalExpression") {
+                this.parseTestExpressionForMousePositions(item.left, mousePositionValues, mousePositionExpressions);
+                this.parseTestExpressionForMousePositions(item.right, mousePositionValues, mousePositionExpressions);
+            }
+            return mousePositionValues;
+        }
+
+        parseMousePosition(command, ast, conditional) {
+            // Find all variable declarators that are assigned to mouseEvent.clientX, mouseEvent.clientY, mouseEvent.x, or mouseEvent.y
+            // First, look for any MemberExpressions outside of conditionals that have references to keycodes
+            // These references should be found in any assignment expression
+            // TOOD: maybe this really should be just outiside because they could be nested
+            var findMousePositionReferencedOutsideConditionals = {
+                lookFor: ["AssignmentExpression", "VariableDeclarator"],
+                outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
+                items: []
+            }
+
+            $action.ASTAnalyzer.searchAST(ast, findMousePositionReferencedOutsideConditionals);
+
+            var mousePositionExpressions = []; // Locate any variables that will have a stored reference to a keyCode
+            for (var k = 0; k < findMousePositionReferencedOutsideConditionals.items.length; k++) {
+                var expression = findMousePositionReferencedOutsideConditionals.items[k];
+                if (expression.type == "AssignmentExpression") {
+                    if (expression.right.type == "MemberExpression" && expression.right.property.type == "Identifier" && (expression.right.property.name == "clientX" || expression.right.property.name == "x" || expression.right.property.name == "clientY" || expression.right.property.name == "y")) {
+                        mousePositionExpressions.push(expression.left);
+                    }
+                } else if (expression.type == "VariableDeclarator") {
+                    if (expression.init.type == "MemberExpression" && expression.init.property.type == "Identifier" && (expression.init.property.name == "clientX" || expression.init.property.name == "x" || expression.init.property.name == "clientY" || expression.init.property.name == "y")) {
+                        mousePositionExpressions.push(expression.id);
+                    }
+                }
+            }
+
+            // Go through each path condition and look for referenced keycodes
+            var mousePositionValues = [];
+            if (conditional.pathConditions) {
+                for (var i = 0; i < conditional.pathConditions.length; i++) {
+                    var pathCondition = conditional.pathConditions[i];
+                    if (pathCondition.type == "BinaryExpression") {
+                        this.parseTestExpressionForMousePositions(pathCondition, mousePositionValues, mousePositionExpressions);
+                    }
+                }
+            }
+
+            if (conditional.testCondition) {
+                this.parseTestExpressionForMousePositions(conditional.testCondition, mousePositionValues, mousePositionExpressions);
+            }
+
+            return mousePositionValues.length > 0;
+        }
+
+        parseTestExpressionForMouseButtons(item, mouseButtonValues, mouseButtonExpressions) {
+            if (item.type == "BinaryExpression") {
+                if (item.left.type == "MemberExpression" && item.right.type == "Literal") {
+                    if (item.left.property && item.left.property.type == "Identifier" && item.left.property.name == "button") {
+                        mouseButtonValues.push(item.right.raw);
+                    }
+                } else if (item.left.type == "Literal" && item.right.type == "MemberExpression") {
+                    if (item.right.property && item.right.property.type == "Identifier" && item.right.property.name == "button") {
+                        mouseButtonValues.push(item.left.raw);
+                    }
+                }
+
+                if ((item.left.type == "MemberExpression" || item.left.type == "Identifier") && item.right.type == "Literal") {
+                    for (var m = 0; m < mouseButtonExpressions.length; m++) {
+                        if (item.left.stringRepresentation === mouseButtonExpressions[m].stringRepresentation) {
+                            mouseButtonValues.push(item.right.raw);
+                        }
+                    }
+                } else if (item.left.type == "Literal" && (item.right.type == "MemberExpression" || item.right.type == "Identifier")) {
+                    for (var m = 0; m < mouseButtonExpressions.length; m++) {
+                        if (item.right.stringRepresentation === mouseButtonExpressions[m].stringRepresentation) {
+                            mouseButtonValues.push(item.left.raw);
+                        }
+                    }
+                }
+            } else if (item.type == "LogicalExpression") {
+                this.parseTestExpressionForMouseButtons(item.left, mouseButtonValues, mouseButtonExpressions);
+                this.parseTestExpressionForMouseButtons(item.right, mouseButtonValues, mouseButtonExpressions);
+            }
+            return mouseButtonValues;
+        }
+
+        parseMouseButtons(command, ast, conditional) {
+            // First, look for any MemberExpressions outside of conditionals that have references to keycodes
+            // These references should be found in any assignment expression
+            // TOOD: maybe this really should be just outiside because they could be nested
+            var findMouseButtonReferencedOutsideConditionals = {
+                lookFor: ["AssignmentExpression", "VariableDeclarator"],
+                outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
+                items: []
+            }
+
+            $action.ASTAnalyzer.searchAST(ast, findMouseButtonReferencedOutsideConditionals);
+
+            var mouseButtonExpressions = []; // Locate any variables that will have a stored reference to a keyCode
+            for (var k = 0; k < findMouseButtonReferencedOutsideConditionals.items.length; k++) {
+                var expression = findMouseButtonReferencedOutsideConditionals.items[k];
+                if (expression.type == "AssignmentExpression") {
+                    if (expression.right.type == "MemberExpression" && expression.right.property.type == "Identifier" && expression.right.property.name == "button") {
+                        mouseButtonExpressions.push(expression.left);
+                    }
+                } else if (expression.type == "VariableDeclarator") {
+                    if (expression.init.type == "MemberExpression" && expression.init.property.type == "Identifier" && expression.init.property.name == "button") {
+                        mouseButtonExpressions.push(expression.id);
+                    }
+                }
+            }
+
+            // Go through each path condition and look for referenced keycodes
+            var mouseButtonValues = [];
+            if (conditional.pathConditions) {
+                for (var i = 0; i < conditional.pathConditions.length; i++) {
+                    var pathCondition = conditional.pathConditions[i];
+                    if (pathCondition.type == "BinaryExpression") {
+                        this.parseTestExpressionForMouseButtons(pathCondition, mouseButtonValues, mouseButtonExpressions);
+                    }
+                }
+            }
+
+            if (conditional.testCondition) {
+                this.parseTestExpressionForMouseButtons(conditional.testCondition, mouseButtonValues, mouseButtonExpressions);
+            }
+
+            return mouseButtonValues;
+        }
+
+        parseTestExpressionForKeyCodes(item, keyCodeValues, keyCodeExpressions) {
+            if (item.type == "BinaryExpression") {
+                if (item.left.type == "MemberExpression" && item.right.type == "Literal") {
+                    if (item.left.property && item.left.property.type == "Identifier" && item.left.property.name == "keyCode") {
+                        keyCodeValues.push(item.right.raw);
+                    }
+                } else if (item.left.type == "Literal" && item.right.type == "MemberExpression") {
+                    if (item.right.property && item.right.property.type == "Identifier" && item.right.property.name == "keyCode") {
+                        keyCodeValues.push(item.left.raw);
+                    }
+                }
+
+                if ((item.left.type == "MemberExpression" || item.left.type == "Identifier") && item.right.type == "Literal") {
+                    for (var m = 0; m < keyCodeExpressions.length; m++) {
+                        if (item.left.stringRepresentation === keyCodeExpressions[m].stringRepresentation) {
+                            keyCodeValues.push(item.right.raw);
+                        }
+                    }
+                } else if (item.left.type == "Literal" && (item.right.type == "MemberExpression" || item.right.type == "Identifier")) {
+                    for (var m = 0; m < keyCodeExpressions.length; m++) {
+                        if (item.right.stringRepresentation === keyCodeExpressions[m].stringRepresentation) {
+                            keyCodeValues.push(item.left.raw);
+                        }
+                    }
+                }
+            } else if (item.type == "LogicalExpression") {
+                this.parseTestExpressionForKeyCodes(item.left, keyCodeValues, keyCodeExpressions);
+                this.parseTestExpressionForKeyCodes(item.right, keyCodeValues, keyCodeExpressions);
+            }
+            return keyCodeValues;
         }
 
         parseKeyCodeInputs(command, ast, conditional) {
@@ -854,13 +1112,11 @@ var $action = $action || {};
             }
         }
 
-        parseIdentifiers(labelMetadata, identifiers) {
-            for (let i = 0; i < identifiers.length; i++) {
-                if (identifiers[i].name) {
-                    this.parseLabel(labelMetadata, identifiers[i].name);
-                } else if (identifiers[i].value) {
-                    this.parseLabel(labelMetadata, identifiers[i].value.toString());
-                }
+        parseIdentifier(labelMetadata, identifier) {
+            if (identifier.name) {
+                this.parseLabel(labelMetadata, identifier.name);
+            } else if (identifier.value) {
+                this.parseLabel(labelMetadata, identifier.value.toString());
             }
         }
 

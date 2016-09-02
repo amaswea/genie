@@ -198,13 +198,29 @@ var $action = $action || {};
         39: "right",
         40: "down",
         65: "a",
-        90: "z", 
-        80: "p", 
-        68: "d", 
-        65: "a", 
-        81: "q", 
+        90: "z",
+        80: "p",
+        68: "d",
+        65: "a",
+        81: "q",
         13: "enter"
             // TODO: Populate the rest later
+    }
+
+    $action.MouseButtons = {
+        0: "left-click",
+        1: "mouse-wheel",
+        2: "right-click",
+        3: "browser-back",
+        4: "browser-forward"
+    }
+
+    $action.MouseButtonsReverseMap = {
+        "left-click": 0,
+        "mouse-wheel": 1,
+        "right-click": 2,
+        "browser-back": 3,
+        "browser-forward": 4
     }
 
     $action.KeyCodesReverseMap = {
@@ -213,18 +229,20 @@ var $action = $action || {};
         "up": 37,
         "right": 39,
         "down": 40,
-        "enter": 13, 
+        "enter": 13,
         "a": 65,
-        "z": 90, 
-        "p": 80, 
-        "d": 68, 
-        "a": 65, 
+        "z": 90,
+        "p": 80,
+        "d": 68,
+        "a": 65,
         "q": 81
     }
-    
+
     $action.SpecialKeys = {
-        "left": "ArrowLeft", 
-        "right": "ArrowRight"
+        "left": "ArrowLeft",
+        "right": "ArrowRight", 
+        "up": "ArrowUp", 
+        "down": "ArrowDown"
     }
 
     // Attributes that have a URL to parse

@@ -30,11 +30,19 @@ var $action = $action || {};
 
             this.hide();
             $(window).scroll(_.throttle(this.repositionCommandLineArea, 1));
+
+            // Canvas
+            var canvas = document.createElement("canvas");
+            canvas.classList.add("genie-audio-ui-input-canvas");
+            $('html').append(canvas);
+            this.canvas = canvas;
+            this.canvas.style.display = "none";
         };
 
         appendCommandGroup(label, commands) {
             // Groups
             for (var i = 0; i < commands.length; i++) {
+                if(label == "")
                 var newCommand = new $action.CommandItem(commands[i]);
                 commands[i].CommandItem = newCommand;
 
@@ -81,6 +89,57 @@ var $action = $action || {};
             commandLine[0].style.top = top + "px";
         };
 
+        drawGridAndGetInput(width, height, x, y) {
+            var bw = width;
+            var bh = height;
+            var p = 10;
+
+            var canvas = this.canvas;
+            var context = canvas.getContext("2d");
+            canvas.style.position = "absolute";
+            canvas.style.left = x + "px";
+            canvas.style.top = y + "px";
+            canvas.style.width = width + "px";
+            canvas.style.height = height + "px";
+
+            function drawBoard() {
+                var cellNumber = 1;
+                for (var x = 0; x <= bw; x += 20) {
+                    context.moveTo(0.5 + x + p, p);
+                    context.lineTo(0.5 + x + p, bh + p);
+
+                    var x = 0.5 + x + p;
+                    var y = p;
+                    context.strokeText(cellNumber.toString(), x, y, 10);
+                    cellNumber++;
+                }
+
+
+                cellNumber = 1;
+                for (var x = 0; x <= bh; x += 20) {
+                    context.moveTo(p, 0.5 + x + p);
+                    context.lineTo(bw + p, 0.5 + x + p);
+                }
+
+                context.strokeStyle = "black";
+                context.lineWidth = 1; 
+                context.stroke();
+            }
+
+            drawBoard();
+            this.canvas.style.display = "";
+            
+            return prompt("Please enter a column.");
+        }
+        
+        calculateMousePosition(column, width, height, x, y){
+            var mousePosition = x; 
+            var lineWidth = 20; 
+            mousePosition = mousePosition + column * lineWidth + 10; 
+            console.log(mousePosition);
+            return mousePosition;
+        }
+
         mapTextToCommand(text) {
             if (text == "commands") {
                 var commandLabels = Object.keys(this._commandsMap);
@@ -108,10 +167,24 @@ var $action = $action || {};
                 let command = this._commandsMap[text];
                 if (command) {
                     // Call the execute method to perform the command
-                    if (command.hasArguments()) {
+                    if (command.RequiresMousePosition) {
+                        // remove. Hack
+                        var element = command.Element;
+                        if (command.Element instanceof Document) {
+                            element = document.body;
+                        }
+
+                        var commandHeight = $(element).outerHeight();
+                        var commandWidth = $(element).outerWidth();
+                        var commandX = $(element).offset().left;
+                        var commandY = $(element).offset().top;
+                        var colNumber = this.drawGridAndGetInput(commandWidth, commandHeight, commandX, commandY);
+                        var mousePosition = this.calculateMousePosition(colNumber, commandWidth, commandHeight, commandX, commandY);
+                        
+                        command.execute(0, {x: mousePosition, y: 10 });
+                    } else if (command.hasArguments()) {
                         command.execute(text);
                     } else {
-                        // Call the execute method to perform the command
                         command.execute();
                     }
                 } else {

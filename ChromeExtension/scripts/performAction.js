@@ -21,6 +21,8 @@ function performAction(data) {
     } else if (data.elementID == "window") {
         element = window;
     }
+    
+    debugger;
 
     if (element) {
         // Execute the action using the trigger or the associated action function
@@ -77,8 +79,40 @@ function performAction(data) {
                 element.dispatchEvent(keyboardEvent);
             } else if (data.mouse) {
                 var mouseEvent = document.createEvent('MouseEvent');
+
+                if (data.mousePosition && data.mouseButton) {
+                    Object.defineProperty(mouseEvent, 'clientX', {
+                        get: function () {
+                            return data.mousePosition.x;
+                        }
+                    });
+                    Object.defineProperty(mouseEvent, 'clientY', {
+                        get: function () {
+                            return data.mousePosition.y;
+                        }
+                    });
+
+                    Object.defineProperty(mouseEvent, 'screenX', {
+                        get: function () {
+                            return data.mousePosition.x;
+                        }
+                    });
+
+                    Object.defineProperty(mouseEvent, 'screenY', {
+                        get: function () {
+                            return data.mousePosition.y;
+                        }
+                    });
+
+                    Object.defineProperty(mouseEvent, 'button', {
+                        get: function () {
+                            return data.mouseButton;
+                        }
+                    });
+                }
+
                 if (mouseEvent.initMouseEvent) {
-                    mouseEvent.initMouseEvent(event, true, true, document.defaultView, false, false, false, false);
+                    mouseEvent.initMouseEvent(event, true, true, document.defaultView, 1, data.mousePosition.x, data.mousePosition.y, data.mousePosition.x, data.mousePosition.y, false, false, false, false, data.mouseButton);
                 }
 
                 element.dispatchEvent(mouseEvent);
