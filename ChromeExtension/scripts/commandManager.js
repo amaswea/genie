@@ -47,29 +47,30 @@ var $action = $action || {};
         }
 
         addCommand(command) {
-            // let duplicate = this.findDuplicate(command); // Look for duplicate commands
+            let duplicate = this.findDuplicate(command); // Look for duplicate commands
             // TODO: Fix this later
             if (command.global) {
                 command.eventType = $action.GlobalEventHandlersMap[command.eventType];
             }
-            if ((command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1)) {
+            if (!duplicate && (command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1)) {
                 var element = $action.getElementFromID(command.elementID);
                 var newCommand = new $action.Command(command.id, command.elementID, command.eventType, command.handler)
                 this.initMetadata(newCommand);
+                console.log(newCommand.Handler);
+                console.log(newCommand.EventType);
+                console.log(newCommand.Element.tagName)
 
-                if (command.keyCodeArguments && $action.isKeyboardEvent(command.eventType)) {
+                this.createArgumentsMap(newCommand, command);
+                if (command.keyCodeArguments) {
+                    var labelMetadataString = newCommand.labelMetadata();
                     if (command.keyCodeArguments instanceof Array) {
                         for (var i = 0; i < command.keyCodeArguments.length; i++) {
-                            let arg = command.keyCodeArguments[i];
-                            this.addKeyCodeArgumentToMetadata(newCommand, arg);
+                            newCommand.ArgumentsMap[command.keyCodeArguments[i]] = labelMetadataString;
                         }
                     } else {
-                        this.addKeyCodeArgumentToMetadata(newCommand, command.keyCodeArguments);
+                        newCommand.ArgumentsMap[command.keyCodeArguments] = labelMetadataString;
                     }
                 }
-
-                this.createArgumentsMap(newCommand);
-                //  console.log("adding new command " + command.eventType + " " + command.handler + " " + command.elementID);
 
                 this._commandCount++;
 
@@ -79,7 +80,6 @@ var $action = $action || {};
             }
             return false; // Returns whether the command was successfully added
         };
-
 
         removeCommand(command) {
             var storedCommand = this._commands[command.id];
@@ -106,8 +106,8 @@ var $action = $action || {};
             for (var i = 0; i < keys.length; i++) {
                 let commandState = commandStates[keys[i]];
                 let command = this._commands[keys[i]];
-                if (command.DataDependent != commandState) {
-                    command.DataDependent = commandState;
+                if (command.IsEnabled != commandState) {
+                    command.IsEnabled = commandState;
                     this._ui.updateCommandEnabledState(command, commandState);
                 }
             }
@@ -192,7 +192,7 @@ var $action = $action || {};
                     }
 
                     // All identifiers referenced in the right-hand side of the assignment should also be linked
-                    this.linkIdentifiers(assignment.right, declaratorMap);
+                    this.linkIdentifiers(assignment, declaratorMap);
                 }
             }
 
@@ -309,11 +309,11 @@ var $action = $action || {};
             return true;
         }
 
-        parsePhrase(labelMetadata, phrase) {
+        parsePhrase(labelMetadata, phrase, allEnglish = true) {
             var toLower = phrase.toLowerCase();
             var tagged = this._parser.parse(phrase);
             var split = this._parser.split(phrase);
-            if (split && split.length > 1 && !tagged.nonEnglish.length) {
+            if (split && split.length > 1 && ((allEnglish && !tagged.nonEnglish.length) || !allEnglish)) {
                 let first = split[0].toLowerCase();
                 var sentence = split.toString().replace(/\,/g, " ").toLowerCase();
                 sentence = _.upperFirst(sentence);
@@ -341,17 +341,17 @@ var $action = $action || {};
             }
         }
 
-        parseLabel(labelMetadata, labelString) {
+        parseLabel(labelMetadata, labelString, allEnglish = true) {
             var sentences = labelString.split(/\.|\?|!/);
             var split = [];
 
             if (sentences.length > 1) {
                 for (var i = 0; i < sentences.length; i++) {
-                    this.parsePhrase(labelMetadata, sentences[i].toLowerCase());
+                    this.parsePhrase(labelMetadata, sentences[i].toLowerCase(), allEnglish);
                 }
             } else {
                 let sentence = sentences[0].trim();
-                this.parsePhrase(labelMetadata, sentence);
+                this.parsePhrase(labelMetadata, sentence, allEnglish);
             }
         }
 
@@ -539,7 +539,7 @@ var $action = $action || {};
                 command.LabelMetadata.conditionals.expressionCalls.push(data);
                 // Parse the located identifiers
                 for (let j = 0; j < findIdentifiersInNode.items.length; j++) {
-                    this.parseIdentifier(command.LabelMetadata.expressionCalls, findIdentifiersInNode.items[j]);
+                    this.parseIdentifier(data, findIdentifiersInNode.items[j]);
                 }
             }
         }
@@ -568,8 +568,8 @@ var $action = $action || {};
                     // Then parse all the identifers found within the collection of items
                     // Parse the located identifiers
                     for (let j = 0; j < findIdentifiersInNode.items.length; j++) {
-                        if (findIdentifiersInNode.items[j]) {
-                            this.parseIdentifier(command.LabelMetadata.expressionCalls, findIdentifiersInNode.items[j]);
+                        if (findIdentifiersInNode.items[j].referencedIdentifier) {
+                            this.parseIdentifier(command.LabelMetadata.assignments, findIdentifiersInNode.items[j]);
                         }
                     }
                 }
@@ -614,8 +614,8 @@ var $action = $action || {};
 
                         // Then parse all the identifers found within the collection of items
                         for (let j = 0; j < findIdentifiersInNode.items.length; j++) {
-                            if (findIdentifiersInNode.items[j]) {
-                                this.parseIdentifier(command.LabelMetadata.expressionCalls, findIdentifiersInNode.items[j]);
+                            if (findIdentifiersInNode.items[j].referencedIdentifier) {
+                                this.parseIdentifier(data, findIdentifiersInNode.items[j]);
                             }
                         }
                     }
@@ -623,28 +623,28 @@ var $action = $action || {};
             }
         }
 
-        parseExpressionStatementsOutsideConditionals(command, ast) {
-            var findExpressionStatementsOutsideConditionals = {
-                lookFor: ["ExpressionStatement"],
+        parseNodesOutsideConditionals(command, ast) {
+            var findNodesOutsideConditionals = {
+                lookFor: [],
                 outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, findExpressionStatementsOutsideConditionals);
-            this.parseComments(command.LabelMetadata.expressionComments, findExpressionStatementsOutsideConditionals.items);
+            $action.ASTAnalyzer.searchAST(ast, findNodesOutsideConditionals);
+            this.parseComments(command.LabelMetadata.expressionComments, findNodesOutsideConditionals.items);
         }
 
-        parseExpressionStatementsInsideConditional(command, keyCodes, mouseButtons, dependency, conditional) {
-            var findExpressionStatementsInsideConditionals = {
-                lookFor: ["ExpressionStatement"],
+        parseNodesInsideConditional(command, keyCodes, mouseButtons, dependency, conditional) {
+            var findNodesInsideConditional = {
+                lookFor: [],
                 outside: ["IfStatement", "ConditionalExpression", "WhileStatement", "DoWhileStatement", "ForStatement", "ForInStatement", "ForOfStatement", "SwitchStatement"],
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(conditional, findExpressionStatementsInsideConditionals);
+            $action.ASTAnalyzer.searchAST(conditional, findNodesInsideConditional);
 
             // Object to hold the data
-            if (findExpressionStatementsInsideConditionals.items.length) {
+            if (findNodesInsideConditional.items.length) {
                 var data = { // For each conditional expression
                     keyCodeValues: keyCodes,
                     mouseButtonValues: mouseButtons,
@@ -657,13 +657,13 @@ var $action = $action || {};
                 }
 
                 var added = false;
-                for (var i = 0; i < findExpressionStatementsInsideConditionals.items.length; i++) {
-                    if (findExpressionStatementsInsideConditionals.items[i].leadingComments) {
+                for (var i = 0; i < findNodesInsideConditional.items.length; i++) {
+                    if (findNodesInsideConditional.items[i].leadingComments) {
                         if (!added) {
                             added = true;
                             command.LabelMetadata.conditionals.expressionComments.push(data);
                         }
-                        this.parseComment(data, findExpressionStatementsInsideConditionals.items[i]);
+                        this.parseComment(data, findNodesInsideConditional.items[i]);
                     }
                 }
             }
@@ -745,18 +745,6 @@ var $action = $action || {};
             }
         }
 
-        addKeyCodeArgumentToMetadata(command, arg) {
-            var keyCode = $action.KeyCodesReverseMap[arg];
-            var types = ["assignments", "expressionCalls", "expressionComments"];
-            for (var i = 0; i < types.length; i++) {
-                let metadata = command.LabelMetadata.conditionals[types[i]];
-                for (var j = 0; j < metadata.length; j++) {
-                    let item = metadata[j];
-                    item.keyCodeValues.push(keyCode);
-                }
-            }
-        }
-
         convertKeyCodesToString(keyCodesArray) {
             var keyCodeString = "";
             for (var i = 0; i < keyCodesArray.length; i++) {
@@ -772,7 +760,7 @@ var $action = $action || {};
         parseOutsideConditionals(command, ast) {
             this.parseFunctionCallsOutsideConditionals(command, ast);
             this.parseAssignmentExpressionsOutsideConditionals(command, ast);
-            this.parseExpressionStatementsOutsideConditionals(command, ast);
+            this.parseNodesOutsideConditionals(command, ast);
         }
 
         parseConditionals(command, ast) {
@@ -802,13 +790,13 @@ var $action = $action || {};
 
                 this.parseFunctionCallsInsideConditional(command, keyCodes, mouseButtons, dependency, findConditionals.items[i].consequent);
                 this.parseAssignmentExpressionsInsideConditional(command, keyCodes, mouseButtons, dependency, findConditionals.items[i].consequent);
-                this.parseExpressionStatementsInsideConditional(command, keyCodes, mouseButtons, dependency, findConditionals.items[i].consequent);
+                this.parseNodesInsideConditional(command, keyCodes, mouseButtons, dependency, findConditionals.items[i].consequent);
 
                 if (findConditionals.items[i].alternate) {
                     dependency = this.getDependency(findConditionals.items[i], true);
                     this.parseFunctionCallsInsideConditional(command, [], [], dependency, findConditionals.items[i].alternate);
                     this.parseAssignmentExpressionsInsideConditional(command, [], [], dependency, findConditionals.items[i].alternate);
-                    this.parseExpressionStatementsInsideConditional(command, [], [], dependency, findConditionals.items[i].alternate);
+                    this.parseNodesInsideConditional(command, [], [], dependency, findConditionals.items[i].alternate);
                 }
             }
         }
@@ -884,7 +872,7 @@ var $action = $action || {};
                         mousePositionExpressions.push(expression.left);
                     }
                 } else if (expression.type == "VariableDeclarator") {
-                    if (expression.init.type == "MemberExpression" && expression.init.property.type == "Identifier" && (expression.init.property.name == "clientX" || expression.init.property.name == "x" || expression.init.property.name == "clientY" || expression.init.property.name == "y")) {
+                    if (expression.init && expression.init.type == "MemberExpression" && expression.init.property.type == "Identifier" && (expression.init.property.name == "clientX" || expression.init.property.name == "x" || expression.init.property.name == "clientY" || expression.init.property.name == "y")) {
                         mousePositionExpressions.push(expression.id);
                     }
                 }
@@ -960,7 +948,7 @@ var $action = $action || {};
                         mouseButtonExpressions.push(expression.left);
                     }
                 } else if (expression.type == "VariableDeclarator") {
-                    if (expression.init.type == "MemberExpression" && expression.init.property.type == "Identifier" && expression.init.property.name == "button") {
+                    if (expression.init && expression.init.type == "MemberExpression" && expression.init.property.type == "Identifier" && expression.init.property.name == "button") {
                         mouseButtonExpressions.push(expression.id);
                     }
                 }
@@ -1097,7 +1085,7 @@ var $action = $action || {};
                 let comments = expressionStatements[i].leadingComments;
                 if (comments) {
                     for (let j = 0; j < comments.length; j++) {
-                        this.parseLabel(labelMetadata, comments[j].value);
+                        this.parseLabel(labelMetadata, comments[j].value, false);
                     }
                 }
             }
@@ -1107,7 +1095,7 @@ var $action = $action || {};
             let comments = statement.leadingComments;
             if (comments) {
                 for (let j = 0; j < comments.length; j++) {
-                    this.parseLabel(labelMetadata, comments[j].value);
+                    this.parseLabel(labelMetadata, comments[j].value, false);
                 }
             }
         }

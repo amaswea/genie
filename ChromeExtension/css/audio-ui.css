@@ -7,7 +7,6 @@
     z-index: 10000000;
 }
 */
-
 #genie-audio-ui {
     width: 300px;
     border-radius: 4px;
@@ -18,51 +17,31 @@
     box-shadow: rgb(126, 126, 126) 1px 1px 1px 1px;
     border-radius: 3px;
     overflow: auto;
-    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 14px;
     z-index: 10000000;
     position: absolute;
-    right: 10px; 
+    right: 10px;
     top: 10px;
     color: #428bca !important;
-}
-
-.genie-audio-ui-group-label {
-    padding: 10px 10px 10px 10px;
-    font-weight: bolder;
-    cursor: pointer;
-    display: inline-block;
-    border-bottom: 0.5px solid lightgray;
-    width: 100%;
-    color: black !important;
-    background-color: #e4e4e4;
 }
 
 .genie-audio-ui-list {
     list-style-type: none;
     margin: 0;
     padding: 0;
-    width: 280px;
 }
 
-.genie-audio-ui-list-item {
-    margin: 0;
-    list-style-type: none;
-    border-bottom: 0.5px solid lightgray;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    padding-left: 10px;
+.genie-audio-ui-command {
+    padding: 10px 10px 10px 10px;
     cursor: pointer;
+    border-bottom: 0.5px dotted lightgray;
+}
+
+.genie-audio-ui-label,
+.genie-audio-ui-arguments-item {
     display: flex;
-    flex-direction: column;
-}
-
-.genie-audio-ui-list-item-label {
-    color: black !important;
-}
-
-.genie-audio-ui-list-item-command {
-    font-weight: bold;
+    flex-direction: row;
 }
 
 .genie-audio-ui-header {
@@ -70,21 +49,16 @@
     padding-left: 10px;
     padding-bottom: 10px;
     color: black !important;
-}
-
-.genie-audio-ui-header,
-.genie-audio-ui-label {
     font-weight: bold;
 }
 
 .genie-ui-disabled {
-    color: white;
     background-color: lightgray;
     border-bottom: 0.5px solid white;
 }
 
-
-.genie-audio-ui-arguments-span {
+.genie-audio-ui-arguments-span,
+.genie-audio-ui-label-text {
     font-weight: bold;
     margin-right: 10px;
 }

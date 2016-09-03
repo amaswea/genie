@@ -64,7 +64,7 @@ var $action = $action || {};
 
             this._handler = handler;
             this._dependencies = [ /* { keyCode: "", dependencyString: "" } */ ];
-            this._dataDependent = false;
+            this._isEnabled = true;
             this._computedStyles = {};
 
             // Collection of possible command arguments (inputs)
@@ -162,12 +162,12 @@ var $action = $action || {};
             return this._postCommands;
         };
 
-        get DataDependent() {
-            return this._dataDependent;
+        get IsEnabled() {
+            return this._isEnabled;
         }
 
-        set DataDependent(state) {
-            this._dataDependent = state;
+        set IsEnabled(state) {
+            this._isEnabled = state;
         }
 
         set ComputedStyles(styles) {
@@ -247,7 +247,7 @@ var $action = $action || {};
             }
 
             // 3. Command results in no effect because of input guards or conditions in the code
-            if (this.DataDependent) {
+            if (!this.IsEnabled) {
                 return false;
             }
 
@@ -508,10 +508,41 @@ var $action = $action || {};
                 actions = this.getActionsToPerform(argument1, argument2);
             }
 
+            console.log("posting message " + actions);
             window.postMessage(actions, "*");
 
             // Unload the script
             (document.head || document.documentElement).removeChild(s);
+        }
+
+        labelMetadata() {
+            var completeLabel = "";
+            // Constructs a desired label for the command based on the command metadata available
+            var nodeTypes = ["elementLabels", "handlerComments", "expressionComments", "expressionCalls", "assignments", "handlerName"];
+            var phraseTypes = ["phrases", "imperativePhrases", "nouns", "verbs", "other"];
+            for (var i = 0; i < nodeTypes.length; i++) {
+                for (var j = 0; j < phraseTypes.length; j++) {
+                    var labelSet = this.LabelMetadata[nodeTypes[i]][phraseTypes[j]];
+                    for (var k = 0; k < labelSet.length; k++) {
+                        completeLabel = completeLabel + _.upperFirst(labelSet[k]) + ", ";
+                    }
+                }
+            }
+
+            var conditionalTypes = ["assignments", "expressionCalls", "expressionComments"];
+            for (var i = 0; i < conditionalTypes.length; i++) {
+                var conditionalType = this.LabelMetadata.conditionals[conditionalTypes[i]];
+                for (var j = 0; j < conditionalType.length; j++) {
+                    var item = conditionalType[j];
+                    for (var k = 0; k < phraseTypes.length; k++) {
+                        if (item[phraseTypes[k]].length) {
+                            completeLabel = completeLabel + _.upperFirst(item[phraseTypes[k]]) + ", ";
+                        }
+                    }
+                }
+            }
+
+            return completeLabel.substring(0, completeLabel.length - 2);
         }
     };
 

@@ -1,3 +1,5 @@
-.style-genie-help-ui-tooltip {
-    z-index: 2147483646 !important;
+body > .style-genie-help-ui-tooltip > .opentip > .ot-content  {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+    font-size: 14px !important;
+    color: #428bca !important;
 }

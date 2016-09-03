@@ -170,9 +170,9 @@ function updateCommandEnabledStates() {
         messageType: 'getCommandStates'
     }, "*");
 
-    // $action.commandManager.updateVisibleCommands();
     $action.commandsChanged = false;
-    //  setTimeout(updateCommandEnabledStates, 2000);
+    setTimeout(updateCommandEnabledStates, 5000);
+    setTimeout($action.commandManager.updateVisibleCommands(), 5000);
 }
 
 function organizeCommands() {
@@ -240,13 +240,13 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         $action.scriptManager = new $action.ScriptManager();
     }
 
-    $action.interface = new $action.AudioUI();
+    $action.interface = new $action.ShortcutsUI();
 
     // Create a new instance of the command manager with this instance of the UI
     $action.commandManager = new $action.CommandManager($action.interface, $action.scriptManager);
 
-   // injectJQueryD3OverrideScript();
-    
+    // injectJQueryD3OverrideScript();
+
     // Must be injected before document intialization to intercept all addEventListener calls
     injectMonitorScript();
 })();

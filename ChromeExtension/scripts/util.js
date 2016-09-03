@@ -144,15 +144,14 @@ var $action = $action || {};
 
     $action.getJQueryD3OverrideScript = function () {
         var directive = `'use strict';`;
-        
+
         var newJQueryOn = function (events, selector, handler) { // TODO: handle when selector, data options are used
-            jQuery.fn._on.apply(this, arguments);
             var handle = handler;
 
             if (selector != null && !handle) {
                 handler = selector;
             }
-            console.log(events + " " + selector + " " + handler.toString());
+            //  console.log(events + " " + selector + " " + handler.toString());
 
             var eventList = typeof (events) == "string" ? events.split(" ") : (typeof (events) == "object" ? [events.type] : []);
             for (var i = 0; i < eventList.length; i++) {
@@ -168,10 +167,11 @@ var $action = $action || {};
                 var pageHandlerObject = getPageHandlerObject(id, elementID, evt, handler, null, null);
                 window.geniePageHandlerMap[id] = pageHandlerObject;
             }
+
+            return jQuery.fn._on.apply(this, arguments);
         }
 
         var newJQueryOff = function (events, selector, handler) {
-            jQuery.fn._off.apply(this, arguments);
             var eventList = typeof (events) == "string" ? events.split(" ") : (typeof (events) == "object" ? [events.type] : []);
             var element = this[0] ? this[0] : $(this.selector)[0];
             element = element ? element : this.context;
@@ -189,21 +189,25 @@ var $action = $action || {};
                     }
                 }
             }
+
+            return jQuery.fn._off.apply(this, arguments);
         }
 
         var newD3 = function (type, listener, useCapture) {
             function sendEventAddedMessage(eventType, element) {
-                var handlerString = listener.toString();
-                var elementID = detectOrAssignElementID(element);
-                var handlerID = getPageHandlerID(type, listener, elementID); // If the handler already exists in the map, ignore it. 
-                if (!handlerID) {
-                    var handlerID = getHandlerID(); // This unique ID will represent this handler, event, and element combination
-                    var contentObject = getContentObject(handlerID, elementID, 'eventAdded', eventType, listener, element);
-                    window.postMessage(contentObject, "*");
+                if (element) {
+                    var handlerString = listener.toString();
+                    var elementID = detectOrAssignElementID(element);
+                    var handlerID = getPageHandlerID(type, listener, elementID); // If the handler already exists in the map, ignore it. 
+                    if (!handlerID) {
+                        var handlerID = getHandlerID(); // This unique ID will represent this handler, event, and element combination
+                        var contentObject = getContentObject(handlerID, elementID, 'eventAdded', eventType, listener);
+                        window.postMessage(contentObject, "*");
 
-                    // Get a page handler object to cache so that the handler can be instrumented when polling takes place
-                    var pageHandlerObject = getPageHandlerObject(handlerID, elementID, eventType, listener);
-                    window.geniePageHandlerMap[handlerID] = pageHandlerObject;
+                        // Get a page handler object to cache so that the handler can be instrumented when polling takes place
+                        var pageHandlerObject = getPageHandlerObject(handlerID, elementID, eventType, listener);
+                        window.geniePageHandlerMap[handlerID] = pageHandlerObject;
+                    }
                 }
             }
 
@@ -361,7 +365,8 @@ var $action = $action || {};
                     return result;
                 } else {
                     oldHandler.apply(this, [evt]);
-                    console.log("calling " + oldHandler.toString());s
+                    console.log("calling " + oldHandler.toString());
+                    s
                 }
             };
 
@@ -408,7 +413,7 @@ var $action = $action || {};
                             window.geniePageHandlerMap[contentObjectID].handler = newHandler;
                             window.geniePageHandlerMap[contentObjectID].instrumented = true;
                         }*/
-                        pageHandlerObject.dependencies = event.data.dependencies; 
+                        pageHandlerObject.dependencies = event.data.dependencies;
                     }
                 } else if (event.data.messageType == 'eventDependenciesNotFound') {
                     // If the command handler could not be parsed, remove it from the map
@@ -534,8 +539,8 @@ var $action = $action || {};
                     elementID: elementID,
                     id: id
                 };
-                
-                if(keyCodeArguments){
+
+                if (keyCodeArguments) {
                     handlerObj.keyCodeArguments = keyCodeArguments;
                 }
             }
@@ -592,6 +597,7 @@ var $action = $action || {};
 
         var ignoreMinifiedJQuery = "`function (e){return typeof b===i||e&&b.event.triggered===e.type?t:b.event.dispatch.apply(f.elem,arguments)}`";
         var ignoreMinifiedListener = "`function (e){return st===t||e&&st.event.triggered===e.type?t:st.event.dispatch.apply(s.elem,arguments)}`";
+        var ignoreMinifiedListener2 = "`function (e){return typeof x===r||e&&x.event.triggered===e.type?undefined:x.event.dispatch.apply(a.elem,arguments)}`";
 
 
         var newAddEventListener = function (type, listener, options = null, useCapture = false, ignore = false) {
@@ -605,7 +611,7 @@ var $action = $action || {};
                 var handlerID = getPageHandlerID(type, listener, elementID); // If the handler already exists in the map, ignore it.
 
                 //  console.log(type + " " + listener.toString() + " " + this);
-                if (handlerString != ignoreJQueryFunction && handlerString != ignoreMinifiedJQuery && !ignore && !handlerID) {
+                if (handlerString != ignoreJQueryFunction && handlerString != ignoreMinifiedJQuery && handlerString != ignoreMinifiedListener && handlerString != ignoreMinifiedListener2 && !ignore && !handlerID) {
                     var id = getHandlerID(); // This unique ID will represent this handler, event, and element combination
                     var contentObject = getContentObject(id, elementID, 'eventAdded', type, listener);
 
@@ -637,7 +643,7 @@ var $action = $action || {};
         };
 
         var script = document.createElement("script");
-        script.appendChild(document.createTextNode(directive + "\n" + windowListener + "\n" + windowObjects + "\n" + updateEventHandlerOnElement + "; \n" + receiveMessage + "; \n" + getElementFromID + "; \n" + getPageHandlerID + "; \n" + getPageHandlerObject + "; \n" + getContentObject + "; \n" + detectElementID + "; \n" + detectOrAssignElementID + "; \n" + getHandlerID + "; \n" + getElementID + "; \n var ignoreMinifiedJQuery = " + ignoreMinifiedJQuery + "; \n" + ignoreJQueryFunction + "; \n" + "EventTarget.prototype._addEventListener = EventTarget.prototype.addEventListener;\n" + "EventTarget.prototype.addEventListener = " + newAddEventListener + "; \n" + "EventTarget.prototype._removeEventListener = EventTarget.prototype.removeEventListener; \n" + "EventTarget.prototype.removeEventListener = " + newRemoveEventListener + "; \n"));
+        script.appendChild(document.createTextNode(directive + "\n" + windowListener + "\n" + windowObjects + "\n" + updateEventHandlerOnElement + "; \n" + receiveMessage + "; \n" + getElementFromID + "; \n" + getPageHandlerID + "; \n" + getPageHandlerObject + "; \n" + getContentObject + "; \n" + detectElementID + "; \n" + detectOrAssignElementID + "; \n" + getHandlerID + "; \n" + getElementID + "; \n var ignoreMinifiedJQuery = " + ignoreMinifiedJQuery + "; \n var ignoreMinifiedListener = " + ignoreMinifiedListener + "; \n var ignoreMinifiedListener2 = " + ignoreMinifiedListener2 + "; \n" + ignoreJQueryFunction + "; \n" + "EventTarget.prototype._addEventListener = EventTarget.prototype.addEventListener;\n" + "EventTarget.prototype.addEventListener = " + newAddEventListener + "; \n" + "EventTarget.prototype._removeEventListener = EventTarget.prototype.removeEventListener; \n" + "EventTarget.prototype.removeEventListener = " + newRemoveEventListener + "; \n"));
 
         script.id = "genie_monitor_script";
 

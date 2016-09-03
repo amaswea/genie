@@ -32,31 +32,31 @@ var $action = $action || {};
             if (url.includes("jquery") || url.includes("lodash")) {
                 return true;
             }
-            if(url.includes("twitter")){
+            if (url.includes("twitter")) {
                 return true;
             }
-            if(url.includes("google-analytics")){
+            if (url.includes("google-analytics")) {
                 return true;
             }
-            if(url.includes("swfobject")){
+            if (url.includes("swfobject")) {
                 return true;
             }
-            if(url.includes("js.cookie")){
+            if (url.includes("js.cookie")) {
                 return true;
             }
-            if(url.includes("keypress")){
+            if (url.includes("keypress")) {
                 return true;
             }
-            if(url.includes("hammer.min")){
-                return true; 
-            }
-            if(url.includes("jsonfn.min")){
+            if (url.includes("hammer.min")) {
                 return true;
             }
-            if(url.includes("d3.min")){
+            if (url.includes("jsonfn.min")) {
                 return true;
             }
-            if(url.includes("cloudflare") && url.includes("rocket")){
+            if (url.includes("d3.min")) {
+                return true;
+            }
+            if (url.includes("cloudflare") && url.includes("rocket")) {
                 return true;
             }
             return false;
@@ -100,12 +100,12 @@ var $action = $action || {};
                     if (this._functions[item.id.name]) {
                         if (this._functions[item.id.name] instanceof Array) {
                             this._functions[item.id.name].push(item);
-                        } else  if (this._functions[item.id.name]){
+                        } else if (this._functions[item.id.name]) {
                             let oldVal = this._functions[item.id.name];
                             this._functions[item.id.name] = [];
                             this._functions[item.id.name].push(oldVal);
                             this._functions[item.id.name].push(item);
-                        }else {
+                        } else {
                             this._functions[item.id.name] = item;
                         }
                     } else {
@@ -129,20 +129,42 @@ var $action = $action || {};
                     if (item.id.name) {
                         if (this._declarations[item.id.name] instanceof Array) {
                             this._declarations[item.id.name].push(item);
-                        } else if(this._declarations[item.id.name]) {
+                        } else if (this._declarations[item.id.name]) {
                             let oldVal = this._declarations[item.id.name];
                             this._declarations[item.id.name] = [];
                             this._declarations[item.id.name].push(oldVal);
                             this._declarations[item.id.name].push(item);
-                        }else {
+                        } else {
                             this._declarations[item.id.name] = item;
                         }
                     }
                 }
             }
+
+            // Look for variables declared on the window object or in the global scope
+            var findAssignmentExpressionsInProgram = {
+                lookFor: ["AssignmentExpression"],
+                within: ["Program"],
+                items: []
+            }
+
+            $action.ASTAnalyzer.searchAST(ast, findAssignmentExpressionsInProgram);
+            for (var j = 0; j < findAssignmentExpressionsInProgram.items.length; j++) {
+                let assignment = findAssignmentExpressionsInProgram.items[j];
+                if (assignment.left && assignment.left.type == "MemberExpression" && assignment.left.object && assignment.left.object.type == "Identifier" && assignment.left.object.name == "window" && assignment.left.property && assignment.left.property.name) {
+                    if (this._declarations[assignment.left.property.name] instanceof Array) {
+                        this._declarations[assignment.left.property.name].push(assignment);
+                    } else if (this._declarations[assignment.left.property.name]) {
+                        let oldVal = this._declarations[assignment.left.property.name];
+                        this._declarations[assignment.left.property.name] = [];
+                        this._declarations[assignment.left.property.name].push(oldVal);
+                        this._declarations[assignment.left.property.name].push(assignment);
+                    } else {
+                        this._declarations[assignment.left.property.name] = assignment;
+                    }
+                }
+            }
         }
-
-
     }
 
     $action.ScriptManager = ScriptManager;

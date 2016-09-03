@@ -15,37 +15,52 @@ var $action = $action || {};
             // Initialize the UI for the CommandItem corresponding to each command
             this._tagName = this.Command.Element.tagName;
             var listItem = document.createElement("li");
-            listItem.classList.add("genie-audio-ui-list-item");
+            listItem.classList.add("genie-audio-ui-command");
 
-            var commandLabelSpan = document.createElement("span");
-            commandLabelSpan.classList.add("genie-audio-ui-list-item-command");
+            var commandLabels = document.createElement("div");
+            commandLabels.classList.add("genie-audio-ui-label");
 
-            var label = this.label().split(",");
-            commandLabelSpan.textContent = label;
+            var label = this.firstImperativeLabel();
+            var description = this.descriptionLabel();
+            var labelSpan = document.createElement("span");
 
-            listItem.appendChild(commandLabelSpan);
+            if (label.length) {
+                labelSpan.classList.add("genie-audio-ui-label-text");
+                labelSpan.textContent = label;
+                commandLabels.appendChild(labelSpan);
+                listItem.appendChild(commandLabels);
+            }
+            if (description.length) {
+                var descriptionSpan = document.createElement("span");
+                descriptionSpan.classList.add("genie-audio-ui-label-description");
+                descriptionSpan.textContent = description;
+                commandLabels.appendChild(descriptionSpan);
+            }
+            if (label.length && description.length) {
+                labelSpan.textContent = labelSpan.textContent + ": ";
+            }
 
             // Command arguments (if there are any)
-            var argumentsDiv = document.createElement("div");
-            argumentsDiv.classList.add("genie-audio-ui-arguments");
-            if (this.Command.ArgumentsMap) {
-                var keys = Object.keys(this.Command.ArgumentsMap);
-                for (var i = 0; i < keys.length; i++) {
+            var argumentKeys = Object.keys(this.Command.ArgumentsMap);
+            if (argumentKeys.length) {
+                var argumentsDiv = document.createElement("div");
+                argumentsDiv.classList.add("genie-audio-ui-arguments");
+                for (var i = 0; i < argumentKeys.length; i++) {
                     var argDiv = document.createElement("div");
                     argDiv.classList.add("genie-audio-ui-arguments-item");
                     var argSpan = document.createElement("span");
                     argSpan.classList.add("genie-audio-ui-arguments-span");
-                    argSpan.textContent = _.upperFirst(keys[i]) + ": ";
+                    argSpan.textContent = _.upperFirst(argumentKeys[i]) + ": ";
                     var valueSpan = document.createElement("span");
                     valueSpan.classList.add("genie-audio-ui-value-span");
-                    valueSpan.textContent = this.Command.ArgumentsMap[keys[i]];
+                    valueSpan.textContent = this.Command.ArgumentsMap[argumentKeys[i]];
                     argDiv.appendChild(argSpan);
                     argDiv.appendChild(valueSpan);
                     argumentsDiv.appendChild(argDiv);
                 }
+                listItem.appendChild(argumentsDiv);
             }
 
-            listItem.appendChild(argumentsDiv);
             this._domElement = listItem;
         }
     };
@@ -97,26 +112,9 @@ var $action = $action || {};
             this.canvas.style.display = "none";
         };
 
-        findFinalResult(speechResults) {
-            var highest;
-            for (var i = 0; i < speechResults.length; i++) {
-                if (speechResults[i].isFinal) {
-                    for (var j = 0; j < speechResults[i].length; j++) {
-                        let alternative = speechResults[i][j];
-                        if (!highest) {
-                            highest = alternative;
-                        } else if (alternative.confidence > highest.confidence) {
-                            highest = alternative;
-                        }
-                    }
-                }
-            }
-
-            if (highest) {
-                return highest;
-            }
-
+        findLikeliestResult(speechResults) {
             // Otherwise return the result with the highest confidence value
+            var highest;
             for (var i = 0; i < speechResults.length; i++) {
                 for (var j = 0; j < speechResults[i].length; j++) {
                     let alternative = speechResults[i][j];
@@ -162,7 +160,7 @@ var $action = $action || {};
 
         mapResultsToCommand(speechResults, resultIndex) {
             // Speech results are are in the results property
-            let result = this.findFinalResult(speechResults);
+            let result = this.findLikeliestResult(speechResults);
             // Result will have a set of SpeechRecognitionAlternative objects. Find the first one with > .90 confidence rate. 
 
             // Execute the command
@@ -172,7 +170,18 @@ var $action = $action || {};
             // Find the commands corresponding execute() method in the commandsMap
             let command = this._audioCommands[commandText];
             if (command) {
-                if (command.hasArguments()) {
+                if (!command.userInvokeable()) {
+                    /*var msg = new SpeechSynthesisUtterance();
+                    var voices = window.speechSynthesis.getVoices();
+                    msg.voice = voices[10]; // Note: some voices don't support altering params
+                    msg.voiceURI = 'native';
+                    msg.volume = 1; // 0 to 1
+                    msg.rate = 1; // 0.1 to 10
+                    msg.pitch = 2; //0 to 2
+                    msg.text = "Sorry. This command is disabled.";
+                    msg.lang = 'en-US';
+                    window.speechSynthesis.speak(msg);*/
+                } else if (command.hasArguments()) {
                     if (command.RequiresMousePosition) {
                         var commandHeight = $(command.Element).outerHeight();
                         var commandWidth = $(command.Element).outerWidth();
@@ -183,6 +192,8 @@ var $action = $action || {};
                     } else {
                         command.execute(commandText);
                     }
+                } else {
+                    command.execute();
                 }
             }
 
@@ -193,14 +204,14 @@ var $action = $action || {};
                 var group = document.createElement('li');
                 group.classList.add('genie-audio-ui-group');
 
-/*
-                var menulabel = document.createElement('span');
-                menulabel.classList.add('genie-audio-ui-group-label');
+                /*
+                                var menulabel = document.createElement('span');
+                                menulabel.classList.add('genie-audio-ui-group-label');
 
-                var label = pluralize.plural(label);
-                menulabel.textContent = label[0].toUpperCase() + label.substring(1, label.length);
-                group.appendChild(menulabel);
-*/
+                                var label = pluralize.plural(label);
+                                menulabel.textContent = label[0].toUpperCase() + label.substring(1, label.length);
+                                group.appendChild(menulabel);
+                */
 
                 var list = document.createElement('ul');
                 list.classList.add('genie-audio-ui-list');
@@ -224,7 +235,7 @@ var $action = $action || {};
 
                         }
                     } else {
-                        let commandLabel = newCommand.label().toLowerCase();
+                        let commandLabel = newCommand.firstImperativeLabel().toLowerCase();
                         this._audioCommands[commandLabel] = newCommand.Command;
                     }
 
@@ -252,15 +263,16 @@ var $action = $action || {};
             }
 
             // Initialze speech recognition
-            /*            this._recognition = new webkitSpeechRecognition();
-                        this._recognition.continuous = true;
-                        this._recognition.interimResults = true;
-                        this._recognition.lang = "en-US";
-                        var self = this;
-                        this._recognition.onresult = function (event) {
-                            self.mapResultsToCommand(event.results, event.resultIndex);
-                        }
-                        this._recognition.start();*/
+            this._recognition = new webkitSpeechRecognition();
+            this._recognition.continuous = true;
+            this._recognition.interimResults = false;
+            this._recognition.lang = "en-US";
+            var self = this;
+            this._recognition.onresult = function (event) {
+                self.mapResultsToCommand(event.results, event.resultIndex);
+                console.log("Result found");
+            }
+            this._recognition.start();
         }
 
         /**

@@ -31,13 +31,13 @@
                 "https://*/*"
             ],
             "css": [
-                "css/help-ui.css", 
-                "css/keyboard-list.css", 
-                "css/audio-ui.css", 
-                "css/menu-ui.css", 
+                "css/opentip.css",
+                "css/help-ui.css",
+                "css/keyboard-list.css",
+                "css/audio-ui.css",
+                "css/menu-ui.css",
                 "css/keyboard-ui.css",
-                "css/opentip.css", 
-                "css/command-line-ui.css", 
+                "css/command-line-ui.css",
                 "css/shortcut-ui.css"
             ],
             "js": [
@@ -76,7 +76,7 @@
         "<all_urls>",
         "storage",
         "webRequest",
-        "webRequestBlocking", 
+        "webRequestBlocking",
         "commands"
     ],
 

@@ -13,13 +13,17 @@ var $action = $action || {};
 
         init() {
             var command = document.createElement("div");
-            command.classList.add("genie-shortcuts-ui-command");
+            command.classList.add("genie-shortcut-ui-command");
 
-            var label = document.createElement("span");
-            label.classList.add("genie-shortcuts-ui-command-label");
-            label.textContent = this.label();
+/*            var label = document.createElement("span");
+            label.classList.add("genie-shortcut-ui-command-label");
+            label.textContent = this.firstImperativeLabel() + ": ";*/
 
-            command.appendChild(label);
+            var description = document.createElement("span");
+            description.classList.add("genie-shortcuts-ui-command-description");
+            description.textContent = this.firstImperativeLabel() + ", " + this.descriptionLabel();
+          //  command.appendChild(label);
+            command.appendChild(description);
             this._domElement = command;
         }
     };
@@ -69,27 +73,24 @@ var $action = $action || {};
         };
 
         appendCommandGroup(label, commands) {
-            var commandGroup = document.createElement("div");
-            commandGroup.classList.add("genie-shortcut-ui-group");
-            var commandGroupLabel = document.createElement("span");
-            commandGroupLabel.classList.add("genie-shortcut-ui-group-label");
-            commandGroupLabel.textContent = label;
-            commandGroup.appendChild(commandGroupLabel);
+            if (label == "commands") {
+                var commandGroup = document.createElement("div");
+                commandGroup.classList.add("genie-shortcut-ui-group");
+                var commandsContainer = document.createElement("div");
+                commandsContainer.classList.add("genie-shortcut-ui-group-content");
+                commandGroup.appendChild(commandsContainer);
+                for (var i = 0; i < commands.length; i++) {
+                    var newCommand = new $action.ShortcutsUICommandItem(commands[i]);
+                    commands[i].CommandItem = newCommand;
 
-            var commandsContainer = document.createElement("div");
-            commandsContainer.classList.add("genie-shortcut-ui-group-content");
-            commandGroup.appendChild(commandsContainer);
-            for (var i = 0; i < commands.length; i++) {
-                var newCommand = new $action.ShortcutsUICommandItem(commands[i]);
-                commands[i].CommandItem = newCommand;
-
-                // When a command gets added, add a glowing border around the command element
-                var commandElement = commands[i].Element;
-                if (!(commandElement instanceof Window) && !(commandElement instanceof Document)) { // TODO: make this generic
-                    commandsContainer.append(newCommand.DOM);
+                    // When a command gets added, add a glowing border around the command element
+                    var commandElement = commands[i].Element;
+                    if (!(commandElement instanceof Window) && !(commandElement instanceof Document)) { // TODO: make this generic
+                        commandsContainer.append(newCommand.DOM);
+                    }
                 }
+                this.commandContainer.appendChild(commandGroup);
             }
-            this.commandContainer.appendChild(commandGroup);
         }
     };
 

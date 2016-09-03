@@ -56,7 +56,7 @@ var $action = $action || {};
                     // Update the text
                 } else {
                     var commandLabel = 
-                    this.createTooltip(commands[i], newCommand.label());
+                    this.createTooltip(commands[i], newCommand.firstImperativeLabel(), newCommand.descriptionLabel());
                 }
 
                 // How to handle when element has multiple commands? 
@@ -80,23 +80,27 @@ var $action = $action || {};
             return argString;
         }
 
-        createTooltip(command, label) {
+        createTooltip(command, commandLabel, description) {
             // Initialize the tooltip
             // Look for a tooltip already attached
             var existingTooltip = this.getTooltip(command);
             if (!existingTooltip) {
                 var $element = $(command.Element);
                 var tooltip = new Opentip($element, {
+                    background: '#f5f5f5', 
+                    borderColor: '#f5f5f5',
                     showOn: null,
                     target: $element,
                     tipJoint: "bottom left",
                     hideTriggers: [],
-                    className: "genie-help-ui-tootip"
+                    className: "genie-help-ui-tooltip"
                 });
+                
+                var label = commandLabel + ": " + description; 
                 
                 var commandArguments = this.arguments(command.ArgumentsMap); 
                 if(commandArguments && commandArguments.length) {
-                    label = label + commandArguments;
+                    label = label + ", " + commandArguments;
                 }
                 tooltip.setContent(label);
                 // tooltip.setAttribute("id", "genie-help-ui-tooltip-" + command.ElementID);

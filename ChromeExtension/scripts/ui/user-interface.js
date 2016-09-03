@@ -32,11 +32,11 @@
              this._rootUI.style.display = "none";
          }
 
-         remove() {}
+         removeCommands() {
 
-         appendCommand(dom, commandCount) {}
+         }
 
-         removeCommand(dom, commandCount) {}
+         removeCommand() {}
 
          updateCommandEnabledState(command, enabled) {
              // What should happen when the command state changes
@@ -82,6 +82,14 @@
              return this._domElement;
          }
 
+         set Trigger(trigger) {
+             this._trigger = trigger;
+         }
+
+         get Trigger() {
+             return this._trigger;
+         }
+
          init() {};
 
          /**
@@ -124,6 +132,7 @@
                     verbs: []
                 }
             }*/
+             var labels = [];
              var completeLabel = "";
              // Constructs a desired label for the command based on the command metadata available
              var nodeTypes = ["elementLabels", "handlerComments", "expressionComments", "expressionCalls", "assignments", "handlerName"];
@@ -132,16 +141,19 @@
                  for (var j = 0; j < phraseTypes.length; j++) {
                      var labelSet = this.command.LabelMetadata[nodeTypes[i]][phraseTypes[j]];
                      for (var k = 0; k < labelSet.length; k++) {
-                         completeLabel = completeLabel + _.upperFirst(labelSet[k]) + ", ";
+                         if (labels.indexOf(labelSet[k]) < 0) {
+                             completeLabel = completeLabel + _.upperFirst(labelSet[k]) + ", ";
+                             labels.push(labelSet[k]);
+                         }
                      }
                  }
              }
 
              return completeLabel.substring(0, completeLabel.length - 2);
          }
-         
+
          firstImperativeLabel() {
-             var nodeTypes = ["elementLabels", "handlerComments", "expressionComments", "expressionCalls", "assignments"];
+             var nodeTypes = ["handlerName", "handlerComments", "expressionComments", "expressionCalls", "elementLabels","assignments"];
              var phraseTypes = ["imperativePhrases", "verbs", "nouns", "phrases", "other"];
              for (var i = 0; i < nodeTypes.length; i++) {
                  for (var j = 0; j < phraseTypes.length; j++) {
@@ -152,7 +164,71 @@
                      }
                  }
              }
+
+             if (!this.command.hasArguments()) {
+                 var types = ["assignments", "expressionCalls", "expressionComments"];
+                 var labelTypes = ["imperativePhrases", "verbs", "nouns", "phrases", "other"];
+                 for (var i = 0; i < types.length; i++) {
+                     var type = this.command.LabelMetadata.conditionals[types[i]];
+                     for (var j = 0; j < type.length; j++) {
+                         var obj = type[j];
+                         for (var k = 0; k < labelTypes.length; k++) {
+                             var labelNode = obj[labelTypes[k]];
+                             for (var l = 0; l < labelNode.length; l++) {
+                                 let first = _.upperFirst(labelNode[l]);
+                                 return first;
+                             }
+                         }
+                     }
+                 }
+             }
+
              return "";
+         }
+
+         descriptionLabel() {
+             // Returns all of the label metadata after the first imperative label is found (description)
+             var nodeTypes = ["handlerName", "handlerComments", "expressionComments", "expressionCalls", "elementLabels","assignments"];
+             var phraseTypes = ["imperativePhrases", "verbs", "nouns", "phrases", "other"];
+             var foundOne = false;
+             var label = "";
+             var labels = [];
+
+             for (var i = 0; i < nodeTypes.length; i++) {
+                 for (var j = 0; j < phraseTypes.length; j++) {
+                     var labelSet = this.command.LabelMetadata[nodeTypes[i]][phraseTypes[j]];
+                     for (var k = 0; k < labelSet.length; k++) {
+                         if (foundOne && labels.indexOf(labelSet[k]) < 0) {
+                             label = label + _.upperFirst(labelSet[k]) + ", ";
+                             labels.push(labelSet[k]);
+                         }
+                         foundOne = true;
+                     }
+                 }
+             }
+
+             if (!this.command.hasArguments()) {
+                 var types = ["assignments", "expressionCalls", "expressionComments"];
+                 var labelTypes = ["imperativePhrases", "verbs", "nouns", "phrases", "other"];
+                 for (var i = 0; i < types.length; i++) {
+                     var type = this.command.LabelMetadata.conditionals[types[i]];
+                     for (var j = 0; j < type.length; j++) {
+                         var obj = type[j];
+                         for (var k = 0; k < labelTypes.length; k++) {
+                             var labelNode = obj[labelTypes[k]];
+                             for (var l = 0; l < labelNode.length; l++) {
+                                 if (foundOne && labels.indexOf(labelNode[l]) < 0) {
+                                     label = label + labelNode[l] + ", ";
+                                     labels.push(labelNode[l]);
+                                 }
+                                 foundOne = true;
+                             }
+                         }
+                     }
+                 }
+             }
+
+             return label.substring(0, label.length - 2);
          }
      };
 

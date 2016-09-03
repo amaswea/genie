@@ -89,7 +89,6 @@ var $action = $action || {};
         "mouseout",
         "mouseover",
         "mouseup",
-        "resize",
         "scroll",
         "select",
         "wheel",

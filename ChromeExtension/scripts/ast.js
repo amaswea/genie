@@ -54,7 +54,7 @@ var $action = $action || {};
                 visitor.collect = false;
             }
 
-            if (visitor.collect && !visitor.inside && visitor.lookFor && visitor.lookFor.length && visitor.lookFor.indexOf(node.type) > -1) {
+            if (visitor.collect && !visitor.inside && ((visitor.lookFor && visitor.lookFor.length && visitor.lookFor.indexOf(node.type) > -1) || visitor.lookFor.length == 0)) {
                 visitor.items.push(node);
             }
 
