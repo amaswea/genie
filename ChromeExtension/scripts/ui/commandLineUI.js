@@ -7,6 +7,7 @@ var $action = $action || {};
             super();
             this._commandsMap = {};
             this.init();
+            this._macros = {};
         }
 
         init() {
@@ -42,7 +43,6 @@ var $action = $action || {};
         appendCommandGroup(label, commands) {
             // Groups
             for (var i = 0; i < commands.length; i++) {
-                if(label == "")
                 var newCommand = new $action.CommandItem(commands[i]);
                 commands[i].CommandItem = newCommand;
 
@@ -122,32 +122,35 @@ var $action = $action || {};
                 }
 
                 context.strokeStyle = "black";
-                context.lineWidth = 1; 
+                context.lineWidth = 1;
                 context.stroke();
             }
 
             drawBoard();
             this.canvas.style.display = "";
-            
+
             return prompt("Please enter a column.");
         }
-        
-        calculateMousePosition(column, width, height, x, y){
-            var mousePosition = x; 
-            var lineWidth = 20; 
-            mousePosition = mousePosition + column * lineWidth + 10; 
+
+        calculateMousePosition(column, width, height, x, y) {
+            var mousePosition = x;
+            var lineWidth = 20;
+            mousePosition = mousePosition + column * lineWidth + 10;
             console.log(mousePosition);
             return mousePosition;
         }
 
         mapTextToCommand(text) {
+            var hasEqual = text.split("=");
             if (text == "commands") {
                 var commandLabels = Object.keys(this._commandsMap);
                 var labelString = "";
                 for (var i = 0; i < commandLabels.length; i++) {
-                    labelString = labelString + commandLabels[i];
-                    if (i < commandLabels.length - 1) {
-                        labelString = labelString + ",";
+                    if (this._commandsMap[commandLabels[i]].IsEnabled) {
+                        labelString = labelString + commandLabels[i];
+                        if (i < commandLabels.length - 1) {
+                            labelString = labelString + ",";
+                        }
                     }
                 }
                 this._textarea.value = this._textarea.value + "\n" + labelString;
@@ -162,35 +165,59 @@ var $action = $action || {};
                         this._textarea.value = this._textarea.value + command.ArgumentsMap[commandKeys[i]];
                     }
                 }
+            } else if (text.split("=").length == 2) {
+                // Define a macro
+                var split = text.split("=");
+                var commandName = split[0].trim().toLowerCase();
+                var commands = split[1].trim().split(",");
+                this._macros[commandName] = commands;
+                this._textarea.value = this._textarea.value + "\n" + "Macro saved.";
             } else {
                 // Find the commands corresponding execute() method in the commandsMap
+                text = text.toLowerCase();
                 let command = this._commandsMap[text];
+                let macro = this._macros[text];
                 if (command) {
-                    // Call the execute method to perform the command
-                    if (command.RequiresMousePosition) {
-                        // remove. Hack
-                        var element = command.Element;
-                        if (command.Element instanceof Document) {
-                            element = document.body;
+                    this.performCommand(command, text);
+                } else if (macro) {
+                    for (var i = 0; i < macro.length; i++) {
+                        // Execute each command listed in the macro
+                        var macroCommand = this._commandsMap[macro[i]];
+                        if (macroCommand) {
+                            this.performCommand(macroCommand, macro[i]);
                         }
-
-                        var commandHeight = $(element).outerHeight();
-                        var commandWidth = $(element).outerWidth();
-                        var commandX = $(element).offset().left;
-                        var commandY = $(element).offset().top;
-                        var colNumber = this.drawGridAndGetInput(commandWidth, commandHeight, commandX, commandY);
-                        var mousePosition = this.calculateMousePosition(colNumber, commandWidth, commandHeight, commandX, commandY);
-                        
-                        command.execute(0, {x: mousePosition, y: 10 });
-                    } else if (command.hasArguments()) {
-                        command.execute(text);
-                    } else {
-                        command.execute();
                     }
                 } else {
                     // No command found
                     this._textarea.value = this._textarea.value + "\nSorry. No command found.";
                 }
+            }
+        }
+
+        performCommand(command, text) {
+            // Call the execute method to perform the command
+            if (command.RequiresMousePosition) {
+                // remove. Hack
+                var element = command.Element;
+                if (command.Element instanceof Document) {
+                    element = document.body;
+                }
+
+                var commandHeight = $(element).outerHeight();
+                var commandWidth = $(element).outerWidth();
+                var commandX = $(element).offset().left;
+                var commandY = $(element).offset().top;
+                var colNumber = this.drawGridAndGetInput(commandWidth, commandHeight, commandX, commandY);
+                var mousePosition = this.calculateMousePosition(colNumber, commandWidth, commandHeight, commandX, commandY);
+
+                command.execute(0, {
+                    x: mousePosition,
+                    y: 10
+                });
+            } else if (command.hasArguments()) {
+                command.execute(text);
+            } else {
+                command.execute();
             }
         }
     };
