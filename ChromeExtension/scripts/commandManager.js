@@ -761,6 +761,7 @@ var $action = $action || {};
             this.parseFunctionCallsOutsideConditionals(command, ast);
             this.parseAssignmentExpressionsOutsideConditionals(command, ast);
             this.parseNodesOutsideConditionals(command, ast);
+            command.RequiresMousePosition = this.parseMousePositionAssignment(command, ast);
         }
 
         parseConditionals(command, ast) {
@@ -785,7 +786,7 @@ var $action = $action || {};
                     keyCodes = this.parseKeyCodeInputs(command, ast, findConditionals.items[i]);
                 } else if ($action.isMouseEvent(command.EventType)) {
                     mouseButtons = this.parseMouseButtons(command, ast, findConditionals.items[i]);
-                    command.RequiresMousePosition = this.parseMousePosition(command, ast, findConditionals.items[i]);
+                    command.RequiresMousePosition = command.RequiresMousePosition || this.parseMousePositionConditional(command, ast, findConditionals.items[i]);
                 }
 
                 this.parseFunctionCallsInsideConditional(command, keyCodes, mouseButtons, dependency, findConditionals.items[i].consequent);
@@ -851,7 +852,63 @@ var $action = $action || {};
             return mousePositionValues;
         }
 
-        parseMousePosition(command, ast, conditional) {
+        parseMousePositionAssignment(command, ast) {
+            var findAssignments = {
+                lookFor: ["AssignmentExpression"],
+                items: []
+            }
+
+            var findDeclarators = {
+                lookFor: ["VariableDeclarator"],
+                items: []
+            }
+
+            $action.ASTAnalyzer.searchAST(ast, findDeclarators);
+
+            var mousePositionExpressions = []; // Locate any variables that will have a stored reference to a keyCode
+            for (var k = 0; k < findDeclarators.items.length; k++) {
+                var expression = findDeclarators.items[k];
+                if (expression.type == "VariableDeclarator") {
+                    if (expression.init && expression.init.type == "MemberExpression" && expression.init.property.type == "Identifier" && (expression.init.property.name == "clientX" || expression.init.property.name == "x" || expression.init.property.name == "clientY" || expression.init.property.name == "y")) {
+                        mousePositionExpressions.push(expression.id);
+                    } else if (expression.init && expression.init.type == "CallExpression" && expression.init.callee && expression.init.callee.type == "MemberExpression" && expression.init.callee.property && expression.init.callee.property.type == "Identifier" && expression.init.callee.property.name == "mouse" && expression.init.callee.object && expression.init.callee.object.type == "Identifier" && expression.init.callee.object.name == "d3") {
+                        mousePositionExpressions.push(expression.id);
+                    }
+                }
+            }
+
+            var positionReferences = [];
+            $action.ASTAnalyzer.searchAST(ast, findAssignments);
+
+            for (var j = 0; j < findAssignments.items.length; j++) {
+                var expression = findAssignments.items[j];
+                var findIdentifiers = {
+                    lookFor: ["Identifier"],
+                    items: []
+                }
+                if (expression.type == "AssignmentExpression") {
+                    if (expression.right.type == "MemberExpression" && expression.right.property.type == "Identifier" && (expression.right.property.name == "clientX" || expression.right.property.name == "x" || expression.right.property.name == "clientY" || expression.right.property.name == "y")) {
+                        positionReferences.push(expression.left);
+                    } else if (expression.right && expression.right.type == "CallExpression" && expression.right.callee && expression.right.callee.type == "MemberExpression" && expression.right.callee.property && expression.right.callee.property.type == "Identifier" && expression.right.callee.property.name == "mouse" && expression.right.callee.object && expression.right.callee.object.type == "Identifier" && expression.right.callee.object.name == "d3") {
+                        positionReferences.push(expression.left);
+                    } else {
+                        $action.ASTAnalyzer.searchAST(expression.right, findIdentifiers);
+                        for (var l = 0; l < findIdentifiers.items.length; l++) {
+                            let id = findIdentifiers.items[l];
+                            for (var k = 0; k < mousePositionExpressions.length; k++) {
+                                if (id.name == mousePositionExpressions[k].stringRepresentation) {
+                                    positionReferences.push(expression.left);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return positionReferences.length > 0;
+        }
+
+        parseMousePositionConditional(command, ast, conditional) {
             // Find all variable declarators that are assigned to mouseEvent.clientX, mouseEvent.clientY, mouseEvent.x, or mouseEvent.y
             // First, look for any MemberExpressions outside of conditionals that have references to keycodes
             // These references should be found in any assignment expression
@@ -870,9 +927,13 @@ var $action = $action || {};
                 if (expression.type == "AssignmentExpression") {
                     if (expression.right.type == "MemberExpression" && expression.right.property.type == "Identifier" && (expression.right.property.name == "clientX" || expression.right.property.name == "x" || expression.right.property.name == "clientY" || expression.right.property.name == "y")) {
                         mousePositionExpressions.push(expression.left);
+                    } else if (expression.right && expression.right.type == "CallExpression" && expression.right.callee && expression.right.callee.type == "MemberExpression" && expression.right.callee.property && expression.right.callee.property.type == "Identifier" && expression.right.callee.property.name == "mouse" && expression.right.callee.object && expression.right.callee.object.type == "Identifier" && expression.right.callee.object.name == "d3") {
+                        mousePositionExpressions.push(expression.left);
                     }
                 } else if (expression.type == "VariableDeclarator") {
                     if (expression.init && expression.init.type == "MemberExpression" && expression.init.property.type == "Identifier" && (expression.init.property.name == "clientX" || expression.init.property.name == "x" || expression.init.property.name == "clientY" || expression.init.property.name == "y")) {
+                        mousePositionExpressions.push(expression.id);
+                    } else if (expression.init && expression.init.type == "CallExpression" && expression.init.callee && expression.init.callee.type == "MemberExpression" && expression.init.callee.property && expression.init.callee.property.type == "Identifier" && expression.init.callee.property.name == "mouse" && expression.init.callee.object && expression.init.callee.object.type == "Identifier" && expression.init.callee.object.name == "d3") {
                         mousePositionExpressions.push(expression.id);
                     }
                 }

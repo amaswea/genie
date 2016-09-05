@@ -5,6 +5,7 @@
      class UI {
          constructor() {
              this._organizer = this.OrganizationTypes.Type;
+             this.initCanvas();
          }
 
          get OrganizationTypes() {
@@ -22,7 +23,14 @@
              this._rootUI = rootUI;
          }
 
-         init() {}
+         initCanvas() {
+             // Canvas
+             var canvas = document.createElement("canvas");
+             canvas.classList.add("genie-ui-input-canvas");
+             $('html').append(canvas);
+             this.canvas = canvas;
+             this.canvas.style.display = "none";
+         }
 
          show() {
              this._rootUI.style.display = "";
@@ -65,13 +73,55 @@
                  }
              }
          }
+
+         drawGridAndGetInput(width, height, x, y) {
+             var bw = width;
+             var bh = height;
+             var p = 10;
+
+             var canvas = this.canvas;
+             var context = canvas.getContext("2d");
+             canvas.style.position = "absolute";
+             canvas.style.left = x + "px";
+             canvas.style.top = y + "px";
+             canvas.width = width;
+             canvas.height = height;
+
+             function drawBoard() {
+                 var cellNumber = 1;
+                 for (var x = 0; x <= bw; x += 40) {
+                     for (var y = 0; y <= bh; y += 40) {
+                         context.moveTo(p + x, y + p);
+                         context.lineTo(p + x, y + p + 40);
+                         context.strokeText(cellNumber.toString(), x + p + 5, y + p + 10);
+                         cellNumber++;
+                     }
+                 }
+
+
+                 for (var x = 0; x <= bh; x += 40) {
+                     context.moveTo(p, x + p);
+                     context.lineTo(bw + p, x + p);
+                 }
+
+                 context.strokeStyle = "black";
+                 context.lineWidth = 1;
+                 context.stroke();
+             }
+
+             drawBoard();
+             this.canvas.style.display = "";
+
+             return prompt("Please enter a column.");
+         }
      }
 
      $action.UI = UI;
 
      class CommandItem {
-         constructor(command) {
+         constructor(command, ui) {
              this.command = command;
+             this._ui = ui;
          }
 
          get Command() {
@@ -105,7 +155,7 @@
                  var commandWidth = $(element).outerWidth();
                  var commandX = $(element).offset().left;
                  var commandY = $(element).offset().top;
-                 var colNumber = this.drawGridAndGetInput(commandWidth, commandHeight, commandX, commandY);
+                 var colNumber = this._ui.drawGridAndGetInput(commandWidth, commandHeight, commandX, commandY);
                  var mousePosition = this.calculateMousePosition(colNumber, commandWidth, commandHeight, commandX, commandY);
 
                  this.command.execute(0, {
@@ -117,49 +167,6 @@
              } else {
                  this.command.execute();
              }
-         }
-
-         drawGridAndGetInput(width, height, x, y) {
-             var bw = width;
-             var bh = height;
-             var p = 10;
-
-             var canvas = this.canvas;
-             var context = canvas.getContext("2d");
-             canvas.style.position = "absolute";
-             canvas.style.left = x + "px";
-             canvas.style.top = y + "px";
-             canvas.style.width = width + "px";
-             canvas.style.height = height + "px";
-
-             function drawBoard() {
-                 var cellNumber = 1;
-                 for (var x = 0; x <= bw; x += 20) {
-                     context.moveTo(0.5 + x + p, p);
-                     context.lineTo(0.5 + x + p, bh + p);
-
-                     var x = 0.5 + x + p;
-                     var y = p;
-                     context.strokeText(cellNumber.toString(), x, y, 10);
-                     cellNumber++;
-                 }
-
-
-                 cellNumber = 1;
-                 for (var x = 0; x <= bh; x += 20) {
-                     context.moveTo(p, 0.5 + x + p);
-                     context.lineTo(bw + p, 0.5 + x + p);
-                 }
-
-                 context.strokeStyle = "black";
-                 context.lineWidth = 1;
-                 context.stroke();
-             }
-
-             drawBoard();
-             this.canvas.style.display = "";
-
-             return prompt("Please enter a column.");
          }
 
          /**

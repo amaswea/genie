@@ -2,8 +2,8 @@
 var $action = $action || {};
 (function ($action) {
     class ShortcutsUICommandItem extends $action.CommandItem {
-        constructor(command) {
-            super(command);
+        constructor(command, ui) {
+            super(command, ui);
             this._hasLabel = true;
             this.init();
         }
@@ -185,7 +185,7 @@ var $action = $action || {};
                 shortcutsContainer.classList.add("genie-shortcut-ui-group-shortcuts")
                 commandGroup.appendChild(shortcutsContainer);
                 for (var i = 0; i < commands.length; i++) {
-                    var newCommand = new $action.ShortcutsUICommandItem(commands[i]);
+                    var newCommand = new $action.ShortcutsUICommandItem(commands[i], this);
                     if (newCommand.HasLabel) {
                         var shortcuts = this.createShortcuts(commands[i], newCommand);
                         for (var j = 0; j < shortcuts.length; j++) {

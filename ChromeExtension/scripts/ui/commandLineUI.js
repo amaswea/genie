@@ -31,13 +31,6 @@ var $action = $action || {};
 
             this.hide();
             $(window).scroll(_.throttle(this.repositionCommandLineArea, 1));
-
-            // Canvas
-            var canvas = document.createElement("canvas");
-            canvas.classList.add("genie-audio-ui-input-canvas");
-            $('html').append(canvas);
-            this.canvas = canvas;
-            this.canvas.style.display = "none";
         };
 
         appendCommandGroup(label, commands) {
