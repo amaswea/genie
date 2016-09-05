@@ -164,9 +164,7 @@ var $action = $action || {};
             // Result will have a set of SpeechRecognitionAlternative objects. Find the first one with > .90 confidence rate. 
 
             // Execute the command
-            let commandText = result.transcript.trim().toLowerCase();
-            console.log(commandText);
-
+            let commandText = result.transcript.trim().toLowerCase();s
             // Find the commands corresponding execute() method in the commandsMap
             let command = this._audioCommands[commandText];
             if (command) {

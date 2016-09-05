@@ -365,8 +365,7 @@ var $action = $action || {};
                     return result;
                 } else {
                     oldHandler.apply(this, [evt]);
-                    console.log("calling " + oldHandler.toString());
-                    s
+                    //console.log("calling " + oldHandler.toString());
                 }
             };
 

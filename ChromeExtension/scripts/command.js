@@ -517,7 +517,6 @@ var $action = $action || {};
                 actions = this.getActionsToPerform(argument1, argument2);
             }
 
-            console.log("posting message " + actions);
             window.postMessage(actions, "*");
 
             // Unload the script

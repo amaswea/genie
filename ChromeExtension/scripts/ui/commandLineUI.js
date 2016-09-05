@@ -93,7 +93,6 @@ var $action = $action || {};
             var mousePosition = x;
             var lineWidth = 20;
             mousePosition = mousePosition + column * lineWidth + 10;
-            console.log(mousePosition);
             return mousePosition;
         }
 

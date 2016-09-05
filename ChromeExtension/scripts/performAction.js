@@ -144,7 +144,6 @@ function performAction(data) {
 
 // REMINDER: Don't add dependencies on JQuery in here because the webpage may not be using it
 function receiveMessage(event) {
-    console.log(event.data.messageType);
     var origin = event.origin || event.originalEvent.origin; // For Chrome, the origin property is in the event.originalEvent object.
     if (event.source != window) {
         return;

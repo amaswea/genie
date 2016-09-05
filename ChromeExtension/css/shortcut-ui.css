@@ -20,6 +20,7 @@
     display: flex;
     padding-left: 20px;
     padding-top: 10px;
+    width: 100%;
 }
 
 .genie-shortcut-ui-header {
@@ -52,6 +53,7 @@
     display: flex;
     flex-direction: row;
     align-items: flex-start;
+    width: 100%;
 }
 
 .genie-shortcut-ui-group-shortcuts {
@@ -59,6 +61,8 @@
     flex-direction: column;
     align-items: flex-start;
     margin-left: 20px; 
+    min-width: 50px;
+    max-width: 25%;
 }
 
 .genie-shortcut-ui-group-content {
@@ -66,11 +70,13 @@
     flex-wrap: wrap;
     flex-direction: column;
     align-items: flex-start;
+    width: 75%;
 }
 
 .genie-shortcut-ui-command {
     display: flex; 
     flex-direction: row; 
+    width: 100%;
 }
 
 .genie-shortcut-ui-command-label, .genie-shortcut-ui-arguments-span {
@@ -79,4 +85,15 @@
 
 .genie-shortcut-ui-command-label {
     margin-right: 2px; 
+    white-space: nowrap;
+    overflow: hidden; 
+    text-overflow: ellipsis;
+    max-width: 50%;  
+}
+
+.genie-shortcut-ui-command-description {
+    white-space: nowrap;
+    max-width: 50%; 
+    overflow: hidden; 
+    text-overflow: ellipsis;
 }
