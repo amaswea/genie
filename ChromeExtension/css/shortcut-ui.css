@@ -50,9 +50,15 @@
 
 .genie-shortcut-ui-group {
     display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.genie-shortcut-ui-group-shortcuts {
+    display: flex; 
     flex-direction: column;
     align-items: flex-start;
-    margin-right: 30px;
+    margin-left: 20px; 
 }
 
 .genie-shortcut-ui-group-content {

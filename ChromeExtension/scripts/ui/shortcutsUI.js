@@ -4,12 +4,21 @@ var $action = $action || {};
     class ShortcutsUICommandItem extends $action.CommandItem {
         constructor(command) {
             super(command);
+            this._hasLabel = true;
             this.init();
         }
 
         get DOM() {
             return this._domElement;
         };
+
+        set HasLabel(hasLabel) {
+            this._hasLabel = hasLabel;
+        }
+
+        get HasLabel() {
+            return this._hasLabel;
+        }
 
         init() {
             var argumentKeys = Object.keys(this.Command.ArgumentsMap);
@@ -25,6 +34,10 @@ var $action = $action || {};
 
             var descriptionLabel = this.descriptionLabel();
             var imperativeLabel = this.firstImperativeLabel();
+            if (!descriptionLabel.length && !imperativeLabel.length) {
+                this.HasLabel = false;
+            }
+
             if (imperativeLabel.length) {
                 label.textContent = imperativeLabel;
                 command.appendChild(label);
@@ -42,6 +55,7 @@ var $action = $action || {};
             }
 
             if (argumentKeys.length) {
+                this.HasLabel = true;
                 var argumentsDiv = document.createElement("div");
                 argumentsDiv.classList.add("genie-shortcut-ui-arguments");
                 for (var i = 0; i < argumentKeys.length; i++) {
@@ -112,21 +126,21 @@ var $action = $action || {};
         getUniqueShortcut(label, command) {
             if (label.length) {
                 for (var i = 0; i < label.length; i++) {
-                    var letter = label[i];
+                    var letter = label[i].toLowerCase();
                     if (!this._shortcuts[letter]) {
                         this._shortcuts[letter] = command;
                         return letter;
                     }
                 }
-            } else {
-                // Assign first letter of alphabet not already used
-                var alphabet = "abcdefghijklmnopqrstuvwxyz";
-                for (var j = 0; j < alphabet.length; j++) {
-                    var alphabetLetter = alphabet[j];
-                    if (!this._shortcuts[alphabetLetter]) {
-                        this._shortcuts[alphabetLetter] = command;
-                        return alphabetLetter;
-                    }
+            }
+            
+            // Assign first letter of alphabet not already used
+            var alphabet = "abcdefghijklmnopqrstuvwxyz";
+            for (var j = 0; j < alphabet.length; j++) {
+                var alphabetLetter = alphabet[j];
+                if (!this._shortcuts[alphabetLetter]) {
+                    this._shortcuts[alphabetLetter] = command;
+                    return alphabetLetter;
                 }
             }
 
@@ -134,22 +148,22 @@ var $action = $action || {};
         }
 
         createShortcuts(command, commandItem) {
-            var shortcuts = {};
+            var shortcuts = [];
             if (command.hasArguments()) {
                 var argumentKeys = Object.keys(command.ArgumentsMap);
                 for (var i = 0; i < argumentKeys.length; i++) {
                     let argument = argumentKeys[i];
-                    var argumentShortcut = this.getUniqueShortcut(argument);
+                    var argumentShortcut = this.getUniqueShortcut(argument, commandItem);
                     if (argumentShortcut.length) {
-                        shortcuts[argument] = argumentShortcut;
-                        this._keypressListener.simple_combo("ctrl " + argumentShortcut, commandItem.perform);
+                        shortcuts.push(argumentShortcut);
+                        this._keypressListener.simple_combo("ctrl " + argumentShortcut, commandItem.perform.bind(commandItem, argument));
                     }
                 }
             } else {
                 let label = commandItem.firstImperativeLabel();
-                let shortcut = this.getUniqueShortcut(label);
-                shortcuts[label] = shortcut;
-                this._keypressListener.simple_combo("ctrl " + shortcut, commandItem.perform);
+                let shortcut = this.getUniqueShortcut(label, commandItem);
+                shortcuts.push(shortcut);
+                this._keypressListener.simple_combo("ctrl " + shortcut, commandItem.perform.bind(commandItem));
             }
 
             return shortcuts;
@@ -166,10 +180,21 @@ var $action = $action || {};
                 var commandsContainer = document.createElement("div");
                 commandsContainer.classList.add("genie-shortcut-ui-group-content");
                 commandGroup.appendChild(commandsContainer);
+
+                var shortcutsContainer = document.createElement("div");
+                shortcutsContainer.classList.add("genie-shortcut-ui-group-shortcuts")
+                commandGroup.appendChild(shortcutsContainer);
                 for (var i = 0; i < commands.length; i++) {
                     var newCommand = new $action.ShortcutsUICommandItem(commands[i]);
-                    this.createShortcuts(commands[i], newCommand);
-                    commandsContainer.append(newCommand.DOM);
+                    if (newCommand.HasLabel) {
+                        var shortcuts = this.createShortcuts(commands[i], newCommand);
+                        for (var j = 0; j < shortcuts.length; j++) {
+                            let shortcutLabel = document.createElement("span");
+                            shortcutLabel.textContent = "ctrl + " + shortcuts[j];
+                            shortcutsContainer.appendChild(shortcutLabel);
+                        }
+                        commandsContainer.append(newCommand.DOM);
+                    }
                 }
                 this.commandContainer.appendChild(commandGroup);
             }

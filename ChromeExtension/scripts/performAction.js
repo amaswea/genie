@@ -152,7 +152,7 @@ function receiveMessage(event) {
     // Handle triggering the evnet
     var data = event.data;
     if (data && data.actions && data.messageType == "performAction") {
-        debugger;
+      //  debugger;
         for (var i = 0; i < data.actions.length; i++) {
             performAction(data.actions[i]);
         }

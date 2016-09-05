@@ -20,7 +20,7 @@ $(document).ready(function () {
 
     // Begin polling to update command states
     setTimeout(injectGlobalEventHandlerOverrides, 0); // ACK -- - Fix this in the future
-    setTimeout(updateCommandEnabledStates, 2000);
+  //  setTimeout(updateCommandEnabledStates, 2000);
     setTimeout(organizeCommands, 2000);
 });
 

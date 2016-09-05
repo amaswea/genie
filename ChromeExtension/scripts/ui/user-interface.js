@@ -97,7 +97,7 @@
              if (this.command.RequiresMousePosition) {
                  // remove. Hack
                  var element = this.command.Element;
-                 if (this._commands.Element instanceof Document) {
+                 if (this.command.Element instanceof Document) {
                      element = document.body;
                  }
 
@@ -112,10 +112,10 @@
                      x: mousePosition,
                      y: 10
                  });
-             } else if (command.hasArguments()) {
-                 command.execute(argument);
+             } else if (this.command.hasArguments()) {
+                 this.command.execute(argument);
              } else {
-                 command.execute();
+                 this.command.execute();
              }
          }
 
