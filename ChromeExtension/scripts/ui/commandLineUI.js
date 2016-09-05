@@ -53,12 +53,12 @@ var $action = $action || {};
                 if (commands[i].hasArguments()) {
                     var commandArgumentKeys = Object.keys(commands[i].ArgumentsMap);
                     for (var j = 0; j < commandArgumentKeys.length; j++) {
-                        this._commandsMap[commandArgumentKeys[j]] = newCommand.Command;
+                        this._commandsMap[commandArgumentKeys[j]] = newCommand;
 
                     }
                 } else {
                     let commandLabel = newCommand.firstImperativeLabel().toLowerCase();
-                    this._commandsMap[commandLabel] = newCommand.Command;
+                    this._commandsMap[commandLabel] = newCommand;
                 }
             }
         }
@@ -89,49 +89,6 @@ var $action = $action || {};
             commandLine[0].style.top = top + "px";
         };
 
-        drawGridAndGetInput(width, height, x, y) {
-            var bw = width;
-            var bh = height;
-            var p = 10;
-
-            var canvas = this.canvas;
-            var context = canvas.getContext("2d");
-            canvas.style.position = "absolute";
-            canvas.style.left = x + "px";
-            canvas.style.top = y + "px";
-            canvas.style.width = width + "px";
-            canvas.style.height = height + "px";
-
-            function drawBoard() {
-                var cellNumber = 1;
-                for (var x = 0; x <= bw; x += 20) {
-                    context.moveTo(0.5 + x + p, p);
-                    context.lineTo(0.5 + x + p, bh + p);
-
-                    var x = 0.5 + x + p;
-                    var y = p;
-                    context.strokeText(cellNumber.toString(), x, y, 10);
-                    cellNumber++;
-                }
-
-
-                cellNumber = 1;
-                for (var x = 0; x <= bh; x += 20) {
-                    context.moveTo(p, 0.5 + x + p);
-                    context.lineTo(bw + p, 0.5 + x + p);
-                }
-
-                context.strokeStyle = "black";
-                context.lineWidth = 1;
-                context.stroke();
-            }
-
-            drawBoard();
-            this.canvas.style.display = "";
-
-            return prompt("Please enter a column.");
-        }
-
         calculateMousePosition(column, width, height, x, y) {
             var mousePosition = x;
             var lineWidth = 20;
@@ -146,7 +103,7 @@ var $action = $action || {};
                 var commandLabels = Object.keys(this._commandsMap);
                 var labelString = "";
                 for (var i = 0; i < commandLabels.length; i++) {
-                    if (this._commandsMap[commandLabels[i]].IsEnabled) {
+                    if (this._commandsMap[commandLabels[i]].Command.IsEnabled) {
                         labelString = labelString + commandLabels[i];
                         if (i < commandLabels.length - 1) {
                             labelString = labelString + ",";
@@ -157,12 +114,12 @@ var $action = $action || {};
             } else if (text == "help") {
                 var commandKeys = Object.keys(this._commandsMap);
                 for (var i = 0; i < commandKeys.length; i++) {
-                    let command = this._commandsMap[commandKeys[i]];
+                    let commandItem = this._commandsMap[commandKeys[i]];
                     this._textarea.value = this._textarea.value + "\n" + commandKeys[i] + ": ";
-                    if (command.CommandItem.label().length) {
-                        this._textarea.value = this._textarea.value + command.CommandItem.label();
+                    if (commandItem.label().length) {
+                        this._textarea.value = this._textarea.value + commandItem.label();
                     } else {
-                        this._textarea.value = this._textarea.value + command.ArgumentsMap[commandKeys[i]];
+                        this._textarea.value = this._textarea.value + commandItem.Command.ArgumentsMap[commandKeys[i]];
                     }
                 }
             } else if (text.split("=").length == 2) {
@@ -174,50 +131,25 @@ var $action = $action || {};
                 this._textarea.value = this._textarea.value + "\n" + "Macro saved.";
             } else {
                 // Find the commands corresponding execute() method in the commandsMap
-                text = text.toLowerCase();
-                let command = this._commandsMap[text];
-                let macro = this._macros[text];
-                if (command) {
-                    this.performCommand(command, text);
-                } else if (macro) {
-                    for (var i = 0; i < macro.length; i++) {
-                        // Execute each command listed in the macro
-                        var macroCommand = this._commandsMap[macro[i]];
-                        if (macroCommand) {
-                            this.performCommand(macroCommand, macro[i]);
+                text = text.toLowerCase().split(" ");
+                if (text.length > 2) {
+                    let commandItem = this._commandsMap[text[0]];
+                    let macro = this._macros[text];
+                    if (commandItem) {
+                        commandItem.perform(text);
+                    } else if (macro) {
+                        for (var i = 0; i < macro.length; i++) {
+                            // Execute each command listed in the macro
+                            var macroCommand = this._commandsMap[macro[i]];
+                            if (macroCommand) {
+                                macroCommand.perform(macro[i]);
+                            }
                         }
+                    } else {
+                        // No command found
+                        this._textarea.value = this._textarea.value + "\nSorry. No command found.";
                     }
-                } else {
-                    // No command found
-                    this._textarea.value = this._textarea.value + "\nSorry. No command found.";
                 }
-            }
-        }
-
-        performCommand(command, text) {
-            // Call the execute method to perform the command
-            if (command.RequiresMousePosition) {
-                // remove. Hack
-                var element = command.Element;
-                if (command.Element instanceof Document) {
-                    element = document.body;
-                }
-
-                var commandHeight = $(element).outerHeight();
-                var commandWidth = $(element).outerWidth();
-                var commandX = $(element).offset().left;
-                var commandY = $(element).offset().top;
-                var colNumber = this.drawGridAndGetInput(commandWidth, commandHeight, commandX, commandY);
-                var mousePosition = this.calculateMousePosition(colNumber, commandWidth, commandHeight, commandX, commandY);
-
-                command.execute(0, {
-                    x: mousePosition,
-                    y: 10
-                });
-            } else if (command.hasArguments()) {
-                command.execute(text);
-            } else {
-                command.execute();
             }
         }
     };

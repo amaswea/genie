@@ -92,6 +92,76 @@
 
          init() {};
 
+         perform(argument) {
+             // Call the execute method to perform the command
+             if (this.command.RequiresMousePosition) {
+                 // remove. Hack
+                 var element = this.command.Element;
+                 if (this._commands.Element instanceof Document) {
+                     element = document.body;
+                 }
+
+                 var commandHeight = $(element).outerHeight();
+                 var commandWidth = $(element).outerWidth();
+                 var commandX = $(element).offset().left;
+                 var commandY = $(element).offset().top;
+                 var colNumber = this.drawGridAndGetInput(commandWidth, commandHeight, commandX, commandY);
+                 var mousePosition = this.calculateMousePosition(colNumber, commandWidth, commandHeight, commandX, commandY);
+
+                 this.command.execute(0, {
+                     x: mousePosition,
+                     y: 10
+                 });
+             } else if (command.hasArguments()) {
+                 command.execute(argument);
+             } else {
+                 command.execute();
+             }
+         }
+
+         drawGridAndGetInput(width, height, x, y) {
+             var bw = width;
+             var bh = height;
+             var p = 10;
+
+             var canvas = this.canvas;
+             var context = canvas.getContext("2d");
+             canvas.style.position = "absolute";
+             canvas.style.left = x + "px";
+             canvas.style.top = y + "px";
+             canvas.style.width = width + "px";
+             canvas.style.height = height + "px";
+
+             function drawBoard() {
+                 var cellNumber = 1;
+                 for (var x = 0; x <= bw; x += 20) {
+                     context.moveTo(0.5 + x + p, p);
+                     context.lineTo(0.5 + x + p, bh + p);
+
+                     var x = 0.5 + x + p;
+                     var y = p;
+                     context.strokeText(cellNumber.toString(), x, y, 10);
+                     cellNumber++;
+                 }
+
+
+                 cellNumber = 1;
+                 for (var x = 0; x <= bh; x += 20) {
+                     context.moveTo(p, 0.5 + x + p);
+                     context.lineTo(bw + p, 0.5 + x + p);
+                 }
+
+                 context.strokeStyle = "black";
+                 context.lineWidth = 1;
+                 context.stroke();
+             }
+
+             drawBoard();
+             this.canvas.style.display = "";
+
+             return prompt("Please enter a column.");
+         }
+
          /**
           * A label string to use for the command item
           * @private
@@ -153,7 +223,7 @@
          }
 
          firstImperativeLabel() {
-             var nodeTypes = ["handlerName", "handlerComments", "expressionComments", "expressionCalls", "elementLabels","assignments"];
+             var nodeTypes = ["handlerName", "handlerComments", "expressionComments", "expressionCalls", "elementLabels", "assignments"];
              var phraseTypes = ["imperativePhrases", "verbs", "nouns", "phrases", "other"];
              for (var i = 0; i < nodeTypes.length; i++) {
                  for (var j = 0; j < phraseTypes.length; j++) {
@@ -188,7 +258,7 @@
 
          descriptionLabel() {
              // Returns all of the label metadata after the first imperative label is found (description)
-             var nodeTypes = ["handlerName", "handlerComments", "expressionComments", "expressionCalls", "elementLabels","assignments"];
+             var nodeTypes = ["handlerName", "handlerComments", "expressionComments", "expressionCalls", "elementLabels", "assignments"];
              var phraseTypes = ["imperativePhrases", "verbs", "nouns", "phrases", "other"];
              var foundOne = false;
              var label = "";

@@ -207,9 +207,18 @@ var $action = $action || {};
         get ArgumentsMap() {
             return this._argumentsMap;
         }
+        
+        get RequiresInput() {
+            if(this.EventType == "default"){
+                if($action.ActionableElementsRequiresInput.indexOf(this.Element.tagName) > -1){
+                    return true;
+                }
+            }
+            return false;
+        }
 
         hasArguments() {
-            return this._argumentsMap && Object.keys(this._argumentsMap).length
+            return (this._argumentsMap && Object.keys(this._argumentsMap).length || this.RequiresInput);
         }
 
         /**

@@ -251,8 +251,8 @@ var $action = $action || {};
             return d3.selection.prototype._on.apply(this, arguments);
         }
 
-        var newKeypress = function (combo) {
-            if (combo.keys) {
+        var newKeypress = function (combo, ignore = false) {
+            if (combo.keys && !ignore) {
                 if (combo.on_keydown) {
                     var handler = combo.on_keydown.toString();
                     var elementID = detectOrAssignElementID(document.body);

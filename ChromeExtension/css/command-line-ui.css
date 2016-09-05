@@ -20,6 +20,7 @@
     background-color: #f5f5f5;
     border: none;
     outline: none;
+    padding: 0;
     color: #428bca !important;
     font-size: 14px !important;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
@@ -27,6 +28,8 @@
 
 .genie-command-line-label {
     font-weight: bold;
+    padding-top: 2px; 
+    padding-bottom: 2px;
 }
 
 canvas.genie-audio-ui-input-canvas {

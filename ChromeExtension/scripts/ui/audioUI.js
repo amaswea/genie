@@ -170,31 +170,7 @@ var $action = $action || {};
             // Find the commands corresponding execute() method in the commandsMap
             let command = this._audioCommands[commandText];
             if (command) {
-                if (!command.userInvokeable()) {
-                    /*var msg = new SpeechSynthesisUtterance();
-                    var voices = window.speechSynthesis.getVoices();
-                    msg.voice = voices[10]; // Note: some voices don't support altering params
-                    msg.voiceURI = 'native';
-                    msg.volume = 1; // 0 to 1
-                    msg.rate = 1; // 0.1 to 10
-                    msg.pitch = 2; //0 to 2
-                    msg.text = "Sorry. This command is disabled.";
-                    msg.lang = 'en-US';
-                    window.speechSynthesis.speak(msg);*/
-                } else if (command.hasArguments()) {
-                    if (command.RequiresMousePosition) {
-                        var commandHeight = $(command.Element).outerHeight();
-                        var commandWidth = $(command.Element).outerWidth();
-                        var commandX = $(command.Element).offset().left;
-                        var commandY = $(command.Element).offset().top;
-                        var mousePosition = this.drawGridAndGetInput(commandHeight, commandWidth, commandX, commandY);
-                        command.execute(commandText, mousePosition);
-                    } else {
-                        command.execute(commandText);
-                    }
-                } else {
-                    command.execute();
-                }
+                command.perform(commandText);
             }
 
         }
@@ -231,12 +207,12 @@ var $action = $action || {};
                     if (commands[i].hasArguments()) {
                         var commandArgumentKeys = Object.keys(commands[i].ArgumentsMap);
                         for (var j = 0; j < commandArgumentKeys.length; j++) {
-                            this._audioCommands[commandArgumentKeys[j]] = newCommand.Command;
+                            this._audioCommands[commandArgumentKeys[j]] = newCommand;
 
                         }
                     } else {
                         let commandLabel = newCommand.firstImperativeLabel().toLowerCase();
-                        this._audioCommands[commandLabel] = newCommand.Command;
+                        this._audioCommands[commandLabel] = newCommand;
                     }
 
                     commandItems.push(newCommand);

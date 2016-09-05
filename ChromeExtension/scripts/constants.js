@@ -81,6 +81,7 @@ var $action = $action || {};
         "focusout",
         "input",
         "keydown",
+        "keypress",
         "keyup",
         "mousedown",
         "mouseenter",
@@ -114,7 +115,10 @@ var $action = $action || {};
         "mousemove",
         "mouseout",
         "mouseover",
-        "mouseup"
+        "mouseup",
+        "touchmove", // Put touch events in this category as well b/c they have clientX, clientY position arguments
+        "touchstart",
+        "touchend"
     ]
 
     /**
@@ -157,6 +161,7 @@ var $action = $action || {};
         "input": ["keydown", "keypress", "input", "keyup"],
         "keydown": ["keydown", "keypress", "input", "keyup"],
         "keyup": ["keydown", "keypress", "input", "keyup"],
+        "keypress": ["keydown", "keypress", "input", "keyup"]
     }
 
     // List of W3C inline GlobalEventHandlers that are supported
@@ -239,8 +244,8 @@ var $action = $action || {};
 
     $action.SpecialKeys = {
         "left": "ArrowLeft",
-        "right": "ArrowRight", 
-        "up": "ArrowUp", 
+        "right": "ArrowRight",
+        "up": "ArrowUp",
         "down": "ArrowDown"
     }
 

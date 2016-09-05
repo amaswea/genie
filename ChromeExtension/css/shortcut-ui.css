@@ -11,8 +11,8 @@
     top: 6em;
     width: 92%;
     z-index: 1011;
-    -moz-border-radius: 10px;
-    -webkit-border-radius: 10px;
+    box-shadow: #428bca 0px 0px 1px 0px;
+    border-radius: 2px; 
     padding: 10px;
 }
 
@@ -62,6 +62,15 @@
     align-items: flex-start;
 }
 
-.genie-shortcut-ui-command-label {
+.genie-shortcut-ui-command {
+    display: flex; 
+    flex-direction: row; 
+}
+
+.genie-shortcut-ui-command-label, .genie-shortcut-ui-arguments-span {
     font-weight: bold;
+}
+
+.genie-shortcut-ui-command-label {
+    margin-right: 2px; 
 }
