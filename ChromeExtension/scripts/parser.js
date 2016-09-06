@@ -153,7 +153,7 @@ var $difference = $action || {};
                                 newPos = this.partOfSpeech(splitCamelCase[1]);
                                 newPosValue = newPos[0][1];
                                 this.savePartOfSpeech(splitCamelCase[1], newPosValue, partsOfSpeech);
-                            }else {
+                            } else {
                                 partsOfSpeech.nonEnglish.push(splitCamelCase[1]);
                             }
 
@@ -161,11 +161,17 @@ var $difference = $action || {};
                                 newPos = this.partOfSpeech(splitCamelCase[0]);
                                 newPosValue = newPos[0][1];
                                 this.savePartOfSpeech(splitCamelCase[0], newPosValue, partsOfSpeech);
-                            }else {
-                                partsOfSpeech.nonEnglish.push(splitCamelCase[0]);   
+                            } else {
+                                partsOfSpeech.nonEnglish.push(splitCamelCase[0]);
                             }
-                        }else {
-                            partsOfSpeech.nonEnglish.push(word);
+                        } else {
+                            // try to convert it into a number
+                            var value = parseInt(word);
+                            if (!isNaN(value)) {
+                                partsOfSpeech.other.push(value);
+                            } else {
+                                partsOfSpeech.nonEnglish.push(word);
+                            }
                         }
                     }
                 }

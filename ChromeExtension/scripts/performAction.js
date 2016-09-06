@@ -10,9 +10,9 @@ $action.ActionableElementsActionFunction = {
         if (type == "submit") {
             element.click(); 
         } 
-        else if(type == "checkbox"){
+/*        else if(type == "checkbox"){
             element.
-        }
+        }*/
         else {
             element.focus();
             element.value = argument;

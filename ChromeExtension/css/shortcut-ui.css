@@ -12,7 +12,7 @@
     width: 92%;
     z-index: 1011;
     box-shadow: #428bca 0px 0px 1px 0px;
-    border-radius: 2px; 
+    border-radius: 2px;
     padding: 10px;
 }
 
@@ -57,10 +57,10 @@
 }
 
 .genie-shortcut-ui-group-shortcuts {
-    display: flex; 
+    display: flex;
     flex-direction: column;
     align-items: flex-start;
-    margin-left: 20px; 
+    margin-left: 20px;
     min-width: 50px;
     max-width: 25%;
 }
@@ -74,27 +74,33 @@
 }
 
 .genie-shortcut-ui-command {
-    display: flex; 
-    flex-direction: row; 
+    display: flex;
+    flex-direction: row;
     width: 100%;
 }
 
-.genie-shortcut-ui-command-label, .genie-shortcut-ui-arguments-span {
+.genie-shortcut-ui-command > span, 
+.genie-shortcut-ui-group-shortcuts > span {
+    color: #428bca !important;
+}
+
+.genie-shortcut-ui-command-label,
+.genie-shortcut-ui-arguments-span {
     font-weight: bold;
 }
 
 .genie-shortcut-ui-command-label {
-    margin-right: 2px; 
+    margin-right: 2px;
     white-space: nowrap;
-    overflow: hidden; 
+    overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 50%;  
+    max-width: 50%;
 }
 
 .genie-shortcut-ui-command-description {
     white-space: nowrap;
-    max-width: 50%; 
-    overflow: hidden; 
+    max-width: 50%;
+    overflow: hidden;
     text-overflow: ellipsis;
 }
 

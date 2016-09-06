@@ -242,7 +242,7 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         $action.scriptManager = new $action.ScriptManager();
     }
 
-    $action.interface = new $action.CommandLineUI();
+    $action.interface = new $action.HelpUI();
 
     // Create a new instance of the command manager with this instance of the UI
     $action.commandManager = new $action.CommandManager($action.interface, $action.scriptManager);

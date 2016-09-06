@@ -61,7 +61,8 @@
         }
     }
     function mouseMoveHandler(e) {
-        var clientX = e.clientX - canvas.offsetLeft;
+        var relativeX = e.clientX;
+        relativeX = relativeX - canvas.offsetLeft;
         if(relativeX > 0 && relativeX < canvas.width) {
             paddleX = relativeX - paddleWidth/2;
         }
