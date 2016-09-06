@@ -6,6 +6,7 @@
          constructor() {
              this._organizer = this.OrganizationTypes.Type;
              this.initCanvas();
+             this._cellCoordinates = {};
          }
 
          get OrganizationTypes() {
@@ -30,6 +31,34 @@
              $('html').append(canvas);
              this.canvas = canvas;
              this.canvas.style.display = "none";
+             this.canvas.setAttribute("tabindex", "1");
+         }
+
+         inputHandler(command) {
+             this._eventTimeout = null;
+             let cellString = "";
+             for (var i = 0; i < this._keyCodes.length; i++) {
+                 cellString = cellString + $action.KeyCodes[this._keyCodes[i]];
+             }
+             let cellNumber = parseInt(cellString);
+             let mousePosition = this._cellCoordinates[cellNumber];
+             if (mousePosition) {
+                 console.log(mousePosition);
+                 command.execute(0, mousePosition);
+                 this.canvas.style.display = "none";
+                 this._keyCodes.splice(0, this._keyCodes.length);
+                 window.removeEventListener("keydown", this._listener, false);
+             }
+         }
+
+         inputThrottler(command, evt) {
+             if (!this._eventTimeout) {
+                 this._keyCodes = [];
+                 this._keyCodes.push(evt.which);
+                 this._eventTimeout = setTimeout(this.inputHandler.bind(this, command), 500);
+             } else {
+                 this._keyCodes.push(evt.which);
+             }
          }
 
          show() {
@@ -74,45 +103,48 @@
              }
          }
 
-         drawGridAndGetInput(width, height, x, y) {
+         drawGridAndGetInput(command, width, height, x, y) {
              var bw = width;
              var bh = height;
              var p = 10;
 
              var canvas = this.canvas;
              var context = canvas.getContext("2d");
+             context.clearRect(0, 0, canvas._prevWidth, canvas._prevHeight);
              canvas.style.position = "absolute";
              canvas.style.left = x + "px";
              canvas.style.top = y + "px";
              canvas.width = width;
              canvas.height = height;
+             canvas._prevWidth = width;
+             canvas._prevHeight = height;
 
-             function drawBoard() {
-                 var cellNumber = 1;
-                 for (var x = 0; x <= bw; x += 40) {
-                     for (var y = 0; y <= bh; y += 40) {
-                         context.moveTo(p + x, y + p);
-                         context.lineTo(p + x, y + p + 40);
-                         context.strokeText(cellNumber.toString(), x + p + 5, y + p + 10);
-                         cellNumber++;
-                     }
+             var cellNumber = 1;
+             for (var x = 0; x <= bw; x += 40) {
+                 for (var y = 0; y <= bh; y += 40) {
+                     context.moveTo(p + x, y + p);
+                     context.lineTo(p + x, y + p + 40);
+                     context.strokeText(cellNumber.toString(), x + p + 5, y + p + 10);
+                     this._cellCoordinates[cellNumber] = {
+                         x: (x + p + 20),
+                         y: (y + p + 20)
+                     };
+                     cellNumber++;
                  }
-
-
-                 for (var x = 0; x <= bh; x += 40) {
-                     context.moveTo(p, x + p);
-                     context.lineTo(bw + p, x + p);
-                 }
-
-                 context.strokeStyle = "black";
-                 context.lineWidth = 1;
-                 context.stroke();
              }
 
-             drawBoard();
-             this.canvas.style.display = "";
+             for (var x = 0; x <= bh; x += 40) {
+                 context.moveTo(p, x + p);
+                 context.lineTo(bw + p, x + p);
+             }
 
-             return prompt("Please enter a column.");
+             context.strokeStyle = "black";
+             context.lineWidth = 1;
+             context.stroke();
+
+             this.canvas.style.display = "";
+             this._listener = this.inputThrottler.bind(this, command);
+             window.addEventListener("keydown", this._listener, false);
          }
      }
 
@@ -155,13 +187,7 @@
                  var commandWidth = $(element).outerWidth();
                  var commandX = $(element).offset().left;
                  var commandY = $(element).offset().top;
-                 var colNumber = this._ui.drawGridAndGetInput(commandWidth, commandHeight, commandX, commandY);
-                 var mousePosition = this.calculateMousePosition(colNumber, commandWidth, commandHeight, commandX, commandY);
-
-                 this.command.execute(0, {
-                     x: mousePosition,
-                     y: 10
-                 });
+                 this._ui.drawGridAndGetInput(this.command, commandWidth, commandHeight, commandX, commandY);
              } else if (this.command.hasArguments()) {
                  this.command.execute(argument);
              } else {

@@ -59,6 +59,9 @@ var $action = $action || {};
             if (url.includes("cloudflare") && url.includes("rocket")) {
                 return true;
             }
+            if(url.includes("performAction")){
+                return true;
+            }
             return false;
         }
 

@@ -207,10 +207,10 @@ var $action = $action || {};
         get ArgumentsMap() {
             return this._argumentsMap;
         }
-        
+
         get RequiresInput() {
-            if(this.EventType == "default"){
-                if($action.ActionableElementsRequiresInput.indexOf(this.Element.tagName) > -1){
+            if (this.EventType == "default") {
+                if ($action.ActionableElementsRequiresInput.indexOf(this.Element.tagName) > -1) {
                     return true;
                 }
             }
@@ -495,10 +495,6 @@ var $action = $action || {};
         }
 
         execute(argument1, argument2) {
-            var s = document.createElement('script');
-            s.src = chrome.extension.getURL("scripts/performAction.js");
-            (document.head || document.documentElement).appendChild(s);
-
             // Perform the action
             var actions = {};
             if ($action.isKeyboardEvent(this.EventType)) {
@@ -518,9 +514,6 @@ var $action = $action || {};
             }
 
             window.postMessage(actions, "*");
-
-            // Unload the script
-            (document.head || document.documentElement).removeChild(s);
         }
 
         labelMetadata() {

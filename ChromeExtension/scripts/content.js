@@ -7,6 +7,8 @@ $(document).ready(function () {
     // Add an observer to watch when new elements are added to the page
     $action.mutationObserver = new $action.MutationWatcher();
     $action.mutationObserver.init();
+    
+    injectScript("scripts/performAction.js");
 
     // Parse all script tags in the page and add them as scripts
     var scripts = $('script').not('#genie_monitor_script');

@@ -18,6 +18,7 @@ window.addEventListener("message", receiveMessage, false, false, true);
 
 
 function performAction(data) {
+    debugger;
     var element = document.querySelector("[data-genie-element-id='" + data.elementID + "']");
     if (data.elementID == "document") {
         element = document;
@@ -151,11 +152,8 @@ function receiveMessage(event) {
     // Handle triggering the evnet
     var data = event.data;
     if (data && data.actions && data.messageType == "performAction") {
-      //  debugger;
         for (var i = 0; i < data.actions.length; i++) {
             performAction(data.actions[i]);
         }
     }
-
-    window.removeEventListener("message", receiveMessage, null, false, true);
 };

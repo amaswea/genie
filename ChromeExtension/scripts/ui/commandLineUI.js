@@ -82,13 +82,6 @@ var $action = $action || {};
             commandLine[0].style.top = top + "px";
         };
 
-        calculateMousePosition(column, width, height, x, y) {
-            var mousePosition = x;
-            var lineWidth = 20;
-            mousePosition = mousePosition + column * lineWidth + 10;
-            return mousePosition;
-        }
-
         mapTextToCommand(text) {
             var hasEqual = text.split("=");
             if (text == "commands") {
