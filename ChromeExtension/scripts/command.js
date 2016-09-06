@@ -2,55 +2,6 @@
 
 var $action = $action || {};
 (function ($action) {
-
-    $action.ActionableElementsActionLabel = {
-        "A": "Open",
-        "BUTTON": "Click",
-        "INPUT": "Fill out"
-    }
-
-
-    $action.CommandGroups = {
-        "A": "link",
-        "LINK": "link",
-        "INPUT": "field",
-        "BUTTON": "action",
-        "SELECT": "action",
-        "TEXTAREA": "field"
-    }
-
-    $action.ActionableElements = {
-        "A": function (element) {
-            var href = jQuery(element).attr("href");
-            return href && href.length > 0;
-        },
-        "BUTTON": function (element) {
-            return $(element).attr("type") == "submit";
-        },
-        "INPUT": function (element) {
-            var type = jQuery(element).attr("type");
-            if (type && type == "button") {
-                return false;
-            } else {
-                return type && type != "hidden";
-            }
-        },
-        "TEXTAREA": function (element) {
-            return true;
-        },
-        "SELECT": function (element) {
-            // Has to have at least on option tag
-            if (jQuery(element).find('option').length > 0) {
-                return true;
-            }
-        }
-    }
-
-    $action.GlobalEventHandlerMappings = { // TODO: Add the rest
-        "onclick": "click",
-        "onmouseover": "mouseover"
-    };
-
     /* $action.CommandInputs = {
          "cut": ["ctrl", "x", "" "", "ctrl", "x"]
      };*/
@@ -218,7 +169,7 @@ var $action = $action || {};
         }
 
         hasArguments() {
-            return (this._argumentsMap && Object.keys(this._argumentsMap).length || this.RequiresInput);
+            return this._argumentsMap && Object.keys(this._argumentsMap).length;
         }
 
         /**
@@ -424,6 +375,20 @@ var $action = $action || {};
             };
         };
 
+        getDefaultAction(arg1Value) {
+            var data = {};
+            data.messageType = 'performAction';
+            var actions = [];
+            var action = {};
+            action.event = this.EventType;
+            action.elementID = this.ElementID;
+            action.input = arg1Value; 
+            actions.push(action);
+           
+            data.actions = actions;
+            return data;
+        }
+
         getActionsToPerform(arg1Value, arg2Value) {
             var data = {};
             data.messageType = 'performAction';
@@ -511,10 +476,14 @@ var $action = $action || {};
                     argument1 = "0";
                 }
                 actions = this.getActionsToPerform(argument1, argument2);
+            } else if (this.EventType == 'default') {
+                actions = this.getDefaultAction(argument1);
             }
 
             window.postMessage(actions, "*");
         }
+
+
 
         labelMetadata() {
             var completeLabel = "";

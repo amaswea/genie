@@ -22,7 +22,7 @@ $(document).ready(function () {
 
     // Begin polling to update command states
     setTimeout(injectGlobalEventHandlerOverrides, 0); // ACK -- - Fix this in the future
-    setTimeout(updateCommandEnabledStates, 2000);
+ //   setTimeout(updateCommandEnabledStates, 2000);
     setTimeout(organizeCommands, 2000);
 });
 
@@ -173,8 +173,8 @@ function updateCommandEnabledStates() {
     }, "*");
 
     $action.commandsChanged = false;
-   // setTimeout(updateCommandEnabledStates, 5000);
-    setTimeout($action.commandManager.updateVisibleCommands(), 1000);
+   // setTimeout(updateCommandEnabledStates, 2000);
+    setTimeout($action.commandManager.updateVisibleCommands(), 2000);
 }
 
 function organizeCommands() {
@@ -242,7 +242,7 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         $action.scriptManager = new $action.ScriptManager();
     }
 
-    $action.interface = new $action.ShortcutsUI();
+    $action.interface = new $action.CommandLineUI();
 
     // Create a new instance of the command manager with this instance of the UI
     $action.commandManager = new $action.CommandManager($action.interface, $action.scriptManager);

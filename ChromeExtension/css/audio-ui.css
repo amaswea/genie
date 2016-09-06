@@ -50,6 +50,8 @@
     padding-bottom: 10px;
     color: black !important;
     font-weight: bold;
+    display: flex;
+    flex-direction: column;
 }
 
 .genie-ui-disabled {
@@ -61,4 +63,14 @@
 .genie-audio-ui-label-text {
     font-weight: bold;
     margin-right: 10px;
+}
+
+.genie-audio-ui-label-text {
+    white-space: nowrap;
+}
+
+.genie-audio-ui-header-subtext {
+    font-size: 12px;
+    font-weight: normal;
+    margin-top: 5px;
 }

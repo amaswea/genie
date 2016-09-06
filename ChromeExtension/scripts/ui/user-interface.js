@@ -175,7 +175,7 @@
 
          init() {};
 
-         perform(argument) {
+         perform(argument, input) {
              // Call the execute method to perform the command
              if (this.command.RequiresMousePosition) {
                  // remove. Hack
@@ -191,7 +191,10 @@
                  this._ui.drawGridAndGetInput(this.command, commandWidth, commandHeight, commandX, commandY);
              } else if (this.command.hasArguments()) {
                  this.command.execute(argument);
-             } else {
+             } else if (this.command.RequiresInput) {
+                 this.command.execute(input);
+             }
+             else {
                  this.command.execute();
              }
          }

@@ -5,27 +5,28 @@ $action.ActionableElementsActionFunction = {
     "A": function (element) {
         element.click();
     },
-    "INPUT": function (element,argument) {
-        element.focus();
-        element.value = argument;
+    "INPUT": function (element, argument) {
+        var type = element.getAttribute("type");
+        if (type == "submit") {
+            element.click(); 
+        } else {
+            element.focus();
+            element.value = argument;
+        }
     }
 }
-
-$action.ActionableElementsRequiresInput = ["INPUT", "TEXTAREA"]
 
 // Sending and receiving messages from the window object
 window.addEventListener("message", receiveMessage, false, false, true);
 
-
 function performAction(data) {
-    debugger;
     var element = document.querySelector("[data-genie-element-id='" + data.elementID + "']");
     if (data.elementID == "document") {
         element = document;
     } else if (data.elementID == "window") {
         element = window;
     }
-    
+
     if (element) {
         // Execute the action using the trigger or the associated action function
         if (data.event != 'default') {
@@ -126,10 +127,11 @@ function performAction(data) {
                 element.dispatchEvent(eventObj);
             }
         } else {
+            debugger;
             var actionFunction = $action.ActionableElementsActionFunction[element.tagName];
             if (actionFunction) {
                 if (actionFunction) {
-                    actionFunction(element, data.argument);
+                    actionFunction(element, data.input);
                 }
             }
         }

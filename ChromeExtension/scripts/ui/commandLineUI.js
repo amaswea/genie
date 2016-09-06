@@ -110,24 +110,38 @@ var $action = $action || {};
             } else if (text.split("=").length == 2) {
                 // Define a macro
                 var split = text.split("=");
-                var commandName = split[0].trim().toLowerCase();
+                var macroName = split[0].trim().toLowerCase();
                 var commands = split[1].trim().split(",");
-                this._macros[commandName] = commands;
+                this._macros[macroName] = commands;
                 this._textarea.value = this._textarea.value + "\n" + "Macro saved.";
             } else {
                 // Find the commands corresponding execute() method in the commandsMap
                 text = text.toLowerCase().split(" ");
-                if (text.length > 2) {
+                if (text.length == 1) {
                     let commandItem = this._commandsMap[text[0]];
-                    let macro = this._macros[text];
+                    let macro = this._macros[text[0]];
                     if (commandItem) {
-                        commandItem.perform(text);
+                        // TODO: Commands that require input
+                        commandItem.perform(text[0]);
                     } else if (macro) {
                         for (var i = 0; i < macro.length; i++) {
                             // Execute each command listed in the macro
-                            var macroCommand = this._commandsMap[macro[i]];
+                            // Parse out input strings
+                            var split = macro[i].split("\"");
+                            let macroCommand = macro[i];
+                            let input = "";
+                            let argument = "";
+                            if (split.length == 5) { // TODO: Fix parsing later
+                                argument = split[1];
+                                macroCommand = this._commandsMap[argument];
+                                input = split[3];
+                            } else if(split.length == 3){
+                                argument = split[1];
+                                macroCommand = this._commandsMap[argument];
+                            }
+
                             if (macroCommand) {
-                                macroCommand.perform(macro[i]);
+                                macroCommand.perform(argument, input);
                             }
                         }
                     } else {

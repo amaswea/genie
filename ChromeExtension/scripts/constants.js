@@ -207,16 +207,16 @@ var $action = $action || {};
         68: "d",
         65: "a",
         81: "q",
-        13: "enter", 
-        48: "0", 
-        49: "1", 
-        50: "2", 
-        51: "3", 
-        52: "4", 
-        53: "5", 
-        54: "6", 
-        55: "7", 
-        56: "8", 
+        13: "enter",
+        48: "0",
+        49: "1",
+        50: "2",
+        51: "3",
+        52: "4",
+        53: "5",
+        54: "6",
+        55: "7",
+        56: "8",
         57: "9"
             // TODO: Populate the rest later
     }
@@ -261,4 +261,56 @@ var $action = $action || {};
 
     // Attributes that have a URL to parse
     $action.LabelURLAttributes = ["href"]
+
+
+    $action.ActionableElementsRequiresInput = ["INPUT", "TEXTAREA"];
+    
+    $action.ActionableElementsActionLabel = {
+        "A": "Open",
+        "BUTTON": "Click",
+        "INPUT": "Fill out"
+    }
+
+
+    $action.CommandGroups = {
+        "A": "link",
+        "LINK": "link",
+        "INPUT": "field",
+        "BUTTON": "action",
+        "SELECT": "action",
+        "TEXTAREA": "field"
+    }
+
+    $action.ActionableElements = {
+        "A": function (element) {
+            var href = jQuery(element).attr("href");
+            return href && href.length > 0;
+        },
+        "BUTTON": function (element) {
+            return $(element).attr("type") == "submit";
+        },
+        "INPUT": function (element) {
+            var type = jQuery(element).attr("type");
+            if (type && type == "button") {
+                return false;
+            } else {
+                return type && type != "hidden";
+            }
+        },
+        "TEXTAREA": function (element) {
+            return true;
+        },
+        "SELECT": function (element) {
+            // Has to have at least on option tag
+            if (jQuery(element).find('option').length > 0) {
+                return true;
+            }
+        }
+    }
+
+    $action.GlobalEventHandlerMappings = { // TODO: Add the rest
+        "onclick": "click",
+        "onmouseover": "mouseover"
+    };
+
 })($action);

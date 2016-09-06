@@ -56,9 +56,9 @@ var $action = $action || {};
                 var element = $action.getElementFromID(command.elementID);
                 var newCommand = new $action.Command(command.id, command.elementID, command.eventType, command.handler)
                 this.initMetadata(newCommand);
-                console.log(newCommand.Handler);
+/*                console.log(newCommand.Handler);
                 console.log(newCommand.EventType);
-                console.log(newCommand.Element.tagName)
+                console.log(newCommand.Element.tagName)*/
 
                 this.createArgumentsMap(newCommand, command);
                 if (command.keyCodeArguments) {
