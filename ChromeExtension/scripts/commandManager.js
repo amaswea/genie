@@ -56,9 +56,9 @@ var $action = $action || {};
                 var element = $action.getElementFromID(command.elementID);
                 var newCommand = new $action.Command(command.id, command.elementID, command.eventType, command.handler)
                 this.initMetadata(newCommand);
-/*                console.log(newCommand.Handler);
-                console.log(newCommand.EventType);
-                console.log(newCommand.Element.tagName)*/
+                /*                console.log(newCommand.Handler);
+                                console.log(newCommand.EventType);
+                                console.log(newCommand.Element.tagName)*/
 
                 this.createArgumentsMap(newCommand, command);
                 if (command.keyCodeArguments) {
@@ -92,6 +92,7 @@ var $action = $action || {};
         organizeCommands() {
             var organizer = this._ui.Organizer;
             if (organizer) {
+                this._ui.removeCommands(); 
                 var commandOrder = organizer(this._commands);
                 for (var i = 0; i < commandOrder.length; i++) {
                     let containerLabel = commandOrder[i].container;
@@ -672,34 +673,38 @@ var $action = $action || {};
 
         parseHandler(command) {
             // Parse the handler and get function names
-            var ast = esprima.parse(command.Handler, {
-                tolerant: true,
-                comment: true,
-                attachComment: true
-            });
-
-            // Function name
-            if (ast.body.length == 1) { // Handler should have at least one statement
-                this.linkFunctionCalls(ast);
-                this.linkAssignments(ast);
-
-                // Comments before handler function
-                // Need to link with function call in script first
+            try {
+                var ast = esprima.parse(command.Handler, {
+                    tolerant: true,
+                    comment: true,
+                    attachComment: true
+                });
 
                 // Function name
-                let identifier = ast.body[0].id;
-                if (identifier) {
-                    this.parseLabel(command.LabelMetadata.handlerName, identifier.name);
+                if (ast.body.length == 1) { // Handler should have at least one statement
+                    this.linkFunctionCalls(ast);
+                    this.linkAssignments(ast);
+
+                    // Comments before handler function
+                    // Need to link with function call in script first
+
+                    // Function name
+                    let identifier = ast.body[0].id;
+                    if (identifier) {
+                        this.parseLabel(command.LabelMetadata.handlerName, identifier.name);
+                    }
+
+                    //TODO:  Find comments on the handler function
+
+                    // DOM APIs
+                    // Later
+                    // Differentiate between statements & function calls?
+
+                    this.parseOutsideConditionals(command, ast);
+                    this.parseConditionals(command, ast);
                 }
-
-                //TODO:  Find comments on the handler function
-
-                // DOM APIs
-                // Later
-                // Differentiate between statements & function calls?
-
-                this.parseOutsideConditionals(command, ast);
-                this.parseConditionals(command, ast);
+            } catch (e) {
+                console.log("Could not parse the handler. " + e.message);
             }
         };
 

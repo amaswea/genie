@@ -3,3 +3,7 @@ body > .style-genie-help-ui-tooltip > .opentip > .ot-content  {
     font-size: 14px !important;
     color: #428bca !important;
 }
+
+.genie-help-ui-tooltip-label {
+    font-weight: bold;
+}

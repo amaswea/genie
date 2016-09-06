@@ -109,7 +109,7 @@ var $action = $action || {};
             this.label = label;
 
             this.label.textContent = "Speak a command... ";
-            
+
             var subText = document.createElement("span");
             subText.textContent = "(Speaking the bolded text label triggers the command.)";
             subText.classList.add("genie-audio-ui-header-subtext");
@@ -287,6 +287,13 @@ var $action = $action || {};
             var cmdItem = command.CommandItem;
             if (cmdItem && cmdItem.DOM) {
                 this.list.removeChild(cmdItem.DOM);
+            }
+        }
+
+        removeCommands() {
+            var list = this.list; 
+            while (list.firstChild) {
+                list.removeChild(list.firstChild);
             }
         }
     };

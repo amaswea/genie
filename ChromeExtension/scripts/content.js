@@ -7,7 +7,7 @@ $(document).ready(function () {
     // Add an observer to watch when new elements are added to the page
     $action.mutationObserver = new $action.MutationWatcher();
     $action.mutationObserver.init();
-    
+
     injectScript("scripts/performAction.js");
 
     // Parse all script tags in the page and add them as scripts
@@ -22,7 +22,8 @@ $(document).ready(function () {
 
     // Begin polling to update command states
     setTimeout(injectGlobalEventHandlerOverrides, 0); // ACK -- - Fix this in the future
- //   setTimeout(updateCommandEnabledStates, 2000);
+    setTimeout(updateCommandEnabledStates, 2000);
+    setTimeout(updateVisibleCommands, 2000);
     setTimeout(organizeCommands, 2000);
 });
 
@@ -173,14 +174,17 @@ function updateCommandEnabledStates() {
     }, "*");
 
     $action.commandsChanged = false;
-   // setTimeout(updateCommandEnabledStates, 2000);
-    setTimeout($action.commandManager.updateVisibleCommands(), 2000);
+    // setTimeout(updateCommandEnabledStates, 2000);
+}
+
+function updateVisibleCommands() {
+    $action.commandManager.updateVisibleCommands();
+    setTimeout(updateVisibleCommands, 2000);
 }
 
 function organizeCommands() {
-
-    // TODO:think of better way to implement organization
     $action.commandManager.organizeCommands();
+    setTimeout(organizeCommands, 2000);
 }
 
 /**

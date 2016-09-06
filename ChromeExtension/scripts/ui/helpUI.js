@@ -12,29 +12,10 @@ var $action = $action || {};
         init() {
 
         };
-
-        hide() {
-            // Hide all of the tooltips
-            var keys = Object.keys(this._tooltips);
-            for (var i = 0; i < keys.length; i++) {
-                let element = $action.getElementFromID(keys[i]);
-                let tooltip = this._tooltips[keys[i]];
-                if (tooltip && element) {
-                    tooltip.hide();
-                }
-            }
-        }
-
-        show() {
-            var keys = Object.keys(this._tooltips);
-            for (var i = 0; i < keys.length; i++) {
-                let element = $action.getElementFromID(keys[i]);
-                let tooltip = this._tooltips[keys[i]];
-                if (tooltip && element) {
-                    tooltip.show();
-                }
-            }
-        }
+        
+        show() {}
+        
+        hide() {}
 
         appendCommandGroup(label, commands) {
             for (var i = 0; i < commands.length; i++) {
@@ -55,7 +36,6 @@ var $action = $action || {};
                 if (tooltip.length) {
                     // Update the text
                 } else {
-                    var commandLabel = 
                     this.createTooltip(commands[i], newCommand.firstImperativeLabel(), newCommand.descriptionLabel());
                 }
 
@@ -66,17 +46,17 @@ var $action = $action || {};
         getTooltip(command) {
             return this._tooltips[command.ElementID];
         }
-        
+
         arguments(argumentsMap) {
             var keys = Object.keys(argumentsMap);
-            var argString = ""; 
-            for(var i=0; i<keys.length; i++){
-                argString = argString + keys[i] + ": " + argumentsMap[keys[i]]; 
-                if(i < keys.length -1){
+            var argString = "";
+            for (var i = 0; i < keys.length; i++) {
+                argString = argString + keys[i] + ": " + argumentsMap[keys[i]];
+                if (i < keys.length - 1) {
                     argString = argString + ",";
                 }
             }
-            
+
             return argString;
         }
 
@@ -87,27 +67,38 @@ var $action = $action || {};
             if (!existingTooltip) {
                 var $element = $(command.Element);
                 var tooltip = new Opentip($element, {
-                    background: '#f5f5f5', 
+                    background: '#f5f5f5',
                     borderColor: '#f5f5f5',
                     showOn: null,
                     target: $element,
                     tipJoint: "bottom left",
                     hideTriggers: [],
-                    className: "genie-help-ui-tooltip"
+                    className: "genie-help-ui-tooltip",
+                    removeElementsOnHide: true
                 });
-                
-                var label = commandLabel + ": " + description; 
-                
-                var commandArguments = this.arguments(command.ArgumentsMap); 
-                if(commandArguments && commandArguments.length) {
-                    label = label + ", " + commandArguments;
+
+                var labelSpan = document.createElement("span");
+                labelSpan.classList.add("genie-help-ui-tooltip-label");
+                labelSpan.textContent = commandLabel + ": ";
+
+                var descriptionSpan = document.createElement("span");
+                descriptionSpan.classList.add("genie-help-ui-tooltip-description");
+                descriptionSpan.textContent = description;
+
+                var commandArguments = this.arguments(command.ArgumentsMap);
+                if (commandArguments && commandArguments.length) {
+                    descriptionSpan.textContent = descriptionSpan.textContent + ", " + commandArguments;
                 }
-                tooltip.setContent(label);
+                
+                var tooltipContainer = document.createElement('div');
+                tooltipContainer.classList.add("genie-help-ui-tooltip-container");
+                tooltipContainer.appendChild(labelSpan);
+                tooltipContainer.appendChild(descriptionSpan);
+                tooltip.setContent(tooltipContainer);
+                tooltip.show();
                 // tooltip.setAttribute("id", "genie-help-ui-tooltip-" + command.ElementID);
                 // tooltip.classList.add("genie-help-ui-tooltip");
                 this._tooltips[command.ElementID] = tooltip;
-            } else {
-
             }
         }
     };
