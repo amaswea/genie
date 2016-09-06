@@ -9,7 +9,11 @@ $action.ActionableElementsActionFunction = {
         var type = element.getAttribute("type");
         if (type == "submit") {
             element.click(); 
-        } else {
+        } 
+        else if(type == "checkbox"){
+            element.
+        }
+        else {
             element.focus();
             element.value = argument;
         }
@@ -127,7 +131,6 @@ function performAction(data) {
                 element.dispatchEvent(eventObj);
             }
         } else {
-            debugger;
             var actionFunction = $action.ActionableElementsActionFunction[element.tagName];
             if (actionFunction) {
                 if (actionFunction) {

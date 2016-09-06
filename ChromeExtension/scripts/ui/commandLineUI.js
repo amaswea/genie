@@ -127,16 +127,16 @@ var $action = $action || {};
                         for (var i = 0; i < macro.length; i++) {
                             // Execute each command listed in the macro
                             // Parse out input strings
-                            var split = macro[i].split("\"");
+                            var split = macro[i].replace(/'/g, "").split(":");
                             let macroCommand = macro[i];
                             let input = "";
                             let argument = "";
-                            if (split.length == 5) { // TODO: Fix parsing later
-                                argument = split[1];
+                            if (split.length == 2) { // TODO: Fix parsing later
+                                argument = split[0];
                                 macroCommand = this._commandsMap[argument];
-                                input = split[3];
-                            } else if(split.length == 3){
-                                argument = split[1];
+                                input = split[1];
+                            } else if(split.length == 1) {
+                                argument = split[0];
                                 macroCommand = this._commandsMap[argument];
                             }
 
