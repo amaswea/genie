@@ -143,6 +143,7 @@
              context.stroke();
 
              this.canvas.style.display = "";
+             this.canvas.fillStyle = "rgba(255, 255, 255, 0.5)"; 
              this._listener = this.inputThrottler.bind(this, command);
              window.addEventListener("keydown", this._listener, false);
          }
