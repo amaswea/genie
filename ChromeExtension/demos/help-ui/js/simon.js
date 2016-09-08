@@ -61,6 +61,7 @@
         var desiredResponse = copy.shift();
         var actualResponse = $(e.target).data('tile');
         active = checkResponse();
+        // Check if the user has lost based on their response
         checkLose();
     }
 

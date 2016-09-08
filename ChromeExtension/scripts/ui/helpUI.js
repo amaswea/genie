@@ -7,6 +7,7 @@ var $action = $action || {};
             super();
             this.init();
             this._tooltips = {};
+            this._positions = ["bottom left", "bottom right", "top right", "top left"];
         }
 
         init() {
@@ -59,6 +60,11 @@ var $action = $action || {};
 
             return argString;
         }
+        
+        getRandomPosition(){
+            var randomNumber = Math.floor(Math.random() * 4);
+            return this._positions[randomNumber];
+        }
 
         createTooltip(command, commandLabel, description) {
             // Initialize the tooltip
@@ -66,6 +72,7 @@ var $action = $action || {};
             var existingTooltip = this.getTooltip(command);
             if (!existingTooltip) {
                 var $element = $(command.Element);
+                
                 var tooltip = new Opentip($element, {
                     background: '#f5f5f5',
                     borderColor: '#f5f5f5',

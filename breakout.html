@@ -60,6 +60,7 @@
             leftPressed = false;
         }
     }
+    
     function mouseMoveHandler(e) {
         var relativeX = e.clientX;
         relativeX = relativeX - canvas.offsetLeft;
@@ -67,6 +68,9 @@
             paddleX = relativeX - paddleWidth/2;
         }
     }
+    
+    
+    
     function collisionDetection() {
         for(c=0; c<brickColumnCount; c++) {
             for(r=0; r<brickRowCount; r++) {
