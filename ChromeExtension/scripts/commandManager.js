@@ -97,7 +97,8 @@ var $action = $action || {};
                 for (var i = 0; i < commandOrder.length; i++) {
                     let containerLabel = commandOrder[i].container;
                     let cmds = commandOrder[i].commands;
-                    this._ui.appendCommandGroup(containerLabel, cmds);
+                    this._ui.addCommandsGroup(containerLabel, cmds);
+                    
                 }
             }
         };

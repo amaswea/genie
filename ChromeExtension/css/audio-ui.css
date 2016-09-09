@@ -60,7 +60,8 @@
 }
 
 .genie-audio-ui-arguments-span,
-.genie-audio-ui-label-text {
+.genie-audio-ui-label-text, 
+.genie-audio-ui-unlabeled {
     font-weight: bold;
     margin-right: 10px;
 }
@@ -73,4 +74,25 @@
     font-size: 12px;
     font-weight: normal;
     margin-top: 5px;
+}
+
+.genie-audio-ui-unlabeled > ul {
+    display: none;
+}
+
+.genie-audio-ui-unlabeled:after {
+    content: url('chrome-extension://__MSG_@@extension_id__/resources/downChevron.png');
+    color: #428bca; 
+    font-size: 10px; 
+    float: right; 
+}
+
+.genie-audio-ui-unlabeled.expanded:after {
+    content: url('chrome-extension://__MSG_@@extension_id__/resources/upChevron.png');
+}
+ 
+.genie-audio-ui-unlabeled {
+    cursor: pointer;
+    padding-left: 10px;
+    padding-top: 10px;
 }

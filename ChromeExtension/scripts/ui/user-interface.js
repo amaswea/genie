@@ -7,6 +7,7 @@
              this._organizer = this.OrganizationTypes.Type;
              this.initCanvas();
              this._cellCoordinates = {};
+             this._commandItems = {}; // Collection of command Items
          }
 
          get OrganizationTypes() {
@@ -20,8 +21,21 @@
              return this._organizer;
          }
 
+         get CommandItems() {
+             return this._commandItems;
+         }
+
          set Root(rootUI) {
              this._rootUI = rootUI;
+         }
+
+         addCommandsGroup(label, commands) {
+             let commandItems = this.createCommands(label, commands);
+             if (commandItems) {
+                 this._commandItems[label] = commandItems;
+                 
+                 this.sort(label); // Assumes that _commandItems has been initialized                 
+             }
          }
 
          initCanvas() {
@@ -67,6 +81,10 @@
 
          hide() {
              this._rootUI.style.display = "none";
+         }
+
+         sort() {
+
          }
 
          removeCommands() {
@@ -143,7 +161,7 @@
              context.stroke();
 
              this.canvas.style.display = "";
-             this.canvas.fillStyle = "rgba(255, 255, 255, 0.5)"; 
+             this.canvas.fillStyle = "rgba(255, 255, 255, 0.5)";
              this._listener = this.inputThrottler.bind(this, command);
              window.addEventListener("keydown", this._listener, false);
          }
@@ -193,8 +211,7 @@
                  this.command.execute(argument);
              } else if (this.command.RequiresInput) {
                  this.command.execute(input);
-             }
-             else {
+             } else {
                  this.command.execute();
              }
          }
@@ -288,9 +305,21 @@
                          }
                      }
                  }
-             }
+             } 
+             return ""; 
+         }
 
-             return "";
+         firstArgument() {
+             // Sort by the highest value of the first possible argument
+             var argumentKeys = _.sortBy(Object.keys(this.command.ArgumentsMap), function (key) {
+                 return key;
+             });
+             
+             if (argumentKeys.length) {
+                 return argumentKeys[0];
+             }
+             
+             return ""; 
          }
 
          descriptionLabel() {
@@ -336,6 +365,14 @@
              }
 
              return label.substring(0, label.length - 2);
+         }
+
+         hasLabel() {
+             // Returns whether we were able to find any labeling metadata for the command
+             let imp = this.firstImperativeLabel();
+             let desc = this.descriptionLabel();
+             let arg = this.firstArgument(); 
+             return imp.length || desc.length || arg.length;
          }
      };
 

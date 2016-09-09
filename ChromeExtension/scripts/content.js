@@ -24,7 +24,6 @@ $(document).ready(function () {
     setTimeout(injectGlobalEventHandlerOverrides, 0); // ACK -- - Fix this in the future
     setTimeout(updateCommandEnabledStates, 2000);
     setTimeout(updateVisibleCommands, 2000);
-    setTimeout(organizeCommands, 2000);
 });
 
 /**
@@ -159,6 +158,7 @@ function receiveMessage(event) {
             }
 
             $action.commandManager.updateCommandEnabledStates(newStates);
+            $action.commandManager.organizeCommands();
         }
     }
 };
@@ -174,7 +174,7 @@ function updateCommandEnabledStates() {
     }, "*");
 
     $action.commandsChanged = false;
-     setTimeout(updateCommandEnabledStates, 2000);
+    setTimeout(updateCommandEnabledStates, 2000);
 }
 
 function updateVisibleCommands() {
@@ -183,8 +183,7 @@ function updateVisibleCommands() {
 }
 
 function organizeCommands() {
-    $action.commandManager.organizeCommands();
-    setTimeout(organizeCommands, 2000);
+    //  setTimeout(organizeCommands, 5000);
 }
 
 /**
@@ -246,7 +245,7 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         $action.scriptManager = new $action.ScriptManager();
     }
 
-    $action.interface = new $action.HelpUI();
+    $action.interface = new $action.AudioUI();
 
     // Create a new instance of the command manager with this instance of the UI
     $action.commandManager = new $action.CommandManager($action.interface, $action.scriptManager);
