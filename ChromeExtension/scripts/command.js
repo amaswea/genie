@@ -16,6 +16,7 @@ var $action = $action || {};
             this._handler = handler;
             this._dependencies = [ /* { keyCode: "", dependencyString: "" } */ ];
             this._isEnabled = true;
+            this._isVisible = true;
             this._computedStyles = {};
 
             // Collection of possible command arguments (inputs)
@@ -119,6 +120,14 @@ var $action = $action || {};
 
         set IsEnabled(state) {
             this._isEnabled = state;
+        }
+        
+        get IsVisible() {
+            return this._isVisible;
+        }
+        
+        set IsVisible(state){
+            this._isVisible = state;
         }
 
         set ComputedStyles(styles) {

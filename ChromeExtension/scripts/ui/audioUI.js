@@ -67,7 +67,7 @@ var $action = $action || {};
                 listItem.appendChild(argumentsDiv);
             }
 
-            if (!label.length && !description.length && !argumentKeys.length) {
+            if (label.length < 2 && description.length < 2 && !argumentKeys.length) {
                 // No label meta could be found.  Give the command an auto-generated name
                 labelSpan.textContent = "Command " + this._id + ": ";
                 descriptionSpan.textContent = "Auto-generated command label.";

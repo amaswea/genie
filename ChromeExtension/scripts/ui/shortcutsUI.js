@@ -189,21 +189,12 @@ var $action = $action || {};
             return shortcuts;
         }
 
-        appendCommandGroup(label, commands) {
+        createCommands(label, commands) {
             if (!this._keypressListener) {
                 this._keypressListener = new window.keypress.Listener();
             }
 
             if (label == "commands") {
-                var commandGroup = document.createElement("div");
-                commandGroup.classList.add("genie-shortcut-ui-group");
-                var commandsContainer = document.createElement("div");
-                commandsContainer.classList.add("genie-shortcut-ui-group-content");
-                commandGroup.appendChild(commandsContainer);
-
-                var shortcutsContainer = document.createElement("div");
-                shortcutsContainer.classList.add("genie-shortcut-ui-group-shortcuts")
-                commandGroup.appendChild(shortcutsContainer);
                 var commandItems = [];
                 for (var i = 0; i < commands.length; i++) {
                     var newCommand = new $action.ShortcutsUICommandItem(commands[i], this);
@@ -211,11 +202,17 @@ var $action = $action || {};
                         commandItems.push(newCommand);
                     }
                 }
+                return commandItems;
+            }
+        }
 
+        sort(label) {
+            let commandItems = this.CommandItems[label];
+            if (commandItems) {
                 // Sort the list of commands alphabetically
                 commandItems.sort(function (a, b) {
-                    var nameA = a.firstImperativeLabel().toLowerCase(),
-                        nameB = b.firstImperativeLabel().toLowerCase()
+                    var nameA = a.firstImperativeLabel().toLowerCase()
+                        , nameB = b.firstImperativeLabel().toLowerCase()
                     if (nameA < nameB) //sort string ascending
                         return -1
                     if (nameA > nameB)
@@ -223,11 +220,22 @@ var $action = $action || {};
                     return 0 //default return value (no sorting)
                 })
 
+                var commandGroup = document.createElement("div");
+                commandGroup.classList.add("genie-shortcut-ui-group");
+
+                var shortcutsContainer = document.createElement("div");
+                shortcutsContainer.classList.add("genie-shortcut-ui-group-shortcuts")
+                commandGroup.appendChild(shortcutsContainer);
+
+                var commandsContainer = document.createElement("div");
+                commandsContainer.classList.add("genie-shortcut-ui-group-content");
+                commandGroup.appendChild(commandsContainer);
+
                 for (var i = 0; i < commandItems.length; i++) {
                     var shortcuts = this.createShortcuts(commandItems[i].command, commandItems[i]);
                     for (var j = 0; j < shortcuts.length; j++) {
                         let shortcutLabel = document.createElement("span");
-                        shortcutLabel.textContent = "ctrl + " + shortcuts[j];
+                        shortcutLabel.textContent = "ctrl + " + shortcuts[j] + " --- ";
                         shortcutsContainer.appendChild(shortcutLabel);
                     }
                     commandsContainer.appendChild(commandItems[i].DOM);

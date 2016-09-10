@@ -17,7 +17,8 @@ var $action = $action || {};
             label.classList.add("genie-command-line-label");
             label.textContent = "Enter a command.";
 
-            var textarea = document.createElement("textarea");
+            var textarea = document.createElement("div");
+            textarea.setAttribute("contenteditable", "true");
             textarea.classList.add("genie-command-line-text");
             textarea.classList.add("genie-ui-component")
             commandLine.appendChild(label);
@@ -25,15 +26,15 @@ var $action = $action || {};
             this.Root = commandLine;
             this._textarea = textarea;
             this.attachListeners(textarea);
-            this._textarea.value = this._textarea.value + "Type commands to see the list of available commands...\n";
 
+            this.appendResponse("Type commands to see the list of available commands...\n");
             $('html').append(commandLine);
 
             this.hide();
             $(window).scroll(_.throttle(this.repositionCommandLineArea, 1));
         };
 
-        appendCommandGroup(label, commands) {
+        createCommands(label, commands) {
             // Groups
             for (var i = 0; i < commands.length; i++) {
                 var newCommand = new $action.CommandItem(commands[i]);
@@ -51,10 +52,14 @@ var $action = $action || {};
                     }
                 } else {
                     let commandLabel = newCommand.firstImperativeLabel().toLowerCase();
-                    this._commandsMap[commandLabel] = newCommand;
+                    if (commandLabel.length) {
+                        this._commandsMap[commandLabel] = newCommand;
+                    }
                 }
             }
         }
+
+        updateCommandVisibleState(command, visible) {}
 
         attachListeners(element) {
             var self = this;
@@ -62,9 +67,16 @@ var $action = $action || {};
                 var keyCode = evt.keyCode || evt.which;
                 if (keyCode == '13') {
                     // Get the text entered on the previous line of the text area to use as the command
-                    var textAreaValue = element.value.split(/\n/);
-                    if (textAreaValue && textAreaValue.length) {
-                        var lastCommand = _(textAreaValue).last().trim();
+                    var walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+                    var node = walker.nextNode();
+                    var lastNode;
+                    while (node) {
+                        lastNode = node;
+                        node = walker.nextNode();
+                    }
+
+                    if (lastNode && lastNode.textContent.length) {
+                        var lastCommand = lastNode.textContent.trim();
                         if (lastCommand && lastCommand.length) {
                             self.mapTextToCommand(lastCommand.toLowerCase());
                         }
@@ -89,23 +101,26 @@ var $action = $action || {};
                 var labelString = "";
                 for (var i = 0; i < commandLabels.length; i++) {
                     if (this._commandsMap[commandLabels[i]].Command.IsEnabled) {
-                        labelString = labelString + commandLabels[i];
-                        if (i < commandLabels.length - 1) {
-                            labelString = labelString + ",";
-                        }
+                        labelString = labelString + commandLabels[i] + ", ";
                     }
                 }
-                this._textarea.value = this._textarea.value + "\n" + labelString;
+
+                if (labelString.length) {
+                    labelString = labelString.substring(0, labelString.length - 2);
+                }
+                this.appendResponse(labelString);
             } else if (text == "help") {
                 var commandKeys = Object.keys(this._commandsMap);
+                let text = "";
                 for (var i = 0; i < commandKeys.length; i++) {
                     let commandItem = this._commandsMap[commandKeys[i]];
-                    this._textarea.value = this._textarea.value + "\n" + commandKeys[i] + ": ";
+                    text = text + "\n" + commandKeys[i] + ": ";
                     if (commandItem.label().length) {
-                        this._textarea.value = this._textarea.value + commandItem.label();
+                        text = text + commandItem.label();
                     } else {
-                        this._textarea.value = this._textarea.value + commandItem.Command.ArgumentsMap[commandKeys[i]];
+                        text = text + commandItem.Command.ArgumentsMap[commandKeys[i]];
                     }
+                    this.appendResponse(text);
                 }
             } else if (text.split("=").length == 2) {
                 // Define a macro
@@ -113,7 +128,7 @@ var $action = $action || {};
                 var macroName = split[0].trim().toLowerCase();
                 var commands = split[1].trim().split(",");
                 this._macros[macroName] = commands;
-                this._textarea.value = this._textarea.value + "\n" + "Macro saved.";
+                this.appendResponse("Macro saved.");
             } else {
                 // Find the commands corresponding execute() method in the commandsMap
                 text = text.toLowerCase().split(" ");
@@ -127,7 +142,7 @@ var $action = $action || {};
                         for (var i = 0; i < macro.length; i++) {
                             // Execute each command listed in the macro
                             // Parse out input strings
-                            var split = macro[i].replace(/'/g, "").split(":");
+                            var split = macro[i].replace(/'/g, "").replace(/"/g, "").split(":");
                             let macroCommand = macro[i];
                             let input = "";
                             let argument = "";
@@ -135,7 +150,7 @@ var $action = $action || {};
                                 argument = split[0];
                                 macroCommand = this._commandsMap[argument];
                                 input = split[1];
-                            } else if(split.length == 1) {
+                            } else if (split.length == 1) {
                                 argument = split[0];
                                 macroCommand = this._commandsMap[argument];
                             }
@@ -146,10 +161,20 @@ var $action = $action || {};
                         }
                     } else {
                         // No command found
-                        this._textarea.value = this._textarea.value + "\nSorry. No command found.";
+                        this.appendResponse("Sorry. No command found.");
                     }
                 }
             }
+        }
+
+        appendResponse(text) {
+            let response = document.createElement('div');
+            response.classList.add("genie-command-line-ui-response");
+            response.textContent = text;
+
+            let lineBreak = document.createElement('br');
+            this._textarea.appendChild(response);
+            this._textarea.appendChild(lineBreak);
         }
     };
 

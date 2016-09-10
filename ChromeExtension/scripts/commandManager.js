@@ -119,7 +119,8 @@ var $action = $action || {};
             var keys = Object.keys(this._commands);
             for (var i = 0; i < keys.length; i++) {
                 let command = this._commands[keys[i]];
-                this._ui.updateCommandVisibleState(command, command.visible());
+                command.IsVisible = command.visible();
+                this._ui.updateCommandVisibleState(command, command.IsVisible);
             }
         }
 
