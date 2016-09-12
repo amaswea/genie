@@ -9,7 +9,7 @@ var $action = $action || {};
         }
 
         get DOM() {
-            if(!this._init){
+            if (!this._init) {
                 this.init();
                 this._init = true;
             }
@@ -216,20 +216,6 @@ var $action = $action || {};
                 for (var i = 0; i < commands.length; i++) {
                     var newCommand = new $action.AudioUICommandItem(commands[i], this, i);
                     commands[i].CommandItem = newCommand;
-
-                    // Command could have multiple arguments
-                    // Create a map that we can use later between the audio commands and the command objects. 
-                    if (commands[i].hasArguments()) {
-                        var commandArgumentKeys = Object.keys(commands[i].ArgumentsMap);
-                        for (var j = 0; j < commandArgumentKeys.length; j++) {
-                            this._audioCommands[commandArgumentKeys[j]] = newCommand;
-
-                        }
-                    } else {
-                        let commandLabel = newCommand.commandLabel().toLowerCase();
-                        this._audioCommands[commandLabel] = newCommand;
-                    }
-
                     commandItems.push(newCommand);
                 }
                 return commandItems;
@@ -241,87 +227,85 @@ var $action = $action || {};
          * @private
          * @property undefined
          */
-        sort(label) {
+        appendCommands(label, commandItems) {
             if (label == "commands") { // Don't display any other types of commands (links, etc.)
-                let commandItems = this.CommandItems[label];
-                if (commandItems) {
-                    var group = document.createElement('li');
-                    group.classList.add('genie-audio-ui-group');
+                var group = document.createElement('li');
+                group.classList.add('genie-audio-ui-group');
 
-                    var list = document.createElement('ul');
-                    list.classList.add('genie-audio-ui-list');
+                var list = document.createElement('ul');
+                list.classList.add('genie-audio-ui-list');
 
-                    var unlabeledContainer = document.createElement('li');
-                    unlabeledContainer.classList.add('genie-audio-ui-unlabeled');
-                    var unlabeledSpan = document.createElement("span");
-                    unlabeledContainer.appendChild(unlabeledSpan);
-                    var unlabeled = document.createElement('ul');
-                    unlabeledContainer.appendChild(unlabeled);
+                var unlabeledContainer = document.createElement('li');
+                unlabeledContainer.classList.add('genie-audio-ui-unlabeled');
+                var unlabeledSpan = document.createElement("span");
+                unlabeledContainer.appendChild(unlabeledSpan);
+                var unlabeled = document.createElement('ul');
+                unlabeledContainer.appendChild(unlabeled);
 
-                    unlabeledContainer.addEventListener("click", function () {
-                        if (unlabeled.style.display == "block" || unlabeled.style.display == "") {
-                            unlabeled.style.display = "none";
-                            unlabeledContainer.classList.remove("expanded");
-                        } else {
-                            unlabeled.style.display = "block";
-                            unlabeledContainer.classList.add("expanded");
-                        }
-                    });
+                unlabeledContainer.addEventListener("click", function () {
+                    if (unlabeled.style.display == "block" || unlabeled.style.display == "") {
+                        unlabeled.style.display = "none";
+                        unlabeledContainer.classList.remove("expanded");
+                    } else {
+                        unlabeled.style.display = "block";
+                        unlabeledContainer.classList.add("expanded");
+                    }
+                });
 
-                    // Sort the list of commands alphabetically
-                    commandItems.sort(function (a, b) {
-                        var nameA = a.commandLabel().toLowerCase()
-                            , nameB = b.commandLabel().toLowerCase();
-                        nameA = nameA.length ? nameA : (a.command.hasArguments() ? a.firstArgument() : "");
-                        nameB = nameB.length ? nameB : (b.command.hasArguments() ? b.firstArgument() : "");
-                        let enabledA = a.command.IsEnabled;
-                        let enabledB = b.command.IsEnabled;
-                        if (enabledA && !enabledB) {
-                            return -1;
-                        }
-
-                        if (!enabledA && enabledB) {
-                            return 1;
-                        }
-
-                        if (!nameA.length && !nameB.length) {
-                            return -1;
-                        }
-
-                        if (!nameA.length && nameB.length) {
-                            return 1;
-                        }
-
-                        if (nameA.length && !nameB.length) {
-                            return -1;
-                        }
-
-                        if (nameA < nameB) //sort string ascending
-                            return -1
-                        if (nameA > nameB)
-                            return 1
-                        return 0 //default return value (no sorting)
-                    });
-
-                    var unlabeledCounter = 0;
-                    for (var i = 0; i < commandItems.length; i++) {
-                        if (commandItems[i].hasLabel()) {
-                            list.appendChild(commandItems[i].DOM);
-                        } else {
-                            unlabeledCounter++;
-                            unlabeled.appendChild(commandItems[i].DOM);
-                        }
+                // Sort the list of commands alphabetically
+                commandItems.sort(function (a, b) {
+                    var nameA = a.commandLabel().toLowerCase(),
+                        nameB = b.commandLabel().toLowerCase();
+                    nameA = nameA.length ? nameA : (a.command.hasArguments() ? a.firstArgument() : "");
+                    nameB = nameB.length ? nameB : (b.command.hasArguments() ? b.firstArgument() : "");
+                    let enabledA = a.command.IsEnabled;
+                    let enabledB = b.command.IsEnabled;
+                    if (enabledA && !enabledB) {
+                        return -1;
                     }
 
-                    if (unlabeledCounter) {
-                        unlabeledSpan.textContent = unlabeledCounter + " more commands. ";
-                        list.appendChild(unlabeledContainer);
+                    if (!enabledA && enabledB) {
+                        return 1;
                     }
 
-                    group.appendChild(list);
+                    if (!nameA.length && !nameB.length) {
+                        return -1;
+                    }
 
-                    this.list.appendChild(group);
+                    if (!nameA.length && nameB.length) {
+                        return 1;
+                    }
+
+                    if (nameA.length && !nameB.length) {
+                        return -1;
+                    }
+
+                    if (nameA < nameB) //sort string ascending
+                        return -1
+                    if (nameA > nameB)
+                        return 1
+                    return 0 //default return value (no sorting)
+                });
+
+                var unlabeledCounter = 0;
+                for (var i = 0; i < commandItems.length; i++) {
+                    this.createAudioMapEntry(commandItems[i]);
+                    if (commandItems[i].hasLabel()) {
+                        list.appendChild(commandItems[i].DOM);
+                    } else {
+                        unlabeledCounter++;
+                        unlabeled.appendChild(commandItems[i].DOM);
+                    }
                 }
+
+                if (unlabeledCounter) {
+                    unlabeledSpan.textContent = unlabeledCounter + " more commands. ";
+                    list.appendChild(unlabeledContainer);
+                }
+
+                group.appendChild(list);
+
+                this.list.appendChild(group);
             }
 
             // Initialze speech recognition
@@ -335,6 +319,20 @@ var $action = $action || {};
                     self.mapResultsToCommand(event.results, event.resultIndex);
                 }
                 this._recognition.start();
+            }
+        }
+
+        createAudioMapEntry(commandItem) {
+            // Command could have multiple arguments
+            // Create a map that we can use later between the audio commands and the command objects. 
+            if (commandItem.Command.hasArguments()) {
+                var commandArgumentKeys = Object.keys(commandItem.Command.ArgumentsMap);
+                for (var j = 0; j < commandArgumentKeys.length; j++) {
+                    this._audioCommands[commandArgumentKeys[j]] = commandItem;
+                }
+            } else {
+                let commandLabel = commandItem.commandLabel().toLowerCase();
+                this._audioCommands[commandLabel] = commandItem;
             }
         }
 

@@ -6,6 +6,7 @@ var $action = $action || {};
             // Keep a map between the command labels and their execute() calls so that we can map audio commands to call commands
             super();
             this._commandsMap = {};
+            this._init = false;
             this.init();
             this._macros = {};
         }
@@ -34,26 +35,17 @@ var $action = $action || {};
             $(window).scroll(_.throttle(this.repositionCommandLineArea, 1));
         };
 
-        createCommands(label, commands) {
-            // Groups
-            for (var i = 0; i < commands.length; i++) {
-                var newCommand = new $action.CommandItem(commands[i], this);
-                commands[i].CommandItem = newCommand;
-
-                /*                if (!commands[i].userInvokeable()) {
-                                    newCommand.DOM.classList.add('genie-audio-ui-disabled');
-                                }*/
-
-                if (commands[i].hasArguments()) {
-                    var commandArgumentKeys = Object.keys(commands[i].ArgumentsMap);
+        appendCommands(label, commandItems) {
+            for (var i = 0; i < commandItems.length; i++) {
+                if (commandItems[i].Command.hasArguments()) {
+                    var commandArgumentKeys = Object.keys(commandItems[i].Command.ArgumentsMap);
                     for (var j = 0; j < commandArgumentKeys.length; j++) {
-                        this._commandsMap[commandArgumentKeys[j]] = newCommand;
-
+                        this._commandsMap[commandArgumentKeys[j]] = commandItems[i];
                     }
                 } else {
-                    let commandLabel = newCommand.commandLabel().toLowerCase();
+                    let commandLabel = commandItems[i].commandLabel().toLowerCase();
                     if (commandLabel.length) {
-                        this._commandsMap[commandLabel] = newCommand;
+                        this._commandsMap[commandLabel] = commandItems[i];
                     }
                 }
             }

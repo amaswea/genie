@@ -210,46 +210,44 @@ var $action = $action || {};
             }
         }
 
-        sort(label) {
-            let commandItems = this.CommandItems[label];
-            if (commandItems) {
-                // Sort the list of commands alphabetically
-                commandItems.sort(function (a, b) {
-                    var nameA = a.commandLabel().toLowerCase()
-                        , nameB = b.commandLabel().toLowerCase()
-                    if (nameA < nameB) //sort string ascending
-                        return -1
-                    if (nameA > nameB)
-                        return 1
-                    return 0 //default return value (no sorting)
-                })
+        appendCommands(label, commandItems) {
 
-                var commandGroup = document.createElement("div");
-                commandGroup.classList.add("genie-shortcut-ui-group");
+            // Sort the list of commands alphabetically
+            commandItems.sort(function (a, b) {
+                var nameA = a.commandLabel().toLowerCase(),
+                    nameB = b.commandLabel().toLowerCase()
+                if (nameA < nameB) //sort string ascending
+                    return -1
+                if (nameA > nameB)
+                    return 1
+                return 0 //default return value (no sorting)
+            })
 
-                var shortcutsContainer = document.createElement("div");
-                shortcutsContainer.classList.add("genie-shortcut-ui-group-shortcuts")
-                commandGroup.appendChild(shortcutsContainer);
+            var commandGroup = document.createElement("div");
+            commandGroup.classList.add("genie-shortcut-ui-group");
 
-                var commandsContainer = document.createElement("div");
-                commandsContainer.classList.add("genie-shortcut-ui-group-content");
-                commandGroup.appendChild(commandsContainer);
+            var shortcutsContainer = document.createElement("div");
+            shortcutsContainer.classList.add("genie-shortcut-ui-group-shortcuts")
+            commandGroup.appendChild(shortcutsContainer);
 
-                for (var i = 0; i < commandItems.length; i++) {
-                    let commandDOM = commandItems[i].DOM;
-                    if (commandItems[i].HasLabel) {
-                        var shortcuts = this.createShortcuts(commandItems[i].command, commandItems[i]);
-                        for (var j = 0; j < shortcuts.length; j++) {
-                            let shortcutLabel = document.createElement("span");
-                            shortcutLabel.textContent = "ctrl + " + shortcuts[j] + " --- ";
-                            shortcutsContainer.appendChild(shortcutLabel);
-                        }
-                        commandsContainer.appendChild(commandDOM);
+            var commandsContainer = document.createElement("div");
+            commandsContainer.classList.add("genie-shortcut-ui-group-content");
+            commandGroup.appendChild(commandsContainer);
+
+            for (var i = 0; i < commandItems.length; i++) {
+                let commandDOM = commandItems[i].DOM;
+                if (commandItems[i].HasLabel) {
+                    var shortcuts = this.createShortcuts(commandItems[i].command, commandItems[i]);
+                    for (var j = 0; j < shortcuts.length; j++) {
+                        let shortcutLabel = document.createElement("span");
+                        shortcutLabel.textContent = "ctrl + " + shortcuts[j] + " --- ";
+                        shortcutsContainer.appendChild(shortcutLabel);
                     }
+                    commandsContainer.appendChild(commandDOM);
                 }
-
-                this.commandContainer.appendChild(commandGroup);
             }
+
+            this.commandContainer.appendChild(commandGroup);
         }
     };
 

@@ -14,9 +14,9 @@
 
          get OrganizationTypes() {
              return {
-                 Type: $action.CommandOrganizer.organizeCommandsByType
-                 , All: $action.CommandOrganizer.organizeAllCommands
-             , };
+                 Type: $action.CommandOrganizer.organizeCommandsByType,
+                 All: $action.CommandOrganizer.organizeAllCommands,
+             };
          }
 
          get Organizer() {
@@ -44,9 +44,19 @@
              if (commandItems) {
                  this.initLabelsMap(commandItems);
                  this._commandItems[label] = commandItems;
-
-                 this.sort(label); // Assumes that _commandItems has been initialized                 
+                 this.appendCommands(label, commandItems); // Assumes that _commandItems has been initialized              
              }
+         }
+
+         createCommands(label, commands) {
+             // Groups
+             let commandItems = [];
+             for (var i = 0; i < commands.length; i++) {
+                 var newCommand = new $action.CommandItem(commands[i], this);
+                 commands[i].CommandItem = newCommand;
+                 commandItems.push(newCommand);
+             }
+             return commandItems;
          }
 
          // Creates a map between the labels for each command and the count that have that particular label. This count is used by the // commandLabel function to determine which label is the most unique to identify the command
@@ -144,7 +154,7 @@
              this._rootUI.style.display = "none";
          }
 
-         sort() {
+         appendCommands() {
 
          }
 
@@ -205,8 +215,8 @@
                      context.lineTo(p + x, y + p + 40);
                      context.strokeText(cellNumber.toString(), x + p + 5, y + p + 10);
                      this._cellCoordinates[cellNumber] = {
-                         x: (x + p + 20)
-                         , y: (y + p + 20)
+                         x: (x + p + 20),
+                         y: (y + p + 20)
                      };
                      cellNumber++;
                  }
@@ -411,7 +421,7 @@
                      }
                  }
              }
-             return "";
+             return this.firstImperativeLabel();
          }
 
          firstImperativeLabel() {
