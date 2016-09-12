@@ -106,13 +106,14 @@ var $action = $action || {};
                 let text = "";
                 for (var i = 0; i < commandKeys.length; i++) {
                     let commandItem = this._commandsMap[commandKeys[i]];
-                    text = text + "\n" + commandKeys[i] + ": ";
+                    let key = commandKeys[i] + ": ";
+                    let text = "";
                     if (commandItem.label().length) {
-                        text = text + commandItem.label();
+                        text = text + commandItem.descriptionLabel();
                     } else {
                         text = text + commandItem.Command.ArgumentsMap[commandKeys[i]];
                     }
-                    this.appendResponse(text);
+                    this.appendResponse(text, false, key);
                 }
             } else if (text.split("=").length == 2) {
                 // Define a macro
@@ -159,14 +160,28 @@ var $action = $action || {};
             }
         }
 
-        appendResponse(text) {
+        appendResponse(text, lineBreak = true, key = "") {
             let response = document.createElement('div');
             response.classList.add("genie-command-line-ui-response");
-            response.textContent = text;
 
-            let lineBreak = document.createElement('br');
+            if (!key.length) {
+                response.textContent = text;
+            } else {
+                let keySpan = document.createElement("span");
+                keySpan.classList.add("genie-command-line-ui-response-key");
+                keySpan.textContent = key;
+                let descSpan = document.createElement("span");
+                descSpan.textContent = text;
+                response.appendChild(keySpan);
+                response.appendChild(descSpan);
+            }
+            
             this._textarea.appendChild(response);
-            this._textarea.appendChild(lineBreak);
+
+            if (lineBreak) {
+                let lineBreak = document.createElement('br');
+                this._textarea.appendChild(lineBreak);
+            }
         }
     };
 

@@ -43,6 +43,10 @@
     color: black;
 }
 
+.genie-command-line-ui-response-key {
+    font-weight: bold;
+}
+
 canvas.genie-audio-ui-input-canvas {
     background: none;
 }

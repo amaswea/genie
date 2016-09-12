@@ -4,9 +4,9 @@ $(document).ready(function () {
     button[0].addEventListener("click", function (evt) {
         console.log("click");
     });
-    
+
     button[0].addEventListener("click", function (evt) {
-       console.log("another click"); 
+        console.log("another click");
     });
 
     button[0].addEventListener("dblclick", function (evt) {
@@ -58,27 +58,27 @@ $(document).ready(function () {
     });
 
 
-/*
-    button[0].addEventListener("mouseenter", function (evt) {
-        console.log("mouseenter");
-    });
+    /*
+        button[0].addEventListener("mouseenter", function (evt) {
+            console.log("mouseenter");
+        });
 
-    button[0].addEventListener("mouseleave", function (evt) {
-        console.log("mouseleave");
-    });
+        button[0].addEventListener("mouseleave", function (evt) {
+            console.log("mouseleave");
+        });
 
-    button[0].addEventListener("mousemove", function (evt) {
-        console.log("mousemove");
-    });
+        button[0].addEventListener("mousemove", function (evt) {
+            console.log("mousemove");
+        });
 
-    button[0].addEventListener("mouseout", function (evt) {
-        console.log("mouseout");
-    });
+        button[0].addEventListener("mouseout", function (evt) {
+            console.log("mouseout");
+        });
 
-    button[0].addEventListener("mouseover", function (evt) {
-        console.log("mouseover");
-    });
-*/
+        button[0].addEventListener("mouseover", function (evt) {
+            console.log("mouseover");
+        });
+    */
 
     button[0].addEventListener("mouseup", function (evt) {
         console.log("mouseup");
@@ -111,4 +111,23 @@ $(document).ready(function () {
     button[0].addEventListener("contextmenu", function (evt) {
         console.log("contextmenu");
     });
+
+
+    element.addEventListener("click",
+        function handleButtonClick(evt) {
+            var button2 = $('.button2');
+            var disabled1 = $('.button1').attr("disabled");
+            var disabled2 = button2.attr("disabled");
+            if (disabled1) {
+                alert("Button 1 is disabled.");
+
+                if (disabled2) {
+                    alert("Button 1 is disabled.");
+                } else {
+                    alert("Button 2 is not disabled.");
+                }
+            } else {
+                alert("Button 1 is not disabled.");
+            }
+        });
 });
