@@ -98,7 +98,7 @@ var $action = $action || {};
         appendCommandGroup(label, commands) {
             // Groups
             for (var i = 0; i < commands.length; i++) {
-                var newCommand = new $action.KeyboardListCommandItem(commands[i]);
+                var newCommand = new $action.KeyboardListCommandItem(commands[i], ui);
                 commands[i].CommandItem = newCommand;
 
                 if (!commands[i].userInvokeable()) {

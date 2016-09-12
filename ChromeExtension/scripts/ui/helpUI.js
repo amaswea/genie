@@ -20,7 +20,7 @@ var $action = $action || {};
 
         appendCommandGroup(label, commands) {
             for (var i = 0; i < commands.length; i++) {
-                var newCommand = new $action.CommandItem(commands[i]);
+                var newCommand = new $action.CommandItem(commands[i], this);
                 commands[i].CommandItem = newCommand;
 
                 // When a command gets added, add a glowing border around the command element

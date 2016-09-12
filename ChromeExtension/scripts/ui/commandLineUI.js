@@ -37,7 +37,7 @@ var $action = $action || {};
         createCommands(label, commands) {
             // Groups
             for (var i = 0; i < commands.length; i++) {
-                var newCommand = new $action.CommandItem(commands[i]);
+                var newCommand = new $action.CommandItem(commands[i], this);
                 commands[i].CommandItem = newCommand;
 
                 /*                if (!commands[i].userInvokeable()) {
@@ -51,7 +51,7 @@ var $action = $action || {};
 
                     }
                 } else {
-                    let commandLabel = newCommand.firstImperativeLabel().toLowerCase();
+                    let commandLabel = newCommand.commandLabel().toLowerCase();
                     if (commandLabel.length) {
                         this._commandsMap[commandLabel] = newCommand;
                     }

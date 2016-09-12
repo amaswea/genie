@@ -23,7 +23,7 @@
     position: absolute;
     right: 10px;
     top: 10px;
-    color: #428bca !important;
+    color: #3277B2 !important;
 }
 
 .genie-audio-ui-list {
@@ -78,11 +78,13 @@
 
 .genie-audio-ui-unlabeled > ul {
     display: none;
+    list-style-type: none !important;
+    padding: 0 !important;
 }
 
 .genie-audio-ui-unlabeled:after {
     content: url('chrome-extension://__MSG_@@extension_id__/resources/downChevron.png');
-    color: #428bca; 
+    color: #3277B2; 
     font-size: 10px; 
     float: right; 
 }

@@ -184,8 +184,8 @@ var $action = $action || {};
 
     // Attributes to parse for label metadata
     $action.LabelAttributes = {
-        "GLOBAL": ["class", "id", "title"],
-        "INPUT": ["name", "placeholder", "alt", "value"],
+        "GLOBAL": ["title", "id", "class"],
+        "INPUT": ["placeholder", "alt", "value", "name"],
         "BUTTON": ["name"],
         "FIELDSET": ["name"],
         "TEXTAREA": ["name"],

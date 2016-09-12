@@ -2,8 +2,8 @@
 var $action = $action || {};
 (function ($action) {
     class AudioUICommandItem extends $action.CommandItem {
-        constructor(command, id) {
-            super(command);
+        constructor(command, ui, id) {
+            super(command, ui);
             this._id = id;
             this.init();
         }
@@ -21,7 +21,7 @@ var $action = $action || {};
             var commandLabels = document.createElement("div");
             commandLabels.classList.add("genie-audio-ui-label");
 
-            var label = this.firstImperativeLabel();
+            var label = this.commandLabel();
             var description = this.descriptionLabel();
             var labelSpan = document.createElement("span");
             labelSpan.classList.add("genie-audio-ui-label-text");
@@ -210,7 +210,7 @@ var $action = $action || {};
             if (label == "commands") { // Don't display any other types of commands (links, etc.)
                 var commandItems = [];
                 for (var i = 0; i < commands.length; i++) {
-                    var newCommand = new $action.AudioUICommandItem(commands[i], i);
+                    var newCommand = new $action.AudioUICommandItem(commands[i], this, i);
                     commands[i].CommandItem = newCommand;
 
                     // Command could have multiple arguments
@@ -222,7 +222,7 @@ var $action = $action || {};
 
                         }
                     } else {
-                        let commandLabel = newCommand.firstImperativeLabel().toLowerCase();
+                        let commandLabel = newCommand.commandLabel().toLowerCase();
                         this._audioCommands[commandLabel] = newCommand;
                     }
 
@@ -255,19 +255,19 @@ var $action = $action || {};
                     unlabeledContainer.appendChild(unlabeled);
 
                     unlabeledContainer.addEventListener("click", function () {
-                        if (unlabeled.style.display == "block" || unlabeled.style.display == ""){
+                        if (unlabeled.style.display == "block" || unlabeled.style.display == "") {
                             unlabeled.style.display = "none";
                             unlabeledContainer.classList.remove("expanded");
-                        }else {
-                            unlabeled.style.display = "block"; 
+                        } else {
+                            unlabeled.style.display = "block";
                             unlabeledContainer.classList.add("expanded");
                         }
                     });
 
                     // Sort the list of commands alphabetically
                     commandItems.sort(function (a, b) {
-                        var nameA = a.firstImperativeLabel().toLowerCase(),
-                            nameB = b.firstImperativeLabel().toLowerCase();
+                        var nameA = a.commandLabel().toLowerCase()
+                            , nameB = b.commandLabel().toLowerCase();
                         nameA = nameA.length ? nameA : (a.command.hasArguments() ? a.firstArgument() : "");
                         nameB = nameB.length ? nameB : (b.command.hasArguments() ? b.firstArgument() : "");
                         let enabledA = a.command.IsEnabled;

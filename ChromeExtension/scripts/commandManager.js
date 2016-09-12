@@ -319,7 +319,6 @@ var $action = $action || {};
             if (split && split.length > 1 && ((allEnglish && !tagged.nonEnglish.length) || !allEnglish)) {
                 let first = split[0].toLowerCase();
                 var sentence = split.toString().replace(/\,/g, " ").toLowerCase();
-                sentence = _.upperFirst(sentence);
                 if (tagged.verbs.indexOf(first) > -1) {
                     labelMetadata.imperativePhrases.push(sentence);
                 } else {
