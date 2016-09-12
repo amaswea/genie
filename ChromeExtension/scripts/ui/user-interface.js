@@ -9,6 +9,7 @@
              this._cellCoordinates = {};
              this._commandItems = {}; // Collection of command Items
              this._parser = new $action.Parser();
+             this._labels = {}; // A map between labels and the count of commands that have that label
          }
 
          get OrganizationTypes() {
@@ -34,12 +35,67 @@
              return this._parser;
          }
 
+         get Labels() {
+             return this._labels;
+         }
+
          addCommandsGroup(label, commands) {
              let commandItems = this.createCommands(label, commands);
              if (commandItems) {
+                 this.initLabelsMap(commandItems);
                  this._commandItems[label] = commandItems;
 
                  this.sort(label); // Assumes that _commandItems has been initialized                 
+             }
+         }
+
+         // Creates a map between the labels for each command and the count that have that particular label. This count is used by the // commandLabel function to determine which label is the most unique to identify the command
+         initLabelsMap(commandItems) {
+             for (var m = 0; m < commandItems.length; m++) {
+                 let command = commandItems[m].Command;
+                 // Returns all of the label metadata after the first imperative label is found (description)
+                 var nodeTypes = ["handlerName", "handlerComments", "expressionComments", "expressionCalls", "elementLabels", "assignments"];
+                 var phraseTypes = ["imperativePhrases", "verbs", "nouns", "phrases", "other", "numbers"];
+                 var labels = [];
+                 for (var i = 0; i < nodeTypes.length; i++) {
+                     for (var j = 0; j < phraseTypes.length; j++) {
+                         var labelSet = command.LabelMetadata[nodeTypes[i]][phraseTypes[j]];
+                         for (var k = 0; k < labelSet.length; k++) {
+                             let labelItem = labelSet[k];
+                             if (labels.indexOf(labelItem) < 0) {
+                                 if (!this._labels[labelItem]) {
+                                     this._labels[labelItem] = 0;
+                                 }
+                                 this._labels[labelItem]++;
+                                 labels.push(labelItem);
+                             }
+                         }
+                     }
+                 }
+
+                 if (!command.hasArguments()) {
+                     var types = ["assignments", "expressionCalls", "expressionComments"];
+                     var labelTypes = ["imperativePhrases", "verbs", "nouns", "phrases", "other", "numbers"];
+                     for (var i = 0; i < types.length; i++) {
+                         var type = command.LabelMetadata.conditionals[types[i]];
+                         for (var j = 0; j < type.length; j++) {
+                             var obj = type[j];
+                             for (var k = 0; k < labelTypes.length; k++) {
+                                 var labelNode = obj[labelTypes[k]];
+                                 for (var l = 0; l < labelNode.length; l++) {
+                                     let labelItem = labelNode[l];
+                                     if (labels.indexOf(labelItem) < 0) {
+                                         if (!this._labels[labelItem]) {
+                                             this._labels[labelItem] = 0;
+                                         }
+                                         this._labels[labelItem]++;
+                                         labels.push(labelItem);
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                 }
              }
          }
 
@@ -265,7 +321,7 @@
              var completeLabel = "";
              // Constructs a desired label for the command based on the command metadata available
              var nodeTypes = ["elementLabels", "handlerComments", "expressionComments", "expressionCalls", "assignments", "handlerName"];
-             var phraseTypes = ["phrases", "imperativePhrases", "nouns", "verbs", "other"];
+             var phraseTypes = ["phrases", "imperativePhrases", "nouns", "verbs", "other", "numbers"];
              for (var i = 0; i < nodeTypes.length; i++) {
                  for (var j = 0; j < phraseTypes.length; j++) {
                      var labelSet = this.command.LabelMetadata[nodeTypes[i]][phraseTypes[j]];
@@ -313,25 +369,27 @@
 
          commandLabel() {
              var nodeTypes = ["handlerName", "handlerComments", "expressionComments", "expressionCalls", "elementLabels", "assignments"];
-             var phraseTypes = ["imperativePhrases", "phrases", "verbs", "nouns", "other"];
+             var phraseTypes = ["imperativePhrases", "phrases", "verbs", "nouns", "other", "numbers"];
              for (var i = 0; i < nodeTypes.length; i++) {
                  for (var j = 0; j < phraseTypes.length; j++) {
                      let phraseType = phraseTypes[j];
                      var labelSet = this.command.LabelMetadata[nodeTypes[i]][phraseType];
                      for (var k = 0; k < labelSet.length; k++) {
                          let commandLabel = labelSet[k];
-                         if (phraseType == "imperativePhrases" || phraseType == "phrase") {
-                             commandLabel = this.generateCommandLabelFromPhrase(commandLabel);
+                         if (this._ui.Labels[commandLabel] == 1) {
+                             if (phraseType == "imperativePhrases" || phraseType == "phrase") {
+                                 commandLabel = this.generateCommandLabelFromPhrase(commandLabel);
+                             }
+                             let first = _.upperFirst(commandLabel);
+                             return first;
                          }
-                         let first = _.upperFirst(commandLabel);
-                         return first;
                      }
                  }
              }
 
              if (!this.command.hasArguments()) {
                  var types = ["assignments", "expressionCalls", "expressionComments"];
-                 var labelTypes = ["imperativePhrases", "phrases", "verbs", "nouns", "other"];
+                 var labelTypes = ["imperativePhrases", "phrases", "verbs", "nouns", "other", "numbers"];
                  for (var i = 0; i < types.length; i++) {
                      var type = this.command.LabelMetadata.conditionals[types[i]];
                      for (var j = 0; j < type.length; j++) {
@@ -341,11 +399,13 @@
                              var labelNode = obj[labelType];
                              for (var l = 0; l < labelNode.length; l++) {
                                  let commandLabel = labelNode[l];
-                                 if (labelType == "imperativePhrases" || labelType == "phrases") {
-                                     commandLabel = this.generateCommandLabelFromPhrase(commandLabel);
+                                 if (this._ui.Labels[commandLabel] == 1) {
+                                     if (labelType == "imperativePhrases" || labelType == "phrases") {
+                                         commandLabel = this.generateCommandLabelFromPhrase(commandLabel);
+                                     }
+                                     let first = _.upperFirst(commandLabel);
+                                     return first;
                                  }
-                                 let first = _.upperFirst(commandLabel);
-                                 return first;
                              }
                          }
                      }
@@ -356,7 +416,7 @@
 
          firstImperativeLabel() {
              var nodeTypes = ["handlerName", "handlerComments", "expressionComments", "expressionCalls", "elementLabels", "assignments"];
-             var phraseTypes = ["imperativePhrases", "phrases", "verbs", "nouns", "other"];
+             var phraseTypes = ["imperativePhrases", "phrases", "verbs", "nouns", "other", "numbers"];
              for (var i = 0; i < nodeTypes.length; i++) {
                  for (var j = 0; j < phraseTypes.length; j++) {
                      var labelSet = this.command.LabelMetadata[nodeTypes[i]][phraseTypes[j]];
@@ -369,7 +429,7 @@
 
              if (!this.command.hasArguments()) {
                  var types = ["assignments", "expressionCalls", "expressionComments"];
-                 var labelTypes = ["imperativePhrases", "verbs", "nouns", "phrases", "other"];
+                 var labelTypes = ["imperativePhrases", "verbs", "nouns", "phrases", "other", "numbers"];
                  for (var i = 0; i < types.length; i++) {
                      var type = this.command.LabelMetadata.conditionals[types[i]];
                      for (var j = 0; j < type.length; j++) {
@@ -401,9 +461,10 @@
          }
 
          descriptionLabel() {
+             let commandLabel = this.commandLabel();
              // Returns all of the label metadata after the first imperative label is found (description)
              var nodeTypes = ["handlerName", "handlerComments", "expressionComments", "expressionCalls", "elementLabels", "assignments"];
-             var phraseTypes = ["imperativePhrases", "verbs", "nouns", "phrases", "other"];
+             var phraseTypes = ["imperativePhrases", "verbs", "nouns", "phrases", "other", "numbers"];
              var label = "";
              var labels = [];
 
@@ -411,9 +472,10 @@
                  for (var j = 0; j < phraseTypes.length; j++) {
                      var labelSet = this.command.LabelMetadata[nodeTypes[i]][phraseTypes[j]];
                      for (var k = 0; k < labelSet.length; k++) {
-                         if (labels.indexOf(labelSet[k]) < 0) {
-                             label = label + _.upperFirst(labelSet[k]) + ", ";
-                             labels.push(labelSet[k]);
+                         let labelItem = _.upperFirst(labelSet[k]);
+                         if (labels.indexOf(labelItem) < 0 && labelItem !== commandLabel) {
+                             label = label + labelItem + ", ";
+                             labels.push(labelItem);
                          }
                      }
                  }
@@ -421,7 +483,7 @@
 
              if (!this.command.hasArguments()) {
                  var types = ["assignments", "expressionCalls", "expressionComments"];
-                 var labelTypes = ["imperativePhrases", "verbs", "nouns", "phrases", "other"];
+                 var labelTypes = ["imperativePhrases", "verbs", "nouns", "phrases", "other", "numbers"];
                  for (var i = 0; i < types.length; i++) {
                      var type = this.command.LabelMetadata.conditionals[types[i]];
                      for (var j = 0; j < type.length; j++) {
@@ -429,9 +491,10 @@
                          for (var k = 0; k < labelTypes.length; k++) {
                              var labelNode = obj[labelTypes[k]];
                              for (var l = 0; l < labelNode.length; l++) {
-                                 if (labels.indexOf(labelNode[l]) < 0) {
-                                     label = label + labelNode[l] + ", ";
-                                     labels.push(labelNode[l]);
+                                 let labelItem = _.upperFirst(labelNode[l]);
+                                 if (labels.indexOf(labelItem) < 0 && labelItem !== commandLabel) {
+                                     label = label + labelItem + ", ";
+                                     labels.push(labelItem);
                                  }
                              }
                          }
@@ -444,10 +507,11 @@
 
          hasLabel() {
              // Returns whether we were able to find any labeling metadata for the command
-             let imp = this.firstImperativeLabel();
+             let imp = this.commandLabel();
              let desc = this.descriptionLabel();
              let arg = this.firstArgument();
-             return imp.length || desc.length || arg.length;
+             let hasLabel = imp.length > 1 || desc.length > 1 || arg.length;
+             return hasLabel;
          }
      };
 

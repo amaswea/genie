@@ -5,10 +5,14 @@ var $action = $action || {};
         constructor(command, ui) {
             super(command, ui);
             this._hasLabel = true;
-            this.init();
+            this._init = false;
         }
 
         get DOM() {
+            if (!this._init) {
+                this.init();
+                this._init = true;
+            }
             return this._domElement;
         };
 
@@ -33,7 +37,7 @@ var $action = $action || {};
             label.classList.add("genie-shortcut-ui-command-label");
 
             var descriptionLabel = this.descriptionLabel();
-            var imperativeLabel = this.firstImperativeLabel();
+            var imperativeLabel = this.commandLabel();
             if (!descriptionLabel.length && !imperativeLabel.length) {
                 this.HasLabel = false;
             }
@@ -137,7 +141,7 @@ var $action = $action || {};
             if (description && description.length) {
                 for (var j = 0; j < description.length; j++) {
                     var letter = description[j].toLowerCase();
-                    if (!this._shortcuts[letter] && letter != " ") {
+                    if (!this._shortcuts[letter] && letter != " " && letter != ",") {
                         this._shortcuts[letter] = command;
                         return letter;
                     }
@@ -179,7 +183,7 @@ var $action = $action || {};
                     }
                 }
             } else {
-                let label = commandItem.firstImperativeLabel();
+                let label = commandItem.commandLabel();
                 let descriptionText = commandItem.descriptionLabel();
                 let shortcut = this.getUniqueShortcut(label, descriptionText, commandItem);
                 shortcuts.push(shortcut);
@@ -211,8 +215,8 @@ var $action = $action || {};
             if (commandItems) {
                 // Sort the list of commands alphabetically
                 commandItems.sort(function (a, b) {
-                    var nameA = a.firstImperativeLabel().toLowerCase()
-                        , nameB = b.firstImperativeLabel().toLowerCase()
+                    var nameA = a.commandLabel().toLowerCase()
+                        , nameB = b.commandLabel().toLowerCase()
                     if (nameA < nameB) //sort string ascending
                         return -1
                     if (nameA > nameB)
@@ -232,13 +236,16 @@ var $action = $action || {};
                 commandGroup.appendChild(commandsContainer);
 
                 for (var i = 0; i < commandItems.length; i++) {
-                    var shortcuts = this.createShortcuts(commandItems[i].command, commandItems[i]);
-                    for (var j = 0; j < shortcuts.length; j++) {
-                        let shortcutLabel = document.createElement("span");
-                        shortcutLabel.textContent = "ctrl + " + shortcuts[j] + " --- ";
-                        shortcutsContainer.appendChild(shortcutLabel);
+                    let commandDOM = commandItems[i].DOM;
+                    if (commandItems[i].HasLabel) {
+                        var shortcuts = this.createShortcuts(commandItems[i].command, commandItems[i]);
+                        for (var j = 0; j < shortcuts.length; j++) {
+                            let shortcutLabel = document.createElement("span");
+                            shortcutLabel.textContent = "ctrl + " + shortcuts[j] + " --- ";
+                            shortcutsContainer.appendChild(shortcutLabel);
+                        }
+                        commandsContainer.appendChild(commandDOM);
                     }
-                    commandsContainer.appendChild(commandItems[i].DOM);
                 }
 
                 this.commandContainer.appendChild(commandGroup);

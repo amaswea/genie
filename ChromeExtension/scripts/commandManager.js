@@ -331,6 +331,7 @@ var $action = $action || {};
                 labelMetadata.verbs = labelMetadata.verbs.concat(tagged.verbs);
                 labelMetadata.nouns = labelMetadata.nouns.concat(tagged.nouns);
                 labelMetadata.other = labelMetadata.other.concat(tagged.other);
+                labelMetadata.numbers = labelMetadata.other.concat(tagged.numbers);
             }
         }
 
@@ -535,7 +536,8 @@ var $action = $action || {};
                     imperativePhrases: [],
                     nouns: [],
                     verbs: [],
-                    other: []
+                    other: [], 
+                    numbers: []
                 }
 
                 command.LabelMetadata.conditionals.expressionCalls.push(data);
@@ -609,7 +611,8 @@ var $action = $action || {};
                             imperativePhrases: [],
                             nouns: [],
                             verbs: [],
-                            other: []
+                            other: [], 
+                            numbers: []
                         }
 
                         command.LabelMetadata.conditionals.assignments.push(data);
@@ -655,7 +658,8 @@ var $action = $action || {};
                     imperativePhrases: [],
                     nouns: [],
                     verbs: [],
-                    other: []
+                    other: [], 
+                    numbers: []
                 }
 
                 var added = false;
@@ -711,7 +715,7 @@ var $action = $action || {};
 
         createArgumentsMap(command) {
             var types = ["assignments", "expressionCalls", "expressionComments"];
-            var labelTypes = ["imperativePhrases", "phrases", "verbs", "nouns", "other"];
+            var labelTypes = ["imperativePhrases", "phrases", "verbs", "nouns", "other", "numbers"];
             for (var i = 0; i < types.length; i++) {
                 var type = command.LabelMetadata.conditionals[types[i]];
                 for (var j = 0; j < type.length; j++) {

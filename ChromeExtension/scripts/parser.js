@@ -134,6 +134,7 @@ var $difference = $action || {};
             partsOfSpeech.nouns = [];
             partsOfSpeech.verbs = [];
             partsOfSpeech.other = [];
+            partsOfSpeech.numbers = [];
             partsOfSpeech.nonEnglish = [];
 
             for (var i = 0; i < words.length; i++) {
@@ -168,7 +169,7 @@ var $difference = $action || {};
                             // try to convert it into a number
                             var value = parseInt(word);
                             if (!isNaN(value)) {
-                                partsOfSpeech.other.push(value);
+                                partsOfSpeech.numbers.push(value);
                             } else {
                                 partsOfSpeech.nonEnglish.push(word);
                             }

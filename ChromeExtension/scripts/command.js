@@ -29,42 +29,48 @@ var $action = $action || {};
                     imperativePhrases: [],
                     nouns: [],
                     verbs: [],
-                    other: []
+                    other: [], 
+                    numbers: []
                 },
                 handlerName: {
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
                     verbs: [],
-                    other: []
+                    other: [], 
+                    numbers: []
                 },
                 handlerComments: {
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
                     verbs: [],
-                    other: []
+                    other: [],
+                    numbers: []
                 },
                 expressionCalls: {
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
                     verbs: [],
-                    other: []
+                    other: [], 
+                    numbers: []
                 },
                 expressionComments: {
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
                     verbs: [],
-                    other: []
+                    other: [], 
+                    numbers: []
                 },
                 assignments: {
                     phrases: [],
                     imperativePhrases: [],
                     nouns: [],
                     verbs: [],
-                    other: []
+                    other: [], 
+                    numbers: []
                 },
                 conditionals: {
                     assignments: [],
@@ -498,7 +504,7 @@ var $action = $action || {};
             var completeLabel = "";
             // Constructs a desired label for the command based on the command metadata available
             var nodeTypes = ["elementLabels", "handlerComments", "expressionComments", "expressionCalls", "assignments", "handlerName"];
-            var phraseTypes = ["phrases", "imperativePhrases", "nouns", "verbs", "other"];
+            var phraseTypes = ["phrases", "imperativePhrases", "nouns", "verbs", "other", "numbers"];
             for (var i = 0; i < nodeTypes.length; i++) {
                 for (var j = 0; j < phraseTypes.length; j++) {
                     var labelSet = this.LabelMetadata[nodeTypes[i]][phraseTypes[j]];

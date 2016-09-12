@@ -5,10 +5,14 @@ var $action = $action || {};
         constructor(command, ui, id) {
             super(command, ui);
             this._id = id;
-            this.init();
+            this._init = false;
         }
 
         get DOM() {
+            if(!this._init){
+                this.init();
+                this._init = true;
+            }
             return this._domElement;
         };
 
@@ -67,7 +71,7 @@ var $action = $action || {};
                 listItem.appendChild(argumentsDiv);
             }
 
-            if (label.length < 2 && description.length < 2 && !argumentKeys.length) {
+            if (!this.hasLabel()) {
                 // No label meta could be found.  Give the command an auto-generated name
                 labelSpan.textContent = "Command " + this._id + ": ";
                 descriptionSpan.textContent = "Auto-generated command label.";
