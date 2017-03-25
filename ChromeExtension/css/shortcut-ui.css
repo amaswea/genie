@@ -65,6 +65,10 @@
     max-width: 25%;
 }
 
+.genie-shortcut-ui-group-shortcuts > span {
+    height: 17px;
+}
+
 .genie-shortcut-ui-group-content {
     display: flex;
     flex-wrap: wrap;

@@ -113,21 +113,38 @@ $(document).ready(function () {
     });
 
 
-    element.addEventListener("click",
+    element.addEventListener("click"
+        , // Alert the disabled state of Button 1 and Button 2                 
         function handleButtonClick(evt) {
             var button2 = $('.button2');
             var disabled1 = $('.button1').attr("disabled");
+            // S
             var disabled2 = button2.attr("disabled");
             if (disabled1) {
+                // Alert Button 1 disabled
                 alert("Button 1 is disabled.");
 
                 if (disabled2) {
-                    alert("Button 1 is disabled.");
+                    // Alert Button 2 disabled
+                    alert("Button 2 is disabled.");
                 } else {
+                    // Alert Button 2 not disabled
                     alert("Button 2 is not disabled.");
                 }
             } else {
+                // Alert Button 1 not disabled
                 alert("Button 1 is not disabled.");
             }
         });
+
+    // Rotate the hexagon left <-- Listener comments
+    function rotateHexagonLeft() { // <-- Listener name
+        if (MainHex && gameState !== 0) {
+            // Rotate hexagon left <-- Expression call comments
+            MainHex.rotate(1); // <-- Expression call
+            
+            // Update the hexagon position counter <-- Assignment comments
+            MainHex.hexagonPosition--; // <-- Assignment
+        }
+    }
 });

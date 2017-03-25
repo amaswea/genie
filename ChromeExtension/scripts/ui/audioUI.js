@@ -117,10 +117,6 @@ var $action = $action || {};
 
             this.label.textContent = "Speak a command... ";
 
-            var subText = document.createElement("span");
-            subText.textContent = "(Speaking the bolded text label triggers the command.)";
-            subText.classList.add("genie-audio-ui-header-subtext");
-            this.label.appendChild(subText);
             // Attach the sidebar to the span link
             /* $('body').sidr({
                 side: 'right',
@@ -199,8 +195,12 @@ var $action = $action || {};
 
             // Execute the command
             if (result) {
+                console.log(result.transcript);
                 let commandText = result.transcript.trim().toLowerCase();
-
+                if(commandText == "paws"){
+                    commandText = "pause";
+                }
+                
                 // Find the commands corresponding execute() method in the commandsMap
                 let command = this._audioCommands[commandText];
                 if (command) {
@@ -299,7 +299,7 @@ var $action = $action || {};
                 }
 
                 if (unlabeledCounter) {
-                    unlabeledSpan.textContent = unlabeledCounter + " more commands. ";
+                    unlabeledSpan.textContent = unlabeledCounter + " more commands... ";
                     list.appendChild(unlabeledContainer);
                 }
 

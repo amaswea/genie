@@ -7,6 +7,7 @@
     z-index: 10000000;
 }
 */
+
 #genie-audio-ui {
     width: 300px;
     border-radius: 4px;
@@ -60,7 +61,7 @@
 }
 
 .genie-audio-ui-arguments-span,
-.genie-audio-ui-label-text, 
+.genie-audio-ui-label-text,
 .genie-audio-ui-unlabeled {
     font-weight: bold;
     margin-right: 10px;
@@ -68,6 +69,16 @@
 
 .genie-audio-ui-label-text {
     white-space: nowrap;
+    width: 100px;
+}
+
+.genie-audio-ui-arguments-span {
+    width: 100px; 
+}
+
+.genie-audio-ui-label-description, 
+.genie-audio-ui-value-span {
+    width: 200px;
 }
 
 .genie-audio-ui-header-subtext {
@@ -84,15 +95,15 @@
 
 .genie-audio-ui-unlabeled:after {
     content: url('chrome-extension://__MSG_@@extension_id__/resources/downChevron.png');
-    color: #3277B2; 
-    font-size: 10px; 
-    float: right; 
+    color: #3277B2;
+    font-size: 10px;
+    float: right;
 }
 
 .genie-audio-ui-unlabeled.expanded:after {
     content: url('chrome-extension://__MSG_@@extension_id__/resources/upChevron.png');
 }
- 
+
 .genie-audio-ui-unlabeled {
     cursor: pointer;
     padding-left: 10px;
