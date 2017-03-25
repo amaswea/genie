@@ -1,3 +1,7 @@
+/****
+ *  Button event listeners program analysis test page
+ *****/
+
 $(document).ready(function () {
     var button = $('#mybutton');
 
@@ -57,29 +61,6 @@ $(document).ready(function () {
         console.log("mousedown");
     });
 
-
-    /*
-        button[0].addEventListener("mouseenter", function (evt) {
-            console.log("mouseenter");
-        });
-
-        button[0].addEventListener("mouseleave", function (evt) {
-            console.log("mouseleave");
-        });
-
-        button[0].addEventListener("mousemove", function (evt) {
-            console.log("mousemove");
-        });
-
-        button[0].addEventListener("mouseout", function (evt) {
-            console.log("mouseout");
-        });
-
-        button[0].addEventListener("mouseover", function (evt) {
-            console.log("mouseover");
-        });
-    */
-
     button[0].addEventListener("mouseup", function (evt) {
         console.log("mouseup");
     });
@@ -113,8 +94,7 @@ $(document).ready(function () {
     });
 
 
-    element.addEventListener("click"
-        , // Alert the disabled state of Button 1 and Button 2                 
+    element.addEventListener("click", // Alert the disabled state of Button 1 and Button 2                 
         function handleButtonClick(evt) {
             var button2 = $('.button2');
             var disabled1 = $('.button1').attr("disabled");

@@ -1,3 +1,7 @@
+/****
+ *  Text area event listeners comprehensive test page
+ *****/
+
 $(document).ready(function () {
     var textarea = $('#mytextarea1');
 

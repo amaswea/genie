@@ -1,3 +1,6 @@
+/****
+ *  Select event listeners comprehensive test page
+ *****/
 $(document).ready(function () {
     var select = $('#select');
 
@@ -80,7 +83,6 @@ $(document).ready(function () {
     select[0].addEventListener("mouseup", function (evt) {
         console.log("mouseup");
     });
-
 
     select[0].addEventListener("wheel", function (evt) {
         console.log("wheel");

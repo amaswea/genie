@@ -12,7 +12,7 @@
     background-color: lightgreen; 
 }
 
-// Layout related
+// Layout it out nicely
 .layout-horizontal {
     display: flex;
     flex-direction: row;
