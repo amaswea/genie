@@ -1,21 +1,25 @@
  "use strict";
- var $action = $action || {};
- (function ($action) {
+ var $genie = $genie || {};
+ (function ($genie) {
      // Interface for UIs
      class UI {
          constructor() {
              this._organizer = this.OrganizationTypes.Type;
              this.initCanvas();
+            var div = document.createElement('div'); 
+            $(div).attr("data-bind", "component: 'dialog'"); 
+            $('html').append(div);
+
              this._cellCoordinates = {};
              this._commandItems = {}; // Collection of command Items
-             this._parser = new $action.Parser();
+             this._parser = new $genie.Parser();
              this._labels = {}; // A map between labels and the count of commands that have that label
          }
 
          get OrganizationTypes() {
              return {
-                 Type: $action.CommandOrganizer.organizeCommandsByType,
-                 All: $action.CommandOrganizer.organizeAllCommands,
+                 Type: $genie.CommandOrganizer.organizeCommandsByType,
+                 All: $genie.CommandOrganizer.organizeAllCommands,
              };
          }
 
@@ -27,10 +31,6 @@
              return this._commandItems;
          }
 
-         set Root(rootUI) {
-             this._rootUI = rootUI;
-         }
-
          get Parser() {
              return this._parser;
          }
@@ -38,13 +38,12 @@
          get Labels() {
              return this._labels;
          }
-
          addCommandsGroup(label, commands) {
              let commandItems = this.createCommands(label, commands);
              if (commandItems) {
                  this.initLabelsMap(commandItems);
                  this._commandItems[label] = commandItems;
-                 this.appendCommands(label, commandItems); // Assumes that _commandItems has been initialized              
+                 this.sortCommands(label, commandItems); // Assumes that _commandItems has been initialized              
              }
          }
 
@@ -52,7 +51,7 @@
              // Groups
              let commandItems = [];
              for (var i = 0; i < commands.length; i++) {
-                 var newCommand = new $action.CommandItem(commands[i], this);
+                 var newCommand = new $genie.CommandItem(commands[i], this);
                  commands[i].CommandItem = newCommand;
                  commandItems.push(newCommand);
              }
@@ -123,7 +122,7 @@
              this._eventTimeout = null;
              let cellString = "";
              for (var i = 0; i < this._keyCodes.length; i++) {
-                 cellString = cellString + $action.KeyCodes[this._keyCodes[i]];
+                 cellString = cellString + $genie.KeyCodes[this._keyCodes[i]];
              }
              let cellNumber = parseInt(cellString);
              let mousePosition = this._cellCoordinates[cellNumber];
@@ -146,49 +145,24 @@
              }
          }
 
-         show() {
-             this._rootUI.style.display = "";
-         }
-
-         hide() {
-             this._rootUI.style.display = "none";
-         }
-
-         appendCommands() {
-
-         }
-
-         removeCommands() {
-
-         }
-
-         removeCommand() {}
-
          updateCommandEnabledState(command, enabled) {
              // What should happen when the command state changes
              if (command.CommandItem) {
-                 var domElement = command.CommandItem.DOM;
-                 var disabled = $(domElement).hasClass('genie-ui-disabled');
-                 if (disabled && enabled) {
-                     $(domElement).removeClass('genie-ui-disabled');
-                 }
-
-                 if (!disabled && !enabled) {
-                     $(domElement).addClass('genie-ui-disabled');
-                 }
+                if(command.CommandItem.isEnabled()){
+                    command.CommandItem.isEnabled(false);
+                }else {
+                    command.CommandItem.isEnabled(true);
+                }
              }
          }
 
          updateCommandVisibleState(command, visible) {
-             if (command.CommandItem && command.CommandItem.DOM) {
-                 var displayed = command.CommandItem.DOM.style.display;
-                 if (displayed == "none" && visible) {
-                     command.CommandItem.DOM.style.display = "";
-                 }
-
-                 if (displayed != "none" && !visible) {
-                     command.CommandItem.DOM.style.display = "none";
-                 }
+             if (command.CommandItem) {
+                if(command.CommandItem.isVisible()){
+                    command.CommandItem.isVisible(false);
+                }else {
+                    command.CommandItem.isVisible(true);
+                }
              }
          }
 
@@ -238,7 +212,7 @@
          }
      }
 
-     $action.UI = UI;
+     $genie.UI = UI;
 
      class CommandItem {
          constructor(command, ui) {
@@ -248,10 +222,6 @@
 
          get Command() {
              return this.command;
-         }
-
-         get DOM() {
-             return this._domElement;
          }
 
          set Trigger(trigger) {
@@ -424,6 +394,9 @@
              return this.firstImperativeLabel();
          }
 
+         /** 
+          *  Find the first imperative structured command label in the command metadata
+          */
          firstImperativeLabel() {
              var nodeTypes = ["handlerName", "handlerComments", "expressionComments", "expressionCalls", "elementLabels", "assignments"];
              var phraseTypes = ["imperativePhrases", "phrases", "verbs", "nouns", "other", "numbers"];
@@ -470,6 +443,9 @@
              return "";
          }
 
+         /** 
+          * Generate a label to describe the command from all available description metadata 
+          */
          descriptionLabel() {
              let commandLabel = this.commandLabel();
              // Returns all of the label metadata after the first imperative label is found (description)
@@ -525,5 +501,5 @@
          }
      };
 
-     $action.CommandItem = CommandItem;
- })($action);
+     $genie.CommandItem = CommandItem;
+ })($genie);

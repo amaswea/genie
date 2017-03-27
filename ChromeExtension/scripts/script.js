@@ -1,5 +1,5 @@
-var $action = $action || {};
-(function ($action) {
+var $genie = $genie || {};
+(function ($genie) {
     "use strict";
     class ScriptManager {
         constructor(ui) {
@@ -27,44 +27,22 @@ var $action = $action || {};
 
         isFramework(url) {
             console.log(url);
-            // TODO: Make this more sophisticated later
-            // Does the URL contain jQuery? 
-            if (url.includes("jquery") || url.includes("lodash")) {
-                return true;
-            }
-            if (url.includes("twitter")) {
-                return true;
-            }
-            if (url.includes("google-analytics")) {
-                return true;
-            }
-            if (url.includes("swfobject")) {
-                return true;
-            }
-            if (url.includes("js.cookie")) {
-                return true;
-            }
-            if (url.includes("keypress")) {
-                return true;
-            }
-            if (url.includes("hammer.min")) {
-                return true;
-            }
-            if (url.includes("jsonfn.min")) {
-                return true;
-            }
-            if (url.includes("d3.min")) {
-                return true;
-            }
-            if (url.includes("cloudflare") && url.includes("rocket")) {
-                return true;
-            }
-            if(url.includes("performAction")){
-                return true;
+            // TODO: we should figure out a more generic way of doing this
+            var scriptNames = ["jquery", "lodash", "twitter", "google-analytics", "swfobject", 
+            "js.cookie", "keypress", "hammer", "d3.min", "cloudflare", "rocket", "performAction"];
+            for(let i=0; i<scriptNames.length; i++){
+                if(url.includes(scriptNames[i])){
+                    return true;
+                }
             }
             return false;
         }
 
+        /**
+        * Convert the script to an AST and add it to the collection
+        * @param The url of the script
+        * @param The script code (string)
+        */
         addScript(url, data) {
             if (this.isFramework(url)) {
                 return;
@@ -86,6 +64,11 @@ var $action = $action || {};
             this.processScript(scriptAST);
         }
 
+        /**
+        * Process an AST to find function expressions and variable declations so they can 
+        * be linked to command handlers later 
+        * @param AST node
+        */
         processScript(ast) {
             // Gather up all the scripts on the page and find all function expressions in them to be resolved by the handlers later                      
             var findFunctionExpressionsInProgram = {
@@ -95,7 +78,7 @@ var $action = $action || {};
             }
 
             var clone = $.extend(true, {}, ast);
-            $action.ASTAnalyzer.searchAST(ast, findFunctionExpressionsInProgram);
+            $genie.ASTAnalyzer.searchAST(ast, findFunctionExpressionsInProgram);
 
             for (var i = 0; i < findFunctionExpressionsInProgram.items.length; i++) {
                 let item = findFunctionExpressionsInProgram.items[i];
@@ -125,7 +108,7 @@ var $action = $action || {};
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, findVariableDeclarationsInProgram);
+            $genie.ASTAnalyzer.searchAST(ast, findVariableDeclarationsInProgram);
             for (var i = 0; i < findVariableDeclarationsInProgram.items.length; i++) {
                 let item = findVariableDeclarationsInProgram.items[i];
                 if (item.id) {
@@ -151,7 +134,7 @@ var $action = $action || {};
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, findAssignmentExpressionsInProgram);
+            $genie.ASTAnalyzer.searchAST(ast, findAssignmentExpressionsInProgram);
             for (var j = 0; j < findAssignmentExpressionsInProgram.items.length; j++) {
                 let assignment = findAssignmentExpressionsInProgram.items[j];
                 if (assignment.left && assignment.left.type == "MemberExpression" && assignment.left.object && assignment.left.object.type == "Identifier" && assignment.left.object.name == "window" && assignment.left.property && assignment.left.property.name) {
@@ -170,5 +153,5 @@ var $action = $action || {};
         }
     }
 
-    $action.ScriptManager = ScriptManager;
-})($action);
+    $genie.ScriptManager = ScriptManager;
+})($genie);

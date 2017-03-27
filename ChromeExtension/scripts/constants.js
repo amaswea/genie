@@ -1,12 +1,12 @@
 "use strict";
-var $action = $action || {};
-(function ($action) {
-    $action.dependencies = {};
+var $genie = $genie || {};
+(function ($genie) {
+    $genie.dependencies = {};
 
-    $action.dependencies.Keyboard
+    $genie.dependencies.Keyboard
 
     // List of English word strings mapped to tag names
-    $action.TagEnglishWordMappings = {
+    $genie.TagEnglishWordMappings = {
         "div": "container",
         "h1": "header",
         "h2": "header",
@@ -58,7 +58,7 @@ var $action = $action || {};
     /**
      * List of HTML element types that support the disabled attribute
      */
-    $action.DisabledAttributeElements = [
+    $genie.DisabledAttributeElements = [
         "button", "command", "fieldset", "input", "keygen", "optgroup", "option", "select", "textarea"
     ];
 
@@ -67,7 +67,7 @@ var $action = $action || {};
      * @private
      * @property undefined
      */
-    $action.UserInvokeableEvents = [
+    $genie.UserInvokeableEvents = [
         "cut",
         "copy",
         "paste",
@@ -103,11 +103,11 @@ var $action = $action || {};
         // TOOD: rest of HTML DOM events, Drag & Drop events, Touch events
     ];
 
-    $action.KeyboardEvents = [
+    $genie.KeyboardEvents = [
         "keydown", "keyup", "keypress", "input"
     ]
 
-    $action.MouseEvents = [
+    $genie.MouseEvents = [
         "click",
         "mousedown",
         "mouseenter",
@@ -126,7 +126,7 @@ var $action = $action || {};
      * @private
      * @property undefined
      */
-    $action.MouseOrders = {
+    $genie.MouseOrders = {
         "mousedown": ["mousedown", "mouseup"],
         "mouseup": ["mousedown", "mouseup"],
         "click": ["mousedown", "mouseup", "click"],
@@ -152,7 +152,7 @@ var $action = $action || {};
             // submit
     }
 
-    $action.KeyboardOrders = {
+    $genie.KeyboardOrders = {
         "click": ["keydown", "keypress", "click", "keyup"], // TODO: right click 
         //"dblclick":  Cannot be executed by a seqence of two enter keys.. Might be different in other browsers? Need to test
         "cut": ["keydown", "keydown", "cut", "input", "keyup", "keyup"], // TOOD: Need to pass in the right keycodes for input
@@ -165,11 +165,11 @@ var $action = $action || {};
     }
 
     // List of W3C inline GlobalEventHandlers that are supported
-    $action.GlobalEventHandlers = [
+    $genie.GlobalEventHandlers = [
         "onclick", "onmouseover", "onchange", "ondblclick", "onkeydown", "onkeyup", "onkeypress", "onmousedown", "onmouseout", "onmousewheel"
     ];
 
-    $action.GlobalEventHandlersMap = {
+    $genie.GlobalEventHandlersMap = {
         "onclick": "click",
         "onmouseover": "mouseover",
         "onchange": "change",
@@ -183,7 +183,7 @@ var $action = $action || {};
     }
 
     // Attributes to parse for label metadata
-    $action.LabelAttributes = {
+    $genie.LabelAttributes = {
         "GLOBAL": ["title", "id", "class"],
         "INPUT": ["placeholder", "alt", "value", "name"],
         "BUTTON": ["name"],
@@ -195,7 +195,7 @@ var $action = $action || {};
     }
 
     // List of key codes and word mappings
-    $action.KeyCodes = {
+    $genie.KeyCodes = {
         32: "space",
         37: "left",
         38: "up",
@@ -221,7 +221,7 @@ var $action = $action || {};
             // TODO: Populate the rest later
     }
 
-    $action.MouseButtons = {
+    $genie.MouseButtons = {
         0: "left-click",
         1: "mouse-wheel",
         2: "right-click",
@@ -229,7 +229,7 @@ var $action = $action || {};
         4: "browser-forward"
     }
 
-    $action.MouseButtonsReverseMap = {
+    $genie.MouseButtonsReverseMap = {
         "left-click": 0,
         "mouse-wheel": 1,
         "right-click": 2,
@@ -237,7 +237,7 @@ var $action = $action || {};
         "browser-forward": 4
     }
 
-    $action.KeyCodesReverseMap = {
+    $genie.KeyCodesReverseMap = {
         "space": 32,
         "left": 37,
         "up": 37,
@@ -252,7 +252,7 @@ var $action = $action || {};
         "q": 81
     }
 
-    $action.SpecialKeys = {
+    $genie.SpecialKeys = {
         "left": "ArrowLeft",
         "right": "ArrowRight",
         "up": "ArrowUp",
@@ -260,19 +260,19 @@ var $action = $action || {};
     }
 
     // Attributes that have a URL to parse
-    $action.LabelURLAttributes = ["href"]
+    $genie.LabelURLAttributes = ["href"]
 
 
-    $action.ActionableElementsRequiresInput = ["INPUT", "TEXTAREA"];
+    $genie.ActionableElementsRequiresInput = ["INPUT", "TEXTAREA"];
     
-    $action.ActionableElementsActionLabel = {
+    $genie.ActionableElementsActionLabel = {
         "A": "Open",
         "BUTTON": "Click",
         "INPUT": "Fill out"
     }
 
 
-    $action.CommandGroups = {
+    $genie.CommandGroups = {
         "A": "link",
         "LINK": "link",
         "INPUT": "field",
@@ -281,7 +281,7 @@ var $action = $action || {};
         "TEXTAREA": "field"
     }
 
-    $action.ActionableElements = {
+    $genie.ActionableElements = {
         "A": function (element) {
             var href = jQuery(element).attr("href");
             return href && href.length > 0;
@@ -308,9 +308,9 @@ var $action = $action || {};
         }
     }
 
-    $action.GlobalEventHandlerMappings = { // TODO: Add the rest
+    $genie.GlobalEventHandlerMappings = { // TODO: Add the rest
         "onclick": "click",
         "onmouseover": "mouseover"
     };
 
-})($action);
+})($genie);

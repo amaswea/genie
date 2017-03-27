@@ -1,12 +1,12 @@
 window.addEventListener("message", receiveMessage, false);
-var $action = $action || {};
+var $genie = $genie || {};
 
 $(document).ready(function () {
     // For other types of interfaces, they could be instantiated here or through a setting?
 
     // Add an observer to watch when new elements are added to the page
-    $action.mutationObserver = new $action.MutationWatcher();
-    $action.mutationObserver.init();
+    $genie.mutationObserver = new $genie.MutationWatcher();
+    $genie.mutationObserver.init();
 
     injectScript("scripts/performAction.js");
 
@@ -16,7 +16,7 @@ $(document).ready(function () {
         var script = scripts[i];
         if (!script.attributes.src) {
             var innerHTML = script.innerHTML;
-            $action.scriptManager.addScript("page", innerHTML);
+            $genie.scriptManager.addScript("page", innerHTML);
         }
     }
 
@@ -53,7 +53,7 @@ function injectScript(script) {
 function injectMonitorScript() {
     // Inject the getActions.js script into the page
     var header = document.head || document.documentElement;
-    var monitorScript = $action.getScript();
+    var monitorScript = $genie.getScript();
     var hasScript = document.querySelector("[id='genie_monitor_script]");
     if (hasScript) {
         hasScript.remove();
@@ -72,7 +72,7 @@ function injectMonitorScript() {
 function injectGlobalEventHandlerOverrides() {
     // Inject the getActions.js script into the page
     var header = document.head || document.documentElement;
-    var monitorScript = $action.getGlobalEventHandlerScript();
+    var monitorScript = $genie.getGlobalEventHandlerScript();
     var hasScript = document.querySelector("[id='genie_global_handlers_script']");
     if (hasScript) {
         hasScript.remove();
@@ -90,7 +90,7 @@ function injectGlobalEventHandlerOverrides() {
 function injectJQueryD3OverrideScript() {
     // Inject the getActions.js script into the page
     var header = document.head || document.documentElement;
-    var overrideScript = $action.getJQueryD3OverrideScript();
+    var overrideScript = $genie.getJQueryD3OverrideScript();
     var hasScript = document.querySelector("[id='genie_jquery_d3_override_script']");
     if (hasScript) {
         hasScript.remove();
@@ -114,19 +114,19 @@ function receiveMessage(event) {
     // Check the type of the message returned, and add or remove the command from the dialog accordingly
     if (event.data) {
         if (event.data.messageType == 'eventAdded') {
-            $action.commandsChanged = true;
-            var element = $action.getElementFromID(event.data.elementID);
+            $genie.commandsChanged = true;
+            var element = $genie.getElementFromID(event.data.elementID);
             if (element) {
-                if (!$action.commandManager.hasCommand(event.data.id)) {
+                if (!$genie.commandManager.hasCommand(event.data.id)) {
                     //console.log("adding new command " + event.data.id + " " + event.data.eventType + " " + //event.data.elementID);
-                    var added = $action.commandManager.addCommand(event.data);
+                    var added = $genie.commandManager.addCommand(event.data);
 
                     var dataDependencies = {};
                     if (added) {
                         // Returns a new object with the computed expression string representing the data dependencies. 
-                        var ast = $action.getAST(event.data);
-                        if (!$action.hasSideEffectsOutsideConditionals(ast)) {
-                            dataDependencies = $action.getDataDependencies(ast);
+                        var ast = $genie.getAST(event.data);
+                        if (!$genie.hasSideEffectsOutsideConditionals(ast)) {
+                            dataDependencies = $genie.getDataDependencies(ast);
                             event.data.dependencies = dataDependencies;
                             event.data.messageType = 'eventDependenciesFound';
                             window.postMessage(event.data, "*")
@@ -140,10 +140,10 @@ function receiveMessage(event) {
         }
 
         if (event.data.messageType == 'eventRemoved') {
-            $action.commandsChanged = true;
-            var element = $action.getElementFromID(event.data.elementID);
+            $genie.commandsChanged = true;
+            var element = $genie.getElementFromID(event.data.elementID);
             if (element) {
-                $action.commandManager.removeCommand(element, event.data);
+                $genie.commandManager.removeCommand(element, event.data);
             }
 
         }
@@ -157,8 +157,8 @@ function receiveMessage(event) {
                 //  console.log("id: " + keys[i] + " state: " + value);
             }
 
-            $action.commandManager.updateCommandEnabledStates(newStates);
-            $action.commandManager.organizeCommands();
+            $genie.commandManager.updateCommandEnabledStates(newStates);
+            $genie.commandManager.organizeCommands();
         }
     }
 };
@@ -173,12 +173,12 @@ function updateCommandEnabledStates() {
         messageType: 'getCommandStates'
     }, "*");
 
-    $action.commandsChanged = false;
+    $genie.commandsChanged = false;
   //  setTimeout(updateCommandEnabledStates, 5000);
 }
 
 function updateVisibleCommands() {
-    $action.commandManager.updateVisibleCommands();
+    $genie.commandManager.updateVisibleCommands();
     setTimeout(updateVisibleCommands, 2000);
 }
 
@@ -208,11 +208,11 @@ function isFromSameOrigin(url) {
  */
 chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     if (msg.text === 'open') {
-        $action.interface.show();
+        $genie.interface.show();
     }
 
     if (msg.text === 'close') {
-        $action.interface.hide();
+        $genie.interface.hide();
     }
 
     if (msg.text === 'scriptReceived') {
@@ -220,12 +220,12 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         var url = msg.url;
         if (data && data.length) {
             var orig = window.location.origin;
-            if (!$action.scriptManager) {
-                $action.scriptManager = new $action.ScriptManager();
+            if (!$genie.scriptManager) {
+                $genie.scriptManager = new $genie.ScriptManager();
             }
 
             if (isFromSameOrigin(url)) {
-                $action.scriptManager.addScript(url, data);
+                $genie.scriptManager.addScript(url, data);
             }
         }
     }
@@ -241,14 +241,14 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     });
 
     // Initialize the script manager if not already initialized
-    if (!$action.scriptManager) {
-        $action.scriptManager = new $action.ScriptManager();
+    if (!$genie.scriptManager) {
+        $genie.scriptManager = new $genie.ScriptManager();
     }
 
-    $action.interface = new $action.AudioUI();
+    $genie.interface = new $genie.AudioUI();
 
     // Create a new instance of the command manager with this instance of the UI
-    $action.commandManager = new $action.CommandManager($action.interface, $action.scriptManager);
+    $genie.commandManager = new $genie.CommandManager($genie.interface, $genie.scriptManager);
 
     // injectJQueryD3OverrideScript();
 

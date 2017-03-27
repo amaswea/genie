@@ -1,6 +1,9 @@
+/**
+* Observe and watch for DOM mutation events
+*/
 "use strict";
-var $action = $action || {};
-(function ($action) {
+var $genie = $genie || {};
+(function ($genie) {
     class MutationWatcher {
         constructor() {
             this._pageHandlerIDs = 0;
@@ -8,11 +11,6 @@ var $action = $action || {};
             this._pageCommands = {};
         }
 
-        /**
-         * Description for undefined
-         * @private
-         * @property undefined
-         */
         init() {
             this.observeMutations();
 
@@ -30,6 +28,10 @@ var $action = $action || {};
             return "p" + this._pageHandlerIDs;
         }
 
+        /**
+         * Assign or retrieve a unique ID for the element
+         * @param The DOM element
+         */
         detectOrAssignElementID(element) {
             var id = "";
             if (element instanceof Window) {
@@ -54,7 +56,7 @@ var $action = $action || {};
             var keys = Object.keys(this._pageCommands);
             for (var i = 0; i < keys.length; i++) {
                 var value = this._pageCommands[keys[i]];
-                var elt = $action.getElementFromID(value.elementID);
+                var elt = $genie.getElementFromID(value.elementID);
                 if (value && value.eventType == type && element == elt) {
                     return keys[i];
                 }
@@ -70,16 +72,14 @@ var $action = $action || {};
         }
 
         /**
-         * Description for addCommandsFromElement
-         * @private
-         * @method addCommandFromElement
-         * @param {Object} element
+         * When element is added to the DOM, add a command for it to the command manager if one should be created
+         * @param the DOM element
          */
         addCommandsFromElement(element) {
             var tagAdded = element.tagName;
-            var hasAction = $action.ActionableElements[tagAdded] != undefined;
+            var hasAction = $genie.ActionableElements[tagAdded] != undefined;
             if (hasAction && element.parentNode) {
-                var isActionable = $action.ActionableElements[tagAdded](element);
+                var isActionable = $genie.ActionableElements[tagAdded](element);
                 if (isActionable) {
                     var commandData = {
                         id: this.getHandlerID(),
@@ -88,29 +88,29 @@ var $action = $action || {};
                     }
 
                     this._pageCommands[commandData.id] = commandData;
-                    $action.commandManager.addCommand(commandData);
+                    $genie.commandManager.addCommand(commandData);
                 }
             }
 
             var $element = $(element);
-            for (var i = 0; i < $action.GlobalEventHandlers.length; i++) {
-                var eventHandler = $action.GlobalEventHandlers[i];
+            for (var i = 0; i < $genie.GlobalEventHandlers.length; i++) {
+                var eventHandler = $genie.GlobalEventHandlers[i];
                 var attributeValue = $element.attr(eventHandler);
                 if (attributeValue && attributeValue.length > 0) {
                     var commandData = {
                         id: this.getHandlerID(),
-                        eventType: $action.GlobalEventHandlerMappings[eventHandler],
+                        eventType: $genie.GlobalEventHandlerMappings[eventHandler],
                         handler: attributeValue,
                         elementID: this.detectOrAssignElementID(element)
                     }
 
 
                     this._pageCommands[commandData.id] = commandData;
-                    var added = $action.commandManager.addCommand(commandData);
+                    var added = $genie.commandManager.addCommand(commandData);
                     var dataDependencies = {};
                     if (added) {
                         // Returns a new object with the computed expression string representing the data dependencies. 
-                        dataDependencies = $action.getDataDependencies(commandData);
+                        dataDependencies = $genie.getDataDependencies(commandData);
                         if (dataDependencies) {
                             commandData.dependencies = dataDependencies;
                             window.postMessage({
@@ -131,44 +131,40 @@ var $action = $action || {};
         };
 
         /**
-         * Description for removeCommandsFromElement
-         * @private
-         * @method removeCommandFromElement
-         * @param {Object} element
+         * When element is removed from DOM, remove its commands from the command manager
+         * @param DOM element
          */
         removeCommandsFromElement(element) {
             var tagRemoved = element.tagName;
-            var hasAction = $action.ActionableElements[tagRemoved] != undefined;
+            var hasAction = $genie.ActionableElements[tagRemoved] != undefined;
             if (hasAction) {
-                var isActionable = $action.ActionableElements[tagRemoved](element);
+                var isActionable = $genie.ActionableElements[tagRemoved](element);
                 if (isActionable) {
                     var commandData = {
                         eventType: 'default'
                     }
 
-                    $action.commandManager.removeCommand(element, commandData);
+                    $genie.commandManager.removeCommand(element, commandData);
                 }
             }
 
             var $element = $(element);
-            for (var i = 0; i < $action.GlobalEventHandlers.length; i++) {
-                var eventHandler = $action.GlobalEventHandlers[i];
+            for (var i = 0; i < $genie.GlobalEventHandlers.length; i++) {
+                var eventHandler = $genie.GlobalEventHandlers[i];
                 var attributeValue = $element.attr(eventHandler);
                 if (attributeValue && attributeValue.length > 0) {
                     var commandData = {
-                        eventType: $action.GlobalEventHandlerMappings[eventHandler],
+                        eventType: $genie.GlobalEventHandlerMappings[eventHandler],
                         handler: attributeValue
                     }
 
-                    $action.commandManager.removeCommand(element, commandData);
+                    $genie.commandManager.removeCommand(element, commandData);
                 }
             }
         };
 
         /**
-         * Description for observeMutations
-         * @private
-         * @method observeMutations
+         * Observe DOM mutation events using MutationObserver
          */
         observeMutations() {
             // select the target node
@@ -202,26 +198,26 @@ var $action = $action || {};
                         // If any updates were made to the element attributes, remove the command associated with the old 
                         // value if there was one. Add the new command associated with the new value, if it is set to any // value
                         var attribute = mutation.attributeName;
-                        if (attribute && attribute.length && $action.GlobalEventHandlers.indexOf(attribute) > -1) {
+                        if (attribute && attribute.length && $genie.GlobalEventHandlers.indexOf(attribute) > -1) {
                             var newValue = mutation.target.attributes[attribute].value;
                             var oldValue = mutation.oldValue;
                             if (oldValue) {
                                 var oldCommandData = {
-                                    eventType: $action.GlobalEventHandlerMappings[attribute],
+                                    eventType: $genie.GlobalEventHandlerMappings[attribute],
                                     handler: oldValue
                                 }
 
                                 // remove old command
-                                $action.commandManager.removeCommand(mutation.target, oldCommandData);
+                                $genie.commandManager.removeCommand(mutation.target, oldCommandData);
                             }
 
                             if (newValue) {
                                 var newCommandData = {
-                                    eventType: $action.GlobalEventHandlerMappings[attribute],
+                                    eventType: $genie.GlobalEventHandlerMappings[attribute],
                                     handler: newValue
                                 };
 
-                                $action.commandManager.addCommand(mutation.target, newCommandData);
+                                $genie.commandManager.addCommand(mutation.target, newCommandData);
                             }
                         }
                     }
@@ -242,5 +238,5 @@ var $action = $action || {};
         };
     };
 
-    $action.MutationWatcher = MutationWatcher;
-})($action);
+    $genie.MutationWatcher = MutationWatcher;
+})($genie);

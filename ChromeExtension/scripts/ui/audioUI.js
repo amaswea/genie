@@ -1,51 +1,52 @@
 "use strict";
-var $action = $action || {};
-(function ($action) {
-    class AudioUICommandItem extends $action.CommandItem {
+var $genie = $genie || {};
+(function ($genie) {
+    class ArgumentCommandItem {
+        constructor(){
+            this.RootViewModel = function(params) {
+                var self = this; 
+                ko.components.register("argumentItem", {
+                    viewModel: function(params) {
+                        self.argument = ko.observable('');
+                        self.value = ko.observable('');
+                    },
+                    template: { require: 'audio-command-item.html'}
+                }); 
+            };
+        }
+        init() {
+            ko.applyBindings(new this.RootViewModel())
+        }
+    }
+
+    class AudioUICommandItem extends $genie.CommandItem {
         constructor(command, ui, id) {
             super(command, ui);
             this._id = id;
             this._init = false;
+            this.RootViewModel = function(params) {
+                var self = this; 
+                ko.components.register("commandItem", {
+                    viewModel: function(params) {
+                        self.arguments = ko.observableArray([]);
+                        self.label = ko.observable('');
+                        self.description = ko.observable('');
+                        self.isEnabled = ko.observable(true);
+                        self.isVisible = ko.observable(false);
+                    },
+                    template: { require: 'audio-command-item.html'}
+                }); 
+            };
+
         }
 
-        get DOM() {
-            if (!this._init) {
-                this.init();
-                this._init = true;
-            }
-            return this._domElement;
-        };
-
         init() {
+            ko.applyBindings(new this.RootViewModel())
+
             // Initialize the UI for the CommandItem corresponding to each command
             this._tagName = this.Command.Element.tagName;
-            var listItem = document.createElement("li");
-            listItem.classList.add("genie-audio-ui-command");
-
-            var commandLabels = document.createElement("div");
-            commandLabels.classList.add("genie-audio-ui-label");
-
-            var label = this.commandLabel();
-            var description = this.descriptionLabel();
-            var labelSpan = document.createElement("span");
-            labelSpan.classList.add("genie-audio-ui-label-text");
-            var descriptionSpan = document.createElement("span");
-            descriptionSpan.classList.add("genie-audio-ui-label-description");
-
-            if (label.length) {
-                labelSpan.textContent = label;
-                commandLabels.appendChild(labelSpan);
-                listItem.appendChild(commandLabels);
-            }
-
-            if (description.length) {
-                descriptionSpan.textContent = description;
-                commandLabels.appendChild(descriptionSpan);
-            }
-
-            if (label.length && description.length) {
-                labelSpan.textContent = labelSpan.textContent + ": ";
-            }
+            this.label(this.commandLabel())
+            this.description(this.descriptionLabel())
 
             // Command arguments (if there are any)
             var argumentKeys = _.sortBy(Object.keys(this.Command.ArgumentsMap), function (key) {
@@ -53,85 +54,52 @@ var $action = $action || {};
             });
 
             if (argumentKeys.length) {
-                var argumentsDiv = document.createElement("div");
-                argumentsDiv.classList.add("genie-audio-ui-arguments");
                 for (var i = 0; i < argumentKeys.length; i++) {
-                    var argDiv = document.createElement("div");
-                    argDiv.classList.add("genie-audio-ui-arguments-item");
-                    var argSpan = document.createElement("span");
-                    argSpan.classList.add("genie-audio-ui-arguments-span");
-                    argSpan.textContent = _.upperFirst(argumentKeys[i]) + ": ";
-                    var valueSpan = document.createElement("span");
-                    valueSpan.classList.add("genie-audio-ui-value-span");
-                    valueSpan.textContent = this.Command.ArgumentsMap[argumentKeys[i]];
-                    argDiv.appendChild(argSpan);
-                    argDiv.appendChild(valueSpan);
-                    argumentsDiv.appendChild(argDiv);
+                    let argumentObj = new ArgumentCommandItem().RootViewModel(); 
+                    argumentObj.argument(argumentKeys[i]); 
+                    argumentObj.value(this.Command.ArgumentsMap[argumentKeys[i]])
+                    self.arguments.add(argumentObj);
                 }
-                listItem.appendChild(argumentsDiv);
             }
 
             if (!this.hasLabel()) {
                 // No label meta could be found.  Give the command an auto-generated name
-                labelSpan.textContent = "Command " + this._id + ": ";
-                descriptionSpan.textContent = "Auto-generated command label.";
-                commandLabels.appendChild(labelSpan);
-                commandLabels.appendChild(descriptionSpan);
-                listItem.appendChild(commandLabels);
+                this.label("Command " + this._id + ": ");
+                this.description("Auto-generated command label.");
             }
 
-            this._domElement = listItem;
         }
     };
 
-    $action.AudioUICommandItem = AudioUICommandItem;
+    $genie.AudioUICommandItem = AudioUICommandItem;
 
-    class AudioUI extends $action.UI {
+    class AudioUI extends $genie.UI {
         constructor() {
             super();
-            this.init();
 
             // Keep a map between the command labels and their execute() calls so that we can map audio commands to call commands
             this._audioCommands = {};
             this._speechResults = {};
-            this.Root = this.dialog;
+            this.RootViewModel = function(params) {
+                var self = this; 
+                ko.components.register("dialog", {
+                    viewModel: function(params) {
+                        self.isVisible = ko.observable(false);
+                        self.childCommands = ko.observableArray([]);
+                    },
+                    template: { require: 'audio-dialog.html'}
+                }); 
+            };
+            this.init(); 
         }
 
         init() {
-            var dialog = document.createElement("div");
-            $(dialog).attr("id", "genie-audio-ui");
-            var list = document.createElement("ul");
-            list.classList.add("genie-audio-ui-list");
-
-            var label = document.createElement("div");
-            label.classList.add("genie-audio-ui-header");
-
-
-            dialog.appendChild(label);
-            dialog.appendChild(list);
-            $('html').append(dialog);
-
-            this.dialog = dialog;
-            this.list = list;
-            this.label = label;
-
-            this.label.textContent = "Speak a command... ";
-
-            // Attach the sidebar to the span link
-            /* $('body').sidr({
-                side: 'right',
-                name: 'genie-audio-ui-sidebar',
-                displace: true,
-                renaming: false
-            });
-*/
-            // Canvas
-            var canvas = document.createElement("canvas");
-            canvas.classList.add("genie-audio-ui-input-canvas");
-            this.canvas = canvas;
-            this.canvas.style.display = "none";
+           ko.applyBindings(new this.RootViewModel())
         };
 
+        /**
+         * Find the most likely speech API result 
+         */
         findLikeliestResult(speechResults) {
             // TODO: Figure out why previous results are not cleared when the next one is sent
             // Otherwise return the result with the highest confidence value
@@ -214,7 +182,7 @@ var $action = $action || {};
             if (label == "commands") { // Don't display any other types of commands (links, etc.)
                 var commandItems = [];
                 for (var i = 0; i < commands.length; i++) {
-                    var newCommand = new $action.AudioUICommandItem(commands[i], this, i);
+                    var newCommand = new $genie.AudioUICommandItem(commands[i], this, i);
                     commands[i].CommandItem = newCommand;
                     commandItems.push(newCommand);
                 }
@@ -227,31 +195,8 @@ var $action = $action || {};
          * @private
          * @property undefined
          */
-        appendCommands(label, commandItems) {
+        sortCommands(label, commandItems) {
             if (label == "commands") { // Don't display any other types of commands (links, etc.)
-                var group = document.createElement('li');
-                group.classList.add('genie-audio-ui-group');
-
-                var list = document.createElement('ul');
-                list.classList.add('genie-audio-ui-list');
-
-                var unlabeledContainer = document.createElement('li');
-                unlabeledContainer.classList.add('genie-audio-ui-unlabeled');
-                var unlabeledSpan = document.createElement("span");
-                unlabeledContainer.appendChild(unlabeledSpan);
-                var unlabeled = document.createElement('ul');
-                unlabeledContainer.appendChild(unlabeled);
-
-                unlabeledContainer.addEventListener("click", function () {
-                    if (unlabeled.style.display == "block" || unlabeled.style.display == "") {
-                        unlabeled.style.display = "none";
-                        unlabeledContainer.classList.remove("expanded");
-                    } else {
-                        unlabeled.style.display = "block";
-                        unlabeledContainer.classList.add("expanded");
-                    }
-                });
-
                 // Sort the list of commands alphabetically
                 commandItems.sort(function (a, b) {
                     var nameA = a.commandLabel().toLowerCase(),
@@ -287,25 +232,9 @@ var $action = $action || {};
                     return 0 //default return value (no sorting)
                 });
 
-                var unlabeledCounter = 0;
-                for (var i = 0; i < commandItems.length; i++) {
-                    this.createAudioMapEntry(commandItems[i]);
-                    if (commandItems[i].hasLabel()) {
-                        list.appendChild(commandItems[i].DOM);
-                    } else {
-                        unlabeledCounter++;
-                        unlabeled.appendChild(commandItems[i].DOM);
-                    }
+                for(var i=0; i<commandItems.length; i++){
+                    this.childCommands.push(new commandItems[i].RootViewModel())
                 }
-
-                if (unlabeledCounter) {
-                    unlabeledSpan.textContent = unlabeledCounter + " more commands... ";
-                    list.appendChild(unlabeledContainer);
-                }
-
-                group.appendChild(list);
-
-                this.list.appendChild(group);
             }
 
             // Initialze speech recognition
@@ -339,20 +268,14 @@ var $action = $action || {};
         /**
          * Remove a command from the dialog
          */
-        removeCommand(command, commandCount) {
-            var cmdItem = command.CommandItem;
-            if (cmdItem && cmdItem.DOM) {
-                this.list.removeChild(cmdItem.DOM);
-            }
+        removeCommand(command) {
+            // TODO: Remove command from the dialog
         }
 
         removeCommands() {
-            var list = this.list;
-            while (list.firstChild) {
-                list.removeChild(list.firstChild);
-            }
+            // TODO: REmove a list of commands
         }
     };
 
-    $action.AudioUI = AudioUI;
-})($action);
+    $genie.AudioUI = AudioUI;
+})($genie);

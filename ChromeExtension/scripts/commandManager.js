@@ -1,7 +1,9 @@
+/**
+ * CommandManager class that updates command states
+ */
 "use strict";
-
-var $action = $action || {};
-(function ($action) {
+var $genie = $genie || {};
+(function ($genie) {
 
     class CommandManager {
         constructor(ui, scriptManager) {
@@ -12,7 +14,7 @@ var $action = $action || {};
             this.init();
 
             this._posTagger = new POSTagger();
-            this._parser = new $action.Parser();
+            this._parser = new $genie.Parser();
         }
 
         get Commands() {
@@ -50,11 +52,11 @@ var $action = $action || {};
             let duplicate = this.findDuplicate(command); // Look for duplicate commands
             // TODO: Fix this later
             if (command.global) {
-                command.eventType = $action.GlobalEventHandlersMap[command.eventType];
+                command.eventType = $genie.GlobalEventHandlersMap[command.eventType];
             }
-            if (!duplicate && (command.eventType == 'default' || $action.UserInvokeableEvents.indexOf(command.eventType) > -1 || $action.GlobalEventHandlers.indexOf(command.eventType) > -1)) {
-                var element = $action.getElementFromID(command.elementID);
-                var newCommand = new $action.Command(command.id, command.elementID, command.eventType, command.handler)
+            if (!duplicate && (command.eventType == 'default' || $genie.UserInvokeableEvents.indexOf(command.eventType) > -1 || $genie.GlobalEventHandlers.indexOf(command.eventType) > -1)) {
+                var element = $genie.getElementFromID(command.elementID);
+                var newCommand = new $genie.Command(command.id, command.elementID, command.eventType, command.handler)
                 this.initMetadata(newCommand);
                 /*                console.log(newCommand.Handler);
                                 console.log(newCommand.EventType);
@@ -132,7 +134,7 @@ var $action = $action || {};
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, callList);
+            $genie.ASTAnalyzer.searchAST(ast, callList);
 
             // Go through the returned list of function expressions and link them to those with the same name in the script cache
             for (var i = 0; i < callList.items.length; i++) {
@@ -156,7 +158,7 @@ var $action = $action || {};
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, assignmentExpressionsInProgram);
+            $genie.ASTAnalyzer.searchAST(ast, assignmentExpressionsInProgram);
 
             var variableDeclaratorsInProgram = {
                 lookFor: "VariableDeclarator",
@@ -164,7 +166,7 @@ var $action = $action || {};
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, variableDeclaratorsInProgram);
+            $genie.ASTAnalyzer.searchAST(ast, variableDeclaratorsInProgram);
             var declaratorMap = {};
             for (let i = 0; i < variableDeclaratorsInProgram.items.length; i++) {
                 let declarator = variableDeclaratorsInProgram.items[i];
@@ -208,7 +210,7 @@ var $action = $action || {};
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, findIdentifiersInNode);
+            $genie.ASTAnalyzer.searchAST(ast, findIdentifiersInNode);
 
             for (var i = 0; i < findIdentifiersInNode.items.length; i++) {
                 var identifier = findIdentifiersInNode.items[i];
@@ -384,7 +386,7 @@ var $action = $action || {};
                 return; // Document & Window do not have inline attributes
             }
 
-            var globalAttrs = $action.LabelAttributes.GLOBAL;
+            var globalAttrs = $genie.LabelAttributes.GLOBAL;
             if (globalAttrs.length) {
                 for (var i = 0; i < globalAttrs.length; i++) {
                     let globalAttr = globalAttrs[i];
@@ -398,14 +400,14 @@ var $action = $action || {};
                 }
             }
 
-            var nonGlobalAttrs = $action.LabelAttributes[element.tagName];
+            var nonGlobalAttrs = $genie.LabelAttributes[element.tagName];
             if (nonGlobalAttrs) {
                 for (var j = 0; j < nonGlobalAttrs.length; j++) {
                     let nonGlobalAttr = element.attributes[nonGlobalAttrs[j]];
                     if (nonGlobalAttr) {
                         let nonGlobalVal = nonGlobalAttr.value;
                         if (nonGlobalVal && nonGlobalVal.length) {
-                            if ($action.LabelURLAttributes.indexOf(nonGlobalAttrs[j]) > -1) {
+                            if ($genie.LabelURLAttributes.indexOf(nonGlobalAttrs[j]) > -1) {
                                 this.parseURL(command.LabelMetadata.elementLabels, nonGlobalVal);
                             } else {
                                 this.parseLabel(command.LabelMetadata.elementLabels, nonGlobalVal);
@@ -480,7 +482,7 @@ var $action = $action || {};
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, findFunctionCallExpressionsOutsideConditionals);
+            $genie.ASTAnalyzer.searchAST(ast, findFunctionCallExpressionsOutsideConditionals);
 
             // Visitor for searching identifiers within a node
             var findIdentifiersInNode = {
@@ -492,7 +494,7 @@ var $action = $action || {};
             for (var i = 0; i < findFunctionCallExpressionsOutsideConditionals.items.length; i++) {
                 let item = findFunctionCallExpressionsOutsideConditionals.items[i];
                 if (item && item.referencedFunction) {
-                    $action.ASTAnalyzer.searchAST(item, findIdentifiersInNode);
+                    $genie.ASTAnalyzer.searchAST(item, findIdentifiersInNode);
                 }
             }
 
@@ -510,7 +512,7 @@ var $action = $action || {};
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(conditional, findFunctionCallExpressionsInsideConditionals);
+            $genie.ASTAnalyzer.searchAST(conditional, findFunctionCallExpressionsInsideConditionals);
 
             // Visitor for searching identifiers within a node
             var findIdentifiersInNode = {
@@ -522,7 +524,7 @@ var $action = $action || {};
             for (var i = 0; i < findFunctionCallExpressionsInsideConditionals.items.length; i++) {
                 let item = findFunctionCallExpressionsInsideConditionals.items[i];
                 if (item && item.referencedFunction) {
-                    $action.ASTAnalyzer.searchAST(item, findIdentifiersInNode);
+                    $genie.ASTAnalyzer.searchAST(item, findIdentifiersInNode);
                 }
             }
 
@@ -556,7 +558,7 @@ var $action = $action || {};
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, findAssignmentExpressionsOutsideConditionals);
+            $genie.ASTAnalyzer.searchAST(ast, findAssignmentExpressionsOutsideConditionals);
 
             // Within the assignment expressions that have a referenced identifier, find and parse the identifiers
             for (var i = 0; i < findAssignmentExpressionsOutsideConditionals.items.length; i++) {
@@ -567,7 +569,7 @@ var $action = $action || {};
                 }
 
                 if (item && item.referencedIdentifier) {
-                    $action.ASTAnalyzer.searchAST(item, findIdentifiersInNode);
+                    $genie.ASTAnalyzer.searchAST(item, findIdentifiersInNode);
 
                     // Then parse all the identifers found within the collection of items
                     // Parse the located identifiers
@@ -588,7 +590,7 @@ var $action = $action || {};
             }
 
 
-            $action.ASTAnalyzer.searchAST(conditional, findAssignmentExpressionsInsideConditionals);
+            $genie.ASTAnalyzer.searchAST(conditional, findAssignmentExpressionsInsideConditionals);
 
             // Within the assignment expressions that have a referenced identifier, find and parse the identifiers
             for (var i = 0; i < findAssignmentExpressionsInsideConditionals.items.length; i++) {
@@ -599,8 +601,8 @@ var $action = $action || {};
                 }
 
                 if (item && item.referencedIdentifier) {
-                    $action.ASTAnalyzer.searchAST(item.left, findIdentifiersInNode);
-                    $action.ASTAnalyzer.searchAST(item.right, findIdentifiersInNode);
+                    $genie.ASTAnalyzer.searchAST(item.left, findIdentifiersInNode);
+                    $genie.ASTAnalyzer.searchAST(item.right, findIdentifiersInNode);
 
                     if (findIdentifiersInNode.items.length) {
                         var data = { // For each conditional expression
@@ -635,7 +637,7 @@ var $action = $action || {};
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, findNodesOutsideConditionals);
+            $genie.ASTAnalyzer.searchAST(ast, findNodesOutsideConditionals);
             this.parseComments(command.LabelMetadata.expressionComments, findNodesOutsideConditionals.items);
         }
 
@@ -646,7 +648,7 @@ var $action = $action || {};
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(conditional, findNodesInsideConditional);
+            $genie.ASTAnalyzer.searchAST(conditional, findNodesInsideConditional);
 
             // Object to hold the data
             if (findNodesInsideConditional.items.length) {
@@ -729,9 +731,9 @@ var $action = $action || {};
                         }
                     }
                     labelsString = labelsString.substring(0, labelsString.length - 1);
-                    if ($action.isKeyboardEvent(command.EventType)) {
+                    if ($genie.isKeyboardEvent(command.EventType)) {
                         for (var k = 0; k < obj.keyCodeValues.length; k++) {
-                            var keyCodeValueString = $action.KeyCodes[obj.keyCodeValues[k]];
+                            var keyCodeValueString = $genie.KeyCodes[obj.keyCodeValues[k]];
                             if (!command.ArgumentsMap[keyCodeValueString]) {
                                 command.ArgumentsMap[keyCodeValueString] = labelsString;
                             } else {
@@ -740,10 +742,10 @@ var $action = $action || {};
                         }
                     }
 
-                    if ($action.isMouseEvent) {
+                    if ($genie.isMouseEvent) {
                         // Parse conditional for mouse button 
                         for (var l = 0; l < obj.mouseButtonValues.length; l++) {
-                            var mouseButtonValueString = $action.MouseButtons[obj.mouseButtonValues[l]];
+                            var mouseButtonValueString = $genie.MouseButtons[obj.mouseButtonValues[l]];
                             if (!command.ArgumentsMap[mouseButtonValueString]) {
                                 command.ArgumentsMap[mouseButtonValueString] = labelsString;
                             } else {
@@ -758,7 +760,7 @@ var $action = $action || {};
         convertKeyCodesToString(keyCodesArray) {
             var keyCodeString = "";
             for (var i = 0; i < keyCodesArray.length; i++) {
-                keyCodeString = keyCodeString + $action.KeyCodes[keyCodesArray[i]];
+                keyCodeString = keyCodeString + $genie.KeyCodes[keyCodesArray[i]];
                 if (i < keyCodesArray.length - 1) {
                     keyCodeString = keyCodeString + ", ";
                 }
@@ -784,7 +786,7 @@ var $action = $action || {};
                 items: [] // Will contain the collection of requested elements you are looking for
             }
 
-            $action.ASTAnalyzer.searchAST(ast, findConditionals);
+            $genie.ASTAnalyzer.searchAST(ast, findConditionals);
 
             for (var i = 0; i < findConditionals.items.length; i++) {
                 var dependency = this.getDependency(findConditionals.items[i]);
@@ -792,9 +794,9 @@ var $action = $action || {};
                 // Function calls
                 var keyCodes = {};
                 var mouseButtons = {};
-                if ($action.isKeyboardEvent(command.EventType)) {
+                if ($genie.isKeyboardEvent(command.EventType)) {
                     keyCodes = this.parseKeyCodeInputs(command, ast, findConditionals.items[i]);
-                } else if ($action.isMouseEvent(command.EventType)) {
+                } else if ($genie.isMouseEvent(command.EventType)) {
                     mouseButtons = this.parseMouseButtons(command, ast, findConditionals.items[i]);
                     command.RequiresMousePosition = command.RequiresMousePosition || this.parseMousePositionConditional(command, ast, findConditionals.items[i]);
                 }
@@ -873,7 +875,7 @@ var $action = $action || {};
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, findDeclarators);
+            $genie.ASTAnalyzer.searchAST(ast, findDeclarators);
 
             var mousePositionExpressions = []; // Locate any variables that will have a stored reference to a keyCode
             for (var k = 0; k < findDeclarators.items.length; k++) {
@@ -888,7 +890,7 @@ var $action = $action || {};
             }
 
             var positionReferences = [];
-            $action.ASTAnalyzer.searchAST(ast, findAssignments);
+            $genie.ASTAnalyzer.searchAST(ast, findAssignments);
 
             for (var j = 0; j < findAssignments.items.length; j++) {
                 var expression = findAssignments.items[j];
@@ -902,7 +904,7 @@ var $action = $action || {};
                     } else if (expression.right && expression.right.type == "CallExpression" && expression.right.callee && expression.right.callee.type == "MemberExpression" && expression.right.callee.property && expression.right.callee.property.type == "Identifier" && expression.right.callee.property.name == "mouse" && expression.right.callee.object && expression.right.callee.object.type == "Identifier" && expression.right.callee.object.name == "d3") {
                         positionReferences.push(expression.left);
                     } else {
-                        $action.ASTAnalyzer.searchAST(expression.right, findIdentifiers);
+                        $genie.ASTAnalyzer.searchAST(expression.right, findIdentifiers);
                         for (var l = 0; l < findIdentifiers.items.length; l++) {
                             let id = findIdentifiers.items[l];
                             for (var k = 0; k < mousePositionExpressions.length; k++) {
@@ -929,7 +931,7 @@ var $action = $action || {};
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, findMousePositionReferencedOutsideConditionals);
+            $genie.ASTAnalyzer.searchAST(ast, findMousePositionReferencedOutsideConditionals);
 
             var mousePositionExpressions = []; // Locate any variables that will have a stored reference to a keyCode
             for (var k = 0; k < findMousePositionReferencedOutsideConditionals.items.length; k++) {
@@ -1009,7 +1011,7 @@ var $action = $action || {};
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, findMouseButtonReferencedOutsideConditionals);
+            $genie.ASTAnalyzer.searchAST(ast, findMouseButtonReferencedOutsideConditionals);
 
             var mouseButtonExpressions = []; // Locate any variables that will have a stored reference to a keyCode
             for (var k = 0; k < findMouseButtonReferencedOutsideConditionals.items.length; k++) {
@@ -1085,7 +1087,7 @@ var $action = $action || {};
                 items: []
             }
 
-            $action.ASTAnalyzer.searchAST(ast, findKeyCodesReferencedOutsideConditionals);
+            $genie.ASTAnalyzer.searchAST(ast, findKeyCodesReferencedOutsideConditionals);
 
             var keyCodeExpressions = []; // Locate any variables that will have a stored reference to a keyCode
             for (var k = 0; k < findKeyCodesReferencedOutsideConditionals.length; k++) {
@@ -1264,5 +1266,5 @@ var $action = $action || {};
         }
     };
 
-    $action.CommandManager = CommandManager;
-})($action);
+    $genie.CommandManager = CommandManager;
+})($genie);

@@ -1,6 +1,9 @@
+/**
+* Genie metadata tokenizer and parser
+*/
 "use strict";
-var $difference = $action || {};
-(function ($action) {
+var $genie = $genie || {};
+(function ($genie) {
     class Parser {
         constructor() {
             this.dictionary = new Typo("en_US");
@@ -88,6 +91,8 @@ var $difference = $action || {};
             // Classes with numbers in them
             // no camel casing is used to separate the words
             // First remove all numbers from the string
+            // This code structure is absolutely ridiculous
+            // TODO: REFACTOR ME!!
             var words = [];
             var tokens = this.splitDashed(wordString); // Look for the separator first
             if (!tokens) {
@@ -128,7 +133,9 @@ var $difference = $action || {};
             return words;
         };
 
-        // Tag the parts of speech of the list of words using a parts of speech tagger (POSTagger.js)
+        /**
+         * sorts a list of words by their English parts of speech 
+         */
         normalizeAndTagPOS(words) {
             var partsOfSpeech = {};
             partsOfSpeech.nouns = [];
@@ -190,6 +197,9 @@ var $difference = $action || {};
             }
         }
 
+        /**
+         * Assume English if spelled correctly in English dictionary
+         */
         isEnglish(word) {
             var is_spelled_correctly = this.dictionary.check(word);
             return is_spelled_correctly && word.length > 1;
@@ -227,5 +237,5 @@ var $difference = $action || {};
         }
     };
 
-    $difference.Parser = Parser;
-})($difference);
+    $genie.Parser = Parser;
+})($genie);

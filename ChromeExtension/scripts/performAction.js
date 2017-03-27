@@ -1,7 +1,13 @@
+/**
+ * Injection script to perform requested commands
+ */
 "use strict";
-var $action = $action || {};
+var $genie = $genie || {};
 
-$action.ActionableElementsActionFunction = {
+/**
+ * Get the action function to perform for a default element (no event required)
+ */
+$genie.ActionableElementsActionFunction = {
     "A": function (element) {
         element.click();
     },
@@ -23,6 +29,10 @@ $action.ActionableElementsActionFunction = {
 // Sending and receiving messages from the window object
 window.addEventListener("message", receiveMessage, false, false, true);
 
+/**
+ * Perform an action (invoke an event)
+ * @param event object with elemenID and event property, args
+ */
 function performAction(data) {
     var element = document.querySelector("[data-genie-element-id='" + data.elementID + "']");
     if (data.elementID == "document") {
@@ -131,7 +141,7 @@ function performAction(data) {
                 element.dispatchEvent(eventObj);
             }
         } else {
-            var actionFunction = $action.ActionableElementsActionFunction[element.tagName];
+            var actionFunction = $genie.ActionableElementsActionFunction[element.tagName];
             if (actionFunction) {
                 if (actionFunction) {
                     actionFunction(element, data.input);

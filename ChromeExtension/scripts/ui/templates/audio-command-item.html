@@ -1,0 +1,14 @@
+<li data-bind='visible: isVisible, enable: isEnabled' class="genie-audio-ui-command">
+	<div class="genie-audio-ui-label">
+		<span class="genie-audio-ui-label-text" data-bind='text: label'></span>
+		<span class="genie-audio-ui-label-description" data-bind='text: description'></span>
+	</div>
+	<div class="genie-audio-ui-arguments" data-bind="foreach: arguments">
+		<div class="genie-audio-ui-arguments-item">
+			<span class="genie-audio-ui-arguments-span" data-bind='text: argument'>
+			</span>
+			<span data-bind='text: value' class="genie-audio-ui-value-span">
+			</span>
+		</div>
+	</div>
+</li>

@@ -1,13 +1,6 @@
-/*
-#genie-audio-ui-sidebar {
-    background-color: white;
-    overflow: auto;
-    font-family: 'Lucida Grande', sans-serif;
-    font-size: 10pt;
-    z-index: 10000000;
-}
-*/
-
+/****
+ *  Main container 
+ *****/
 #genie-audio-ui {
     width: 300px;
     border-radius: 4px;
@@ -27,17 +20,24 @@
     color: #3277B2 !important;
 }
 
+/****
+ *  List
+ *****/
 .genie-audio-ui-list {
     list-style-type: none;
     margin: 0;
     padding: 0;
 }
 
+/****
+ *   Command Item
+ *****/
 .genie-audio-ui-command {
     padding: 10px 10px 10px 10px;
     cursor: pointer;
     border-bottom: 0.5px dotted lightgray;
 }
+
 
 .genie-audio-ui-label,
 .genie-audio-ui-arguments-item {

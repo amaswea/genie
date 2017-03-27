@@ -1,0 +1,12 @@
+<div data-bind='visible: isVisible, enable: isEnabled' class="genie-shortcut-ui-command">
+	<span class="genie-shortcut-ui-command-description"></span>
+	<span class="genie-shortcut-ui-command-label"></span>
+	<div class="genie-shortcut-ui-arguments" data-bind="foreach: arguments">
+		<div class="genie-shortcut-ui-arguments-item">
+			<span class="genie-shortcut-ui-arguments-span" data-bind= 'text: argument'>
+			</span>
+			<span data-bind='text: value' class="genie-shortcut-ui-value-span">
+			</span>
+		</div>
+	</div>
+</div>

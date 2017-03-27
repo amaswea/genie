@@ -1,7 +1,10 @@
+/**
+ * Genie utility functions
+ */
 "use strict";
-var $action = $action || {};
-(function ($action) {
-    $action.handlerIDs = 0;
+var $genie = $genie || {};
+(function ($genie) {
+    $genie.handlerIDs = 0;
 
     var treeWalkFast = (function () {
         // create closure for constants
@@ -62,15 +65,15 @@ var $action = $action || {};
         return this.pushStack(results);
     };
 
-    $action.isKeyboardEvent = function (eventType) {
-        return $action.KeyboardEvents.indexOf(eventType) > -1;
+    $genie.isKeyboardEvent = function (eventType) {
+        return $genie.KeyboardEvents.indexOf(eventType) > -1;
     }
 
-    $action.isMouseEvent = function (eventType) {
-        return $action.MouseEvents.indexOf(eventType) > -1;
+    $genie.isMouseEvent = function (eventType) {
+        return $genie.MouseEvents.indexOf(eventType) > -1;
     }
 
-    $action.getElementFromID = function (id) {
+    $genie.getElementFromID = function (id) {
         if (id == "window") {
             return window;
         } else if (id == "document") {
@@ -80,7 +83,7 @@ var $action = $action || {};
         }
     };
 
-    $action.detectOrAssignElementID = function (element) {
+    $genie.detectOrAssignElementID = function (element) {
         var window = element instanceof Window;
         var document = element instanceof Document;
         if (!window && !document) {
@@ -105,11 +108,11 @@ var $action = $action || {};
      * @method instrumentHandler
      * @param {Object} data
      */
-    $action.getDataDependencies = function (ast) {
-        return $action.computeSideEffectFreeExpressions(ast);
+    $genie.getDataDependencies = function (ast) {
+        return $genie.computeSideEffectFreeExpressions(ast);
     }
 
-    $action.hasSideEffectsOutsideConditionals = function (ast) {
+    $genie.hasSideEffectsOutsideConditionals = function (ast) {
         var findFunctionCallsOutsideOfConditionals = {
             outside: [
                     "IfStatement",
@@ -125,11 +128,11 @@ var $action = $action || {};
             items: []
         }
 
-        $action.ASTAnalyzer.searchAST(ast, findFunctionCallsOutsideOfConditionals);
+        $genie.ASTAnalyzer.searchAST(ast, findFunctionCallsOutsideOfConditionals);
         return findFunctionCallsOutsideOfConditionals.items.length > 0;
     }
 
-    $action.getAST = function (data) {
+    $genie.getAST = function (data) {
         try {
             var ast = esprima.parse(data.handler, {
                 tolerant: true
@@ -142,7 +145,7 @@ var $action = $action || {};
         }
     }
 
-    $action.getJQueryD3OverrideScript = function () {
+    $genie.getJQueryD3OverrideScript = function () {
         var directive = `'use strict';`;
 
         var newJQueryOn = function (events, selector, handler) { // TODO: handle when selector, data options are used
@@ -296,7 +299,7 @@ var $action = $action || {};
         return script;
     }
 
-    $action.getGlobalEventHandlerScript = function () {
+    $genie.getGlobalEventHandlerScript = function () {
         var directive = `'use strict';`;
 
         var postHandlerCommand = function postHandlerCommand(elementID, eventType, listener) {
@@ -311,18 +314,18 @@ var $action = $action || {};
         }
 
         var overrideGlobalEventHandlers = function () {
-            var docID = $action.detectOrAssignElementID(document);
+            var docID = $genie.detectOrAssignElementID(document);
             var documentOverrides = "";
-            for (var i = 0; i < $action.GlobalEventHandlers.length; i++) {
-                documentOverrides = documentOverrides + "if(document." + $action.GlobalEventHandlers[i] +
-                    ") { \n postHandlerCommand('" + docID + "', '" + $action.GlobalEventHandlers[i] + "', document." + $action.GlobalEventHandlers[i] + ".toString(), document); \n } \n";
+            for (var i = 0; i < $genie.GlobalEventHandlers.length; i++) {
+                documentOverrides = documentOverrides + "if(document." + $genie.GlobalEventHandlers[i] +
+                    ") { \n postHandlerCommand('" + docID + "', '" + $genie.GlobalEventHandlers[i] + "', document." + $genie.GlobalEventHandlers[i] + ".toString(), document); \n } \n";
             }
 
-            var windowID = $action.detectOrAssignElementID(window);
+            var windowID = $genie.detectOrAssignElementID(window);
             var windowOverrides = "";
-            for (var j = 0; j < $action.GlobalEventHandlers.length; j++) {
-                windowOverrides = windowOverrides + "if(window." + $action.GlobalEventHandlers[j] +
-                    ") { \n postHandlerCommand(" + windowID + ", '" + $action.GlobalEventHandlers[j] + "', window." + $action.GlobalEventHandlers[j] + ".toString(), window); \n } \n";
+            for (var j = 0; j < $genie.GlobalEventHandlers.length; j++) {
+                windowOverrides = windowOverrides + "if(window." + $genie.GlobalEventHandlers[j] +
+                    ") { \n postHandlerCommand(" + windowID + ", '" + $genie.GlobalEventHandlers[j] + "', window." + $genie.GlobalEventHandlers[j] + ".toString(), window); \n } \n";
             }
 
             return postHandlerCommand + "\nfunction detectGlobalHandlers() { \n " + documentOverrides + windowOverrides + "\n } \n detectGlobalHandlers();";
@@ -337,7 +340,7 @@ var $action = $action || {};
     }
 
 
-    $action.getScript = function () {
+    $genie.getScript = function () {
         var directive = `'use strict';`;
         var windowListener = 'window.addEventListener("message", receiveMessage, null, false, true);';
         var windowObjects = `window.geniePageHandlerMap = {};
@@ -656,7 +659,7 @@ var $action = $action || {};
      * @property undefined
      * @param {Object} ast
      */
-    $action.computeSideEffectFreeExpressions = function (ast) {
+    $genie.computeSideEffectFreeExpressions = function (ast) {
         // Find functions called outside conditionals and assume they are side effects
         var findConditionals = {
             within: "Program",
@@ -671,7 +674,7 @@ var $action = $action || {};
             items: [] // Will contain the collection of requested elements you are looking for
         }
 
-        $action.ASTAnalyzer.searchAST(ast, findConditionals);
+        $genie.ASTAnalyzer.searchAST(ast, findConditionals);
 
         var dependencies = [];
         for (var i = 0; i < findConditionals.items.length; i++) {
@@ -693,7 +696,7 @@ var $action = $action || {};
              items: []
          }
 
-         $action.ASTAnalyzer.searchAST(ast, findIdentifiersWithinSwitch);
+         $genie.ASTAnalyzer.searchAST(ast, findIdentifiersWithinSwitch);
 
          for (var j = 0; j < findIdentifiersWithinSwitch.items.length; j++) {
              let expr = findIdentifiersWithinSwitch.items[j].testExpression;
@@ -704,28 +707,28 @@ var $action = $action || {};
         return dependencies;
     };
 
-    $action.getInstrumentedHandler = function (handlerString) {
-        var index = handlerString.indexOf("{") + 1; // Insert after the first bracket in the handler which should be just inside of the function definition. Add 1 to the index so it inserts after that position        
-        var ast = esprima.parse(handlerString);
-        var expressions = $action.computeSideEffectFreeExpressions(ast);
-        var expressionsBody = "\n\tif(window.genieEventPollingMode) \n\t{\n";
-        var expressionsResult = "";
-        for (var i = 0; i < expressions.length; i++) {
-            expressionsBody = expressionsBody + "\t\tlet v" + i + " = " + expressions[i] + ";\n";
-            expressionsResult = expressionsResult + "v" + i;
-            if (i < expressions.length - 1) {
-                expressionsResult = expressionsResult + " && ";
-            }
-        }
+    // $genie.getInstrumentedHandler = function (handlerString) {
+    //     var index = handlerString.indexOf("{") + 1; // Insert after the first bracket in the handler which should be just inside of the function definition. Add 1 to the index so it inserts after that position        
+    //     var ast = esprima.parse(handlerString);
+    //     var expressions = $genie.computeSideEffectFreeExpressions(ast);
+    //     var expressionsBody = "\n\tif(window.genieEventPollingMode) \n\t{\n";
+    //     var expressionsResult = "";
+    //     for (var i = 0; i < expressions.length; i++) {
+    //         expressionsBody = expressionsBody + "\t\tlet v" + i + " = " + expressions[i] + ";\n";
+    //         expressionsResult = expressionsResult + "v" + i;
+    //         if (i < expressions.length - 1) {
+    //             expressionsResult = expressionsResult + " && ";
+    //         }
+    //     }
 
-        expressionsBody = expressionsBody + "\t\treturn " + expressionsResult + ";\n";
-        expressionsBody = expressionsBody + "\t} \n\telse {\n";
+    //     expressionsBody = expressionsBody + "\t\treturn " + expressionsResult + ";\n";
+    //     expressionsBody = expressionsBody + "\t} \n\telse {\n";
 
-        var newHandler = [handlerString.slice(0, index), expressionsBody, handlerString.slice(index)].join('');
+    //     var newHandler = [handlerString.slice(0, index), expressionsBody, handlerString.slice(index)].join('');
 
-        // Insert a closing brack for the else statement
-        var lastIndex = newHandler.lastIndexOf("}");
-        newHandler = [newHandler.slice(0, lastIndex), "}\n", newHandler.slice(lastIndex)].join('');
-        return newHandler;
-    };
-})($action);
+    //     // Insert a closing brack for the else statement
+    //     var lastIndex = newHandler.lastIndexOf("}");
+    //     newHandler = [newHandler.slice(0, lastIndex), "}\n", newHandler.slice(lastIndex)].join('');
+    //     return newHandler;
+    // };
+})($genie);

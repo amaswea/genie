@@ -1,10 +1,18 @@
-var $action = $action || {};
-(function ($action) {
+/**
+* Custom AST traversal for Esprima parser to search and return expressions within an AST 
+*/
+var $genie = $genie || {};
+(function ($genie) {
     "use strict";
     class ASTAnalyzer {
         // Format of abstract syntax tree follows: https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API
         constructor() {}
 
+      /**
+       * Search the Esprima AST node
+       * @param  ast
+       * @param visitor object
+       */
         static searchAST(ast, visitor) {
             if (visitor.outside && !visitor.within) {
                 visitor.collect = true;
@@ -42,6 +50,12 @@ var $action = $action || {};
             // Search for any function calls found within the handlers and return their names 
         }
 
+
+      /**
+       * Search the Esprima AST node
+       * @param  ast node
+       * @param visitor object
+       */
         static searchNode(node, visitor) {
             var collect = visitor.collect;
             var hasProp = visitor.property !== undefined;
@@ -226,7 +240,12 @@ var $action = $action || {};
             }
         }
 
-        // Statements 
+
+      /**
+       * Search a ForStatement node
+       * @param  ast
+       * @param visitor object
+       */
         static searchForStatement(statement, visitor) {
             if (statement.init) {
                 this.searchNode(statement.init, visitor);
@@ -243,6 +262,12 @@ var $action = $action || {};
             this.searchNode(statement.body, visitor);
         }
 
+
+      /**
+       * Search a ForInStatement node
+       * @param  ast
+       * @param visitor object
+       */
         static searchForInStatement(statement, visitor) {
             // if statement.each is true, it is a for each/in instead of a for/in
             // If statement.each is undefined, it is a for/of statement
@@ -251,11 +276,23 @@ var $action = $action || {};
             this.searchNode(statement.body, visitor);
         }
 
+
+      /**
+       * Search a WhileStatement node
+       * @param  ast
+       * @param visitor object
+       */
         static searchWhileStatement(statement, visitor) {
             this.searchNode(statement.test, visitor);
             this.searchNode(statement.body, visitor);
         }
 
+
+      /**
+       * Search a TryStatement node
+       * @param  ast
+       * @param visitor object
+       */
         static searchTryStatement(statement, visitor) {
             this.searchNode(statement.block, visitor);
             if (statement.handler) {
@@ -273,12 +310,24 @@ var $action = $action || {};
             }
         }
 
+
+      /**
+       * Search a BreakStatement node
+       * @param  ast
+       * @param visitor object
+       */
         static searchBreakStatement(statement, visitor) {
             if (statement.label) {
                 this.searchNode(statement.label, visitor);
             }
         }
 
+
+      /**
+       * Search a WithStatement node
+       * @param  ast
+       * @param visitor object
+       */
         static searchWithStatement(statement, visitor) {
             // Not handling this case for scoping
             // With statement use is not recommended
@@ -286,6 +335,12 @@ var $action = $action || {};
             this.searchNode(statement.body, visitor);
         }
 
+
+      /**
+       * Search conditional statement nodes (While, DoWhile, If, For)
+       * @param  ast
+       * @param visitor object
+       */
         static searchConditional(statement, visitor) {
             switch (statement.type) {
             case "WhileStatement":
@@ -304,8 +359,16 @@ var $action = $action || {};
             }
         }
 
+
+      /**
+       * Search SwitchStatement node
+       * @param  ast
+       * @param visitor object
+       */
         static searchSwitchStatement(statement, visitor) {
             var collect = visitor.collect;
+            // Set the visitor to collect from this node 
+            // If in the discriminant expression node
             if (visitor.property == "discriminant") {
                 visitor.collect = true;
             }
@@ -323,13 +386,23 @@ var $action = $action || {};
             // lexical - does it contain any unnested let declarations
         }
 
+
+      /**
+       * Search the ReturnStatement node
+       * @param  ast
+       * @param visitor object
+       */
         static searchReturnStatement(statement, visitor) {
             if (statement.argument) {
                 this.searchNode(statement.argument, visitor);
             }
         }
 
-
+      /**
+       * Search the BlockStatement node
+       * @param  ast
+       * @param visitor object
+       */
         static searchBlockStatement(statement, visitor) {
             // Push the node onto the scope whenever a new block statement is reached
             // Consider only new block statements as new scopes
@@ -344,8 +417,15 @@ var $action = $action || {};
             visitor.scopes.pop();
         }
 
+
+      /**
+       * Search ExpressionStatement nodes
+       * @param  ast
+       * @param visitor object
+       */
         static searchExpressionStatement(statement, visitor) {
             if (!statement.expressionString) {
+                // Convert the entire expression to its string representation
                 statement.expressionString = this.convertNodeToString(statement);
             }
 
@@ -354,11 +434,19 @@ var $action = $action || {};
             }
         }
 
+
+      /**
+       * Search the IfStatment node
+       * @param  ast
+       * @param visitor object
+       */
         static searchIfStatement(statement, visitor) {
             if (!statement.testConditionString) {
                 var clonedStatement = $.extend(true, {}, statement.test);
                 if (clonedStatement.type == "Identifier") {
                     if (clonedStatement.lastAssigned) {
+                        // Find all identifiers in the last assigned path and replace them with
+                        // their last assigned node
                         this.searchIdentifiersInPath(clonedStatement.lastAssigned);
                         clonedStatement = clonedStatement.lastAssigned;
                     } else if (clonedStatement.lastDeclared) {
@@ -402,6 +490,12 @@ var $action = $action || {};
             }
         }
 
+
+      /**
+       * Negate an expression by adding a ! operator
+       * @param  ast
+       * @param visitor object
+       */
         static negateExpression(statement) {
             var negated = {
                 argument: statement,
@@ -413,6 +507,12 @@ var $action = $action || {};
             return negated;
         }
 
+
+      /**
+       * Search a LetStatement node
+       * @param  ast
+       * @param visitor object
+       */
         static searchLetStatement(statement, visitor) {
             for (var i = 0; i < statement.head.length; i++) {
                 this.searchNode(statement.head, visitor);
@@ -420,15 +520,33 @@ var $action = $action || {};
             this.searchNode(statement.body, visitor);
         }
 
+
+      /**
+       * Search a DebuggerStatement node (don't do anything)
+       * @param  ast
+       * @param visitor object
+       */
         static searchDebuggerStatement(statement, visitor) {
             // Do nothing? 
         }
 
+
+      /**
+       * Search a LabledStatement node
+       * @param  ast
+       * @param visitor object
+       */
         static searchLabeledStatement(statement, visitor) {
             this.searchNode(statement.label, visitor);
             this.searchNode(statement.body, visitor);
         }
 
+
+      /**
+       * Search a FunctionDeclaration node
+       * @param  ast
+       * @param visitor object
+       */
         static searchFunctionDeclaration(statement, visitor) {
             if (statement.id) {
                 this.searchNode(statement.id, visitor);
@@ -454,10 +572,22 @@ var $action = $action || {};
             // expression
         }
 
+
+      /**
+       * Search a ThisExpression node
+       * @param  ast
+       * @param visitor object
+       */
         static searchThisExpression(expression, visitor) {
             // Do nothing!
         }
 
+
+      /**
+       * Search a BinaryExpression node (has a binary operator such as ||, |, &)
+       * @param  ast
+       * @param visitor object
+       */
         static searchBinaryExpression(expression, visitor) {
             // Parse left and right hand sides
             this.searchNode(expression.left, visitor);
@@ -465,6 +595,12 @@ var $action = $action || {};
             this.searchNode(expression.right, visitor);
         }
 
+
+      /**
+       * Search an AssignmentExpression node (varName = expression)
+       * @param  ast
+       * @param visitor object
+       */
         static searchAssignmentExpression(expression, visitor) {
             // Search from left to right so that identifiers on the right will be resolved to their mapped nodes in the scope before the assigned variable gets resolved. 
             this.searchNode(expression.right, visitor);
@@ -503,11 +639,23 @@ var $action = $action || {};
             this.searchNode(expression.left, visitor);
         }
 
+
+      /**
+       * Search an UpdateExpression node (varName++)
+       * @param  ast
+       * @param visitor object
+       */
         static searchUpdateExpression(expression, visitor) {
             this.searchNode(expression.operator, visitor);
             this.searchNode(expression.argument, visitor);
         }
 
+
+      /**
+       * Search a LogicalExpression node (||, &&)
+       * @param  ast
+       * @param visitor object
+       */
         static searchLogicalExpression(expression, visitor) {
             // Parse left and right hand sides
             this.searchNode(expression.left, visitor);
@@ -515,6 +663,12 @@ var $action = $action || {};
             this.searchNode(expression.right, visitor);
         }
 
+
+      /**
+       * Search a NewExpression (myInst = new Class())
+       * @param  ast
+       * @param visitor object
+       */
         static searchNewExpression(expression, visitor) {
             this.searchNode(expression.callee, visitor);
             for (var i = 0; i < expression.arguments.length; i++) {
@@ -522,6 +676,12 @@ var $action = $action || {};
             }
         }
 
+
+      /**
+       * Search a CallExpression node (myFunction();)
+       * @param  ast
+       * @param visitor object
+       */
         static searchCallExpression(expression, visitor) {
             this.searchNode(expression.callee, visitor);
             for (var i = 0; i < expression.arguments.length; i++) {
@@ -529,21 +689,44 @@ var $action = $action || {};
             }
         }
 
+
+      /**
+       * Search a MemberExpression node (myObj.myProperty)
+       * @param  ast
+       * @param visitor object
+       */
         static searchMemberExpression(expression, visitor) {
             this.searchNode(expression.object, visitor);
             this.searchNode(expression.property, visitor);
         }
 
+
+      /**
+       * Search a YieldExpression node (yield index++)
+       * @param  ast
+       * @param visitor object
+       */
         static searchYieldExpression(expression, visitor) {
             if (expression.argument) {
                 this.searchNode(expression.argument, visitor);
             }
         }
 
+
+      /**
+       * Search a ComprehensionExpression node ([for (i of numbers) i * 2];)
+       * @param  ast
+       * @param visitor object
+       */
         static searchComprehensionExpression(expression, visitor) {
             // Not supported in ECMAScript standard
         }
 
+      /**
+       * Search a LetExpression node (let myVar=5;)
+       * @param  ast
+       * @param visitor object
+       */
         static searchLetExpression(expression, visitor) {
             for (var i = 0; i < expression.head.length; i++) {
                 this.searchNode(expression.head[i], visitor);
@@ -552,6 +735,11 @@ var $action = $action || {};
             this.searchNode(expression.body, visitor);
         }
 
+      /**
+       * Search an ArrayExpression node (myArray = [1,2,3];)
+       * @param  ast
+       * @param visitor object
+       */
         static searchArrayExpression(expression, visitor) {
             if (expression.elements && expression.elements.length) {
                 for (var i = 0; i < expression.elements.length; i++) {
@@ -563,12 +751,22 @@ var $action = $action || {};
             }
         }
 
+      /**
+       * Search an ObjectExpression node (myObj = { myProp: true };)
+       * @param  ast
+       * @param visitor object
+       */
         static searchObjectExpression(expression, visitor) {
             for (var i = 0; i < expression.properties.length; i++) {
                 this.searchNode(expression.properties[i], visitor);
             }
         }
 
+      /**
+       * Search a FunctionExpression node (function() { body ... })
+       * @param  ast
+       * @param visitor object
+       */
         static searchFunctionExpression(expression, visitor) {
             if (expression.id) {
                 this.searchNode(expression.id, visitor);
@@ -598,18 +796,32 @@ var $action = $action || {};
             // expression
         }
 
+      /**
+       * Search a SequenceExpression node (a=5, b=6, c=7;)
+       * @param  ast
+       * @param visitor object
+       */
         static searchSequenceExpression(expression, visitor) {
             for (var i = 0; i < expression.expressions.length; i++) {
                 this.searchNode(expression.expressions[i], visitor);
             }
         }
 
+      /**
+       * Search a UnaryExpression node (!, -, +, etc.)
+       * @param  ast
+       * @param visitor object
+       */
         static searchUnaryExpression(expression, visitor) {
             this.searchNode(expression.operator, visitor);
             this.searchNode(expression.argument, visitor);
         }
 
-        // Clauses
+      /**
+       * Search a SwtichCase node (switch { case1: {} })
+       * @param  ast
+       * @param visitor object
+       */
         static searchSwitchCase(switchCase, visitor) {
             if (switchCase.test) {
                 this.searchNode(switchCase.test, visitor);
@@ -620,6 +832,11 @@ var $action = $action || {};
             }
         }
 
+      /**
+       * Search a CatchClause node (catch(e) {})
+       * @param  ast
+       * @param visitor object
+       */
         static searchCatchClause(catchClause, visitor) {
             this.searchNode(catchClause.param, visitor);
             if (catchClause.guard) {
@@ -629,6 +846,11 @@ var $action = $action || {};
             this.searchNode(catchClause.body, visitor);
         }
 
+      /**
+       * Search an ObjectPattern node
+       * @param  ast
+       * @param visitor object
+       */
         static searchObjectPattern(pattern, visitor) {
             for (var i = 0; i < pattern.properties; i++) {
                 var p = pattern.properties[i];
@@ -655,7 +877,11 @@ var $action = $action || {};
             // TODO
         }
 
-        // Miscellaneous
+      /**
+       * Search an Identifier node
+       * @param  ast
+       * @param visitor object
+       */
         static searchIdentifier(identifier, visitor) {
             if (!identifier.lastAssigned) {
                 // Locate the reference where the identifier was last assigned, either a AssignmentExpression
@@ -713,6 +939,11 @@ var $action = $action || {};
             // "get" and "set" are the kind values for getters and setters
         }
 
+      /**
+       * Search a VariableDeclarator node (var myVar = myVal; )
+       * @param  ast
+       * @param visitor object
+       */
         static searchVariableDeclarator(declarator, visitor) {
             // Search from left to right so that identifiers on the right will be resolved to their mapped nodes in the scope before the assigned variable gets resolved. 
             if (declarator.init) {
@@ -744,6 +975,11 @@ var $action = $action || {};
             // kind "var" | "let" | "const"
         }
 
+      /**
+       * Find the last assignment expression to this identifier in the current scope
+       * @param  identifier
+       * @param visitor object
+       */
         static findLastAssigned(identifier, visitor) {
             if (visitor.scopes) {
                 for (var i = visitor.scopes.length - 1; i >= 0; i--) {
@@ -756,6 +992,11 @@ var $action = $action || {};
             }
         }
 
+      /**
+       * Find the last declartion of this identifier within the current scope
+       * @param  identifier
+       * @param visitor object
+       */
         static findLastDeclared(identifier, visitor) {
             if (visitor.scopes)
                 for (var i = visitor.scopes.length - 1; i >= 0; i--) {
@@ -767,6 +1008,11 @@ var $action = $action || {};
                 }
         }
 
+      /**
+       * Build an expression by replacing all identifiers recursively with their last assigned or last declared expressions
+       * @param  ast
+       * @param visitor object
+       */
         static constructSideEffectFreeExpression(identifier) {
             // Just construct expression now. Worry about side-effects later
             // Clone the lastAssigned node first so modifications to it do not alter the original tree
@@ -798,6 +1044,10 @@ var $action = $action || {};
             return identifier.lastAssigned ? identifier.lastAssigned : identifier.lastDeclared;
         }
 
+      /**
+       * Search all the identifiers recursively starting at the given node and traversing the last assigned or declared expression
+       * @param  ast node
+       */
         static searchIdentifiersInPath(node) {
             if (node && typeof (node) == "object" && !node.searched) {
                 node.searched = true;
@@ -827,6 +1077,10 @@ var $action = $action || {};
             }
         }
 
+      /**
+       * Convert the node into its string representation
+       * @param AST node
+       */
         static getStringForNode(node) {
             switch (node.type) {
             case "Identifier":
@@ -1210,5 +1464,5 @@ var $action = $action || {};
         }
     }
 
-    $action.ASTAnalyzer = ASTAnalyzer;
-})($action);
+    $genie.ASTAnalyzer = ASTAnalyzer;
+})($genie);

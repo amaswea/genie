@@ -1,41 +1,35 @@
 "use strict";
-var $action = $action || {};
-(function ($action) {
-    class CommandLineUI extends $action.UI {
+var $genie = $genie || {};
+(function ($genie) {
+    class CommandLineUI extends $genie.UI {
         constructor() {
             // Keep a map between the command labels and their execute() calls so that we can map audio commands to call commands
             super();
             this._commandsMap = {};
             this._init = false;
+            this.RootViewModel = function(params) {
+                var self = this; 
+                ko.components.register("dialog", {
+                    viewModel: function(params) {
+                        self.childCommands = ko.observableArray([]);
+                        self.label = ko.observable('');
+                    },
+                    template: { require: 'audio-dialog.html'}
+                }); 
+            };
             this.init();
             this._macros = {};
         }
 
         init() {
-            var commandLine = document.createElement("div");
-            $(commandLine).attr("id", "genie-command-line-ui");
-            var label = document.createElement("div");
-            label.classList.add("genie-command-line-label");
-            label.textContent = "Enter a command.";
-
-            var textarea = document.createElement("div");
-            textarea.setAttribute("contenteditable", "true");
-            textarea.classList.add("genie-command-line-text");
-            textarea.classList.add("genie-ui-component")
-            commandLine.appendChild(label);
-            commandLine.appendChild(textarea);
-            this.Root = commandLine;
-            this._textarea = textarea;
+            ko.applyBindings();
+            this.label("Enter a command.");
             this.attachListeners(textarea);
-
             this.appendResponse("Type commands to see the list of available commands...\n");
-            $('html').append(commandLine);
-
-            this.hide();
             $(window).scroll(_.throttle(this.repositionCommandLineArea, 1));
         };
 
-        appendCommands(label, commandItems) {
+        sortCommands(label, commandItems) {
             for (var i = 0; i < commandItems.length; i++) {
                 if (commandItems[i].Command.hasArguments()) {
                     var commandArgumentKeys = Object.keys(commandItems[i].Command.ArgumentsMap);
@@ -51,8 +45,9 @@ var $action = $action || {};
             }
         }
 
-        updateCommandVisibleState(command, visible) {}
-
+        /** 
+         * Attach event listeners to listen for commands in the command line area 
+         */
         attachListeners(element) {
             var self = this;
             element.addEventListener("keydown", function handlerInput(evt) {
@@ -80,7 +75,6 @@ var $action = $action || {};
 
         repositionCommandLineArea() {
             var commandLine = $('#genie-command-line-ui');
-
             var scrollTop = $(window).scrollTop();
             var top = $(window).height() + scrollTop - commandLine.height() - 20;
             commandLine[0].style.top = top + "px";
@@ -161,6 +155,7 @@ var $action = $action || {};
         }
 
         appendResponse(text, lineBreak = true, key = "") {
+            // TODO: Create template
             let response = document.createElement('div');
             response.classList.add("genie-command-line-ui-response");
 
@@ -185,5 +180,5 @@ var $action = $action || {};
         }
     };
 
-    $action.CommandLineUI = CommandLineUI;
-})($action);
+    $genie.CommandLineUI = CommandLineUI;
+})($genie);

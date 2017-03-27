@@ -1,6 +1,6 @@
 $(document).ready(function () {
     /**
-     * Save the current active state of the interface
+     * Save the current active state of the interface (open or closed)
      * @private
      * @method saveInterfaceState
      * @param {Object} open
@@ -15,7 +15,7 @@ $(document).ready(function () {
     };
 
     /**
-     * Restore the saved state of the interface
+     * Restore the saved state of the interface (open or closed)
      * @private
      * @method restoreInterfaceState
      * @param {Object} tab
@@ -35,7 +35,7 @@ $(document).ready(function () {
     }
 
     /**
-     * Persist the current open or close staste of the interface
+     * Persist the current open or closed taste of the interface
      * @private
      * @method updateState
      * @param {Object} tab
@@ -58,7 +58,9 @@ $(document).ready(function () {
         });
     }
 
-
+  /**
+   * Check a script for whether it is a javasscript file (has a .js) that Genie should parse
+   */
     var isJavaScriptFile = function (url) {
         var lastIndex = url.lastIndexOf('.');
         var extension = url.substring(lastIndex + 1, url.length);
@@ -91,12 +93,12 @@ $(document).ready(function () {
 
         if (request.groupingStrategy) {
             if (request.groupingStrategy == 'visual') {
-                let visualClusters = $action.CommandOrganizer.organizeCommandsVisually(request.metadata);
+                let visualClusters = $genie.CommandOrganizer.organizeCommandsVisually(request.metadata);
                 sendResponse(visualClusters);
             }
 
             if (request.groupingStrategy == 'visualContainer') {
-                let visualContainers = $action.CommandOrganizer.organizeCommandsByVisualContainer(request.metadata);
+                let visualContainers = $genie.CommandOrganizer.organizeCommandsByVisualContainer(request.metadata);
                 sendResponse(visualContainers);
             }
         }
@@ -115,6 +117,7 @@ $(document).ready(function () {
             console.log(details.url);
             $.get(details.url)
                 .done(function (data) {
+                    // Send back the requested script to be parsed
                     chrome.tabs.sendMessage(tabID, {
                         text: 'scriptReceived',
                         data: data,
