@@ -1,0 +1,2 @@
+1. Make into npm package with dependencies
+2. Add bundler for minification
